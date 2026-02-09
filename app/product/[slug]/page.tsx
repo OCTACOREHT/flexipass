@@ -1,4 +1,5 @@
 import Link from "next/link";
+import HeaderMain from "@/components/HeaderMain";
 
 type Plan = { name: string; note: string; price: string; label?: string };
 type CatalogEntry = {
@@ -39,7 +40,7 @@ const fallbackCatalog: Record<string, CatalogEntry> = {
       { name: "Standard", note: "Usage quotidien", price: "$15.00", label: "Popular" },
       { name: "Team", note: "Collaboration illimitée", price: "$25.00", label: "Team" },
     ],
-    description: "Accès à Claude 3 pour analyses, rédaction et ideation.",
+    description: "Accès à Claude 3 pour analyses, rédaction et idéation.",
     features: ["Contexte étendu", "Raisonnement avancé", "Sécurité Anthropic", "Outils code & data"],
     bullets: ["Livraison instantanée", "Paiement sécurisé", "Support 24/7", "Satisfait ou remboursé"],
     icon: "https://seeklogo.com/images/C/claude-ai-logo-A859C5C3E6-seeklogo.com.png",
@@ -136,28 +137,66 @@ const fallbackCatalog: Record<string, CatalogEntry> = {
   },
 };
 
+const normalize = (value: string | undefined | null) =>
+  (value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "-")
+    .replace(/%20/g, "-");
+
+const translate = (text: string) => {
+  const map: Record<string, string> = {
+    "Compte/Abonnement": "Abonnement",
+    "Account / Subscription": "Abonnement",
+    "Giftcard": "Carte cadeau",
+    "Plan standard": "Plan : Standard",
+    "Plan: premuim": "Plan : premium",
+    "Plan: premium": "Plan : premium",
+    "Plan:": "Plan :",
+    "Duration:": "Durée :",
+    "Durée:": "Durée :",
+    "days": "jours",
+    "Fast delivery": "Livraison rapide",
+    "Livraison rapide": "Livraison rapide",
+    "Instant delivery": "Livraison instantanée",
+    "Digital delivery": "Livraison digitale",
+    "Secure payment": "Paiement sécurisé",
+    "Paiement sécurisé": "Paiement sécurisé",
+    "Satisfaction guaranteed": "Satisfaction garantie",
+    "Support 24/7": "Support 24/7",
+  };
+  let t = text;
+  for (const [k, v] of Object.entries(map)) {
+    t = t.replace(k, v);
+  }
+  return t;
+};
+
 async function fetchProducts() {
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/api/admin/products`, {
-      cache: "no-store",
-      next: { revalidate: 0 },
-    }).catch(() => null);
+    const base = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
-    if (!res || !res.ok) {
-      const resLocal = await fetch(`/api/admin/products`, { cache: "no-store" }).catch(() => null);
-      if (!resLocal || !resLocal.ok) return [];
-      return await resLocal.json().catch(() => []);
-    }
-    return await res.json().catch(() => []);
+    // Tente d'abord l'API publique
+    const resPublic = await fetch(`${base}/api/products`, { cache: "no-store", next: { revalidate: 0 } }).catch(() => null);
+    if (resPublic && resPublic.ok) return await resPublic.json().catch(() => []);
+
+    // Sinon fallback sur l'API admin si dispo
+    const resAdmin = await fetch(`${base}/api/admin/products`, { cache: "no-store", next: { revalidate: 0 } }).catch(() => null);
+    if (resAdmin && resAdmin.ok) return await resAdmin.json().catch(() => []);
+
+    return [];
   } catch {
     return [];
   }
 }
 
 export default async function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params;
+  const { slug: rawParam } = await params;
+  const rawSlug = rawParam ?? "";
+  const slug = normalize(decodeURIComponent(rawSlug));
   const dbProducts = await fetchProducts();
-  const dbProduct = dbProducts.find((p: any) => p.id === slug);
+  const products = Array.isArray(dbProducts) ? dbProducts : [];
+  const dbProduct = products.find((p: any) => normalize(p.id) === slug || normalize(p.slug) === slug);
 
   const product: CatalogEntry | null = dbProduct
     ? {
@@ -176,23 +215,53 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         bullets: ["Paiement sécurisé", "Support 24/7", "Satisfaction garantie"],
         icon: "https://upload.wikimedia.org/wikipedia/commons/0/04/ChatGPT_logo.svg",
       }
-    : fallbackCatalog[slug] || null;
+    : fallbackCatalog[slug] || fallbackCatalog[slug.split("-")[0]] || null;
 
   if (!product) {
     return (
-      <main className="update-wrapper">
-        <div className="update-card" style={{ maxWidth: 420 }}>
-          <h1>Produit introuvable</h1>
-          <Link className="update-link" href="/">
-            Retour à l'accueil
-          </Link>
-        </div>
-      </main>
+      <>
+        <header className="nav">
+          <div className="nav-inner">
+            <Link href="/" className="brand">FlexiPass</Link>
+            <div className="nav-center">
+              <nav className="menu">
+                <Link href="/#giftcards">Cartes Cadeaux</Link>
+                <Link href="/#streaming">Streaming</Link>
+                <Link href="/#premium">Premium</Link>
+              </nav>
+              <div className="nav-search">
+                <input type="search" placeholder="Rechercher un produit..." />
+                <i className="ri-search-line" />
+              </div>
+            </div>
+            <div className="actions">
+              <Link href="/" className="user-chip" title="Connexion">
+                <i className="ri-user-smile-line" />
+                <span className="user-name">Connexion</span>
+              </Link>
+              <button className="icon-btn cart-btn" aria-label="Panier">
+                <i className="ri-shopping-bag-3-line" />
+                <span className="cart-badge">0</span>
+              </button>
+            </div>
+          </div>
+        </header>
+        <main className="update-wrapper">
+          <div className="update-card" style={{ maxWidth: 420 }}>
+            <h1>Produit introuvable</h1>
+            <Link className="update-link" href="/">
+              Retour à l'accueil
+            </Link>
+          </div>
+        </main>
+      </>
     );
   }
 
   return (
-    <main className="detail-wrap">
+    <>
+      <HeaderMain />
+      <main className="detail-wrap">
       <div className="detail-grid">
         <div className="detail-left">
           <div className="detail-card">
@@ -222,11 +291,11 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           </div>
 
           <div className="detail-card">
-            <h3>What’s included</h3>
+            <h3>Ce qui est inclus</h3>
             <div className="detail-features">
               {product.features.map((f) => (
                 <span key={f}>
-                  <i className="ri-check-line" /> {f}
+                  <i className="ri-check-line" /> {translate(f)}
                 </span>
               ))}
             </div>
@@ -255,20 +324,103 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                 </div>
               ))}
             </div>
-            <button className="btn-full modal-primary">Buy Now</button>
-            <button className="btn-full ghost-btn">
-              <i className="ri-shopping-cart-2-line" /> Add to Cart
-            </button>
-            <div className="detail-bullets">
-              {product.bullets.map((b) => (
-                <span key={b}>
-                  <i className="ri-checkbox-circle-line" /> {b}
-                </span>
-              ))}
+            <div className="cta-stack">
+              <button className="btn-full modal-primary">Acheter maintenant</button>
+              <button className="btn-full ghost-btn">
+                <i className="ri-shopping-cart-2-line" /> Ajouter au panier
+              </button>
+            </div>
+            <div className="detail-bullets fancy-bullets">
+              <span>
+                <i className="ri-flashlight-line" /> Livraison digitale instantanée
+              </span>
+              <span>
+                <i className="ri-shield-check-line" /> Paiement sécurisé
+              </span>
+              <span>
+                <i className="ri-customer-service-2-line" /> Support 24/7
+              </span>
+              <span>
+                <i className="ri-star-smile-line" /> Satisfaction garantie
+              </span>
             </div>
           </div>
         </div>
       </div>
     </main>
+      <footer className="footer">
+        <div className="footer-inner">
+          <div className="footer-brand">
+            <div className="brand-mark">FlexiPass</div>
+            <p className="footer-tagline">
+              Cartes cadeaux et abonnements numériques pour vos apps et services préférés. Livraison instantanée.
+            </p>
+            <div className="socials">
+              <a aria-label="Twitter" href="#">
+                <i className="ri-twitter-x-line" />
+              </a>
+              <a aria-label="Facebook" href="#">
+                <i className="ri-facebook-circle-line" />
+              </a>
+              <a aria-label="Instagram" href="#">
+                <i className="ri-instagram-line" />
+              </a>
+              <a aria-label="LinkedIn" href="#">
+                <i className="ri-linkedin-box-line" />
+              </a>
+            </div>
+          </div>
+
+          <div className="footer-grid">
+            <div>
+              <h4>Catalogue</h4>
+              <ul>
+                <li><a href="/#giftcards">Cartes cadeaux</a></li>
+                <li><a href="/#streaming">Streaming</a></li>
+                <li><a href="/#premium">Premium</a></li>
+                <li><a href="/product/all">Tous les produits</a></li>
+              </ul>
+            </div>
+            <div>
+              <h4>Support</h4>
+              <ul>
+                <li><a href="mailto:support@flexipass.com">support@flexipass.com</a></li>
+                <li><a href="#">Centre d'aide</a></li>
+              </ul>
+            </div>
+            <div>
+              <h4>Légal</h4>
+              <ul>
+                <li><a href="#">Conditions</a></li>
+                <li><a href="#">Confidentialité</a></li>
+                <li><a href="#">Cookies</a></li>
+              </ul>
+            </div>
+            <div className="newsletter">
+              <h4>Newsletter</h4>
+              <p>Promos exclusives et nouveautés. Pas de spam.</p>
+              <div className="newsletter-form">
+                <input type="email" placeholder="Votre email" />
+                <button type="button">S'inscrire</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="footer-bottom">
+          <span>© {new Date().getFullYear()} FlexiPass. Tous droits réservés.</span>
+          <div className="payments">
+            <span className="pay-pill">Visa</span>
+            <span className="pay-pill">Mastercard</span>
+            <span className="pay-pill">PayPal</span>
+          </div>
+        </div>
+      </footer>
+    </>
   );
 }
+
+
+
+
+
+

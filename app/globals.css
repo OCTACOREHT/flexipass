@@ -1,4 +1,4 @@
-:root {
+﻿:root {
   --sand: #ffffff;
   --ink: #2e2a32;
   --muted: #6f656e;
@@ -74,6 +74,40 @@ button {
   justify-content: center;
 }
 
+.breadcrumb {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #5b5248;
+  font-weight: 700;
+}
+
+.breadcrumb span {
+  color: #b7a99c;
+}
+
+.crumb-current {
+  color: #2f2a33;
+  font-weight: 800;
+}
+
+.page-breadcrumb {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 12px 20px 6px;
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #5b5248;
+  font-weight: 700;
+  border-bottom: 1px solid #f2e8dd;
+}
+
+.page-breadcrumb span {
+  color: #b7a99c;
+}
+
 .brand {
   font-weight: 800;
   font-size: 22px;
@@ -109,7 +143,7 @@ button {
   right: 12px;
   top: 50%;
   transform: translateY(-50%);
-  color: #6f656e;
+  color: #111111;
 }
 
 .nav-results {
@@ -422,11 +456,28 @@ button {
 }
 
 .btn-ghost {
-  border: 1.2px solid rgba(255, 255, 255, 0.65);
-  color: white;
-  padding: 12px 18px;
-  border-radius: 999px;
-  font-weight: 700;
+  border: 1.2px solid #efe5d9;
+  color: #2f2a33;
+  padding: 10px 16px;
+  border-radius: 14px;
+  font-weight: 800;
+  background: #fdf7ef;
+}
+
+.nav-login-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 16px;
+  background: #f7f4ee;
+  border: 1.2px solid #e7e1d8;
+  color: #2f2a33;
+  font-weight: 800;
+}
+
+.nav-login-btn i {
+  color: #2f2a33;
 }
 
 .section {
@@ -570,6 +621,53 @@ button {
 .card button:hover {
   transform: translateY(-1px);
   box-shadow: 0 14px 30px -16px rgba(255, 105, 0, 0.65);
+}
+
+/* Skeletons */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+}
+
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0));
+  transform: translateX(-100%);
+  animation: shimmer 1.2s infinite;
+}
+
+.skeleton-line {
+  height: 14px;
+  background: #f2e8dd;
+  border-radius: 10px;
+  margin: 6px 0;
+}
+
+.skeleton-line.w40 { width: 40%; }
+.skeleton-line.w60 { width: 60%; }
+.skeleton-line.w70 { width: 70%; }
+
+.skeleton-pill {
+  height: 28px;
+  width: 50%;
+  background: #f2e8dd;
+  border-radius: 999px;
+  margin: 8px 0;
+}
+
+.skeleton-btn {
+  height: 36px;
+  width: 100%;
+  background: #f2e8dd;
+  border-radius: 12px;
+  margin-top: 8px;
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
 }
 
 .btn-full {
@@ -1438,11 +1536,43 @@ button {
   font-weight: 700;
 }
 
+.cta-stack {
+  display: grid;
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.fancy-bullets {
+  margin-top: 8px;
+  display: grid;
+  gap: 8px;
+  background: #fff9f2;
+  border: 1px solid #f2e8dd;
+  border-radius: 16px;
+  padding: 12px 14px;
+}
+
+.fancy-bullets span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+  color: #2f2a33;
+}
+
+.fancy-bullets i {
+  color: var(--primary);
+  font-size: 18px;
+}
+
 .ghost-btn {
   background: #ffffff;
   border: 1px solid #f2e8dd;
   color: var(--ink);
   box-shadow: none;
+  padding: 12px 14px;
+  border-radius: 12px;
+  font-weight: 800;
 }
 
 @media (max-width: 900px) {
@@ -1468,6 +1598,7 @@ button {
 
 .user-chip i {
   font-size: 17px;
+  color: #111111;
 }
 
 .avatar-photo {
@@ -1877,3 +2008,4 @@ button {
     width: 100%;
   }
 }
+

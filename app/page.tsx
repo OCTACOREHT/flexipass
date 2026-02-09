@@ -108,6 +108,7 @@ export default function Home() {
   const [fullName, setFullName] = useState("");
   const [remember, setRemember] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "signup" | "reset">("login");
+  const [loadingProducts, setLoadingProducts] = useState(true);
 
   const switchAuthMode = (mode: "login" | "signup" | "reset") => {
     setAuthMode(mode);
@@ -157,21 +158,46 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    // Affiche tout de suite un cache local éventuel
+    try {
+      const cached = localStorage.getItem("products_cache");
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed)) setProducts(parsed);
+      }
+    } catch (_) {}
+
+    setLoadingProducts(true);
     fetch("/api/products")
       .then((r) => r.json())
-      .then((data) => setProducts(data || []))
-      .catch(() => setProducts([]));
+      .then((data) => {
+        const list = Array.isArray(data) ? data : [];
+        setProducts(list);
+        try {
+          localStorage.setItem("products_cache", JSON.stringify(list));
+        } catch (_) {}
+      })
+      .catch(() => setProducts((prev) => prev || []))
+      .finally(() => setLoadingProducts(false));
   }, []);
 
   const visibleProducts = useMemo(() => {
-    const list = products.filter((p) => (active === "all" ? true : p.type === "giftcard" ? active === "gaming" || active === "shopping" || active === "divertissement" : true));
+    const base = Array.isArray(products) ? products : [];
+    const list = base.filter((p) =>
+      active === "all"
+        ? true
+        : p.type === "giftcard"
+        ? active === "gaming" || active === "shopping" || active === "divertissement"
+        : true
+    );
     if (!query.trim()) return list;
     return list.filter((p) => p.title.toLowerCase().includes(query.toLowerCase()));
   }, [products, active, query]);
 
   const searched = useMemo(() => {
     if (!query.trim()) return [];
-    return products.filter((p) => p.title.toLowerCase().includes(query.toLowerCase())).slice(0, 6);
+    const base = Array.isArray(products) ? products : [];
+    return base.filter((p) => p.title.toLowerCase().includes(query.toLowerCase())).slice(0, 6);
   }, [products, query]);
 
   const handleAddToCart = (p: Product, price?: number) => {
@@ -476,54 +502,68 @@ export default function Home() {
           ))}
         </div>
 
-        <div className="grid">
-          {visibleProducts.map((p) => {
-            const selectedVariant = (p.variants && p.variants[0]) || null;
-            const displayPrice = selectedVariant ? `${selectedVariant.price} ${selectedVariant.currency}` : `${p.price} ${p.currency}`;
-            return (
-              <article key={p.id} className={`card ${p.type === "account" ? "luxe" : ""}`}>
-                <div className="card-top">
-                  <div className={`logo-box ${p.type === "account" ? "premium" : ""}`}>
-                    <img src={p.image_url || "https://upload.wikimedia.org/wikipedia/commons/0/04/ChatGPT_logo.svg"} alt={p.title} width={40} height={40} />
+        {loadingProducts && visibleProducts.length === 0 ? (
+          <div className="grid">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <article className="card skeleton" key={`sk-${i}`}>
+                <div className="skeleton-line w40" />
+                <div className="skeleton-line w70" />
+                <div className="skeleton-line w60" />
+                <div className="skeleton-pill" />
+                <div className="skeleton-btn" />
+              </article>
+            ))}
+          </div>
+        ) : (
+          <div className="grid">
+            {visibleProducts.map((p) => {
+              const selectedVariant = (p.variants && p.variants[0]) || null;
+              const displayPrice = selectedVariant ? `${selectedVariant.price} ${selectedVariant.currency}` : `${p.price} ${p.currency}`;
+              return (
+                <article key={p.id} className={`card ${p.type === "account" ? "luxe" : ""}`}>
+                  <div className="card-top">
+                    <div className={`logo-box ${p.type === "account" ? "premium" : ""}`}>
+                      <img src={p.image_url || "https://upload.wikimedia.org/wikipedia/commons/0/04/ChatGPT_logo.svg"} alt={p.title} width={40} height={40} />
+                    </div>
                   </div>
-                </div>
 
-                <h3>{p.title}</h3>
-                <div className="muted">{p.short_description || p.subtitle || p.plan || "Produit numérique"}</div>
+                  <h3>{p.title}</h3>
+                  <div className="muted">{p.short_description || p.subtitle || p.plan || "Produit numérique"}</div>
 
-                {p.variants && p.variants.length > 0 && (
-                  <div className="field">
-                    <label htmlFor={`select-${p.id}`}>Montant</label>
-                    <select id={`select-${p.id}`} name={`select-${p.id}`} onChange={(e) => {
-                      const v = p.variants?.find((v) => v.id === e.target.value);
-                      if (v) handleAddToCart(p, v.price);
-                    }}>
-                      {p.variants.map((v) => (
-                        <option key={v.id} value={v.id}>
-                          {v.label} - {v.price} {v.currency}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
+                  {p.variants && p.variants.length > 0 && (
+                    <div className="field">
+                      <label htmlFor={`select-${p.id}`}>Montant</label>
+                      <select id={`select-${p.id}`} name={`select-${p.id}`} onChange={(e) => {
+                        const v = p.variants?.find((v) => v.id === e.target.value);
+                        if (v) handleAddToCart(p, v.price);
+                      }}>
+                        {p.variants.map((v) => (
+                          <option key={v.id} value={v.id}>
+                            {v.label} - {v.price} {v.currency}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
 
-                {!p.variants?.length && (
-                  <div className="price-row">
-                    <div className="price">{displayPrice}</div>
-                  </div>
-                )}
-                <button type="button" className="btn-full" onClick={() => handleAddToCart(p, selectedVariant?.price)}>
-                  <i className="ri-shopping-cart-2-line" />
-                  Ajouter au panier
-                </button>
+                  {!p.variants?.length && (
+                    <div className="price-row">
+                      <div className="price">{displayPrice}</div>
+                    </div>
+                  )}
+                  <button type="button" className="btn-full" onClick={() => handleAddToCart(p, selectedVariant?.price)}>
+                    <i className="ri-shopping-cart-2-line" />
+                    Ajouter au panier
+                  </button>
                   <a className="btn-full ghost-btn" href={`/product/${p.id}`}>
                     <i className="ri-information-line" />
                     Détails
                   </a>
-              </article>
-            );
-          })}
-        </div>
+                </article>
+              );
+            })}
+          </div>
+        )}
       </section>
 
       <section className="section" id="premium">
