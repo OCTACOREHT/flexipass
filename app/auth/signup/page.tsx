@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { createClient } from "@supabase/supabase-js";
@@ -75,7 +75,7 @@ export default function SignUp() {
               onChange={(e) => setPassword(e.target.value)}
               required
               minLength={6}
-              placeholder="•••••••"
+              placeholder="Votre mot de passe"
             />
           </label>
           <label>
@@ -86,7 +86,7 @@ export default function SignUp() {
               onChange={(e) => setConfirm(e.target.value)}
               required
               minLength={6}
-              placeholder="•••••••"
+              placeholder="Confirmez le mot de passe"
             />
           </label>
           <button type="submit" disabled={loading}>
@@ -107,3 +107,5 @@ export default function SignUp() {
     </main>
   );
 }
+
+

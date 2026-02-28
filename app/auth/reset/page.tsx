@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { createClient } from "@supabase/supabase-js";
@@ -64,3 +64,5 @@ export default function ResetPassword() {
     </main>
   );
 }
+
+

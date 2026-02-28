@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
 const products = [
@@ -69,3 +69,5 @@ export async function POST() {
 
   return NextResponse.json({ inserted: true, products: products.length });
 }
+
+

@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
 export async function GET() {
@@ -47,6 +47,36 @@ export async function POST(request: Request) {
   return NextResponse.json(data);
 }
 
+export async function PATCH(request: Request) {
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return NextResponse.json({ error: "SUPABASE_SERVICE_ROLE_KEY manquant" }, { status: 500 });
+  }
+  const body = await request.json();
+  const id = body?.id;
+  if (!id) return NextResponse.json({ error: "id manquant" }, { status: 400 });
+  const supabase = supabaseAdmin();
+  const { data, error } = await supabase
+    .from("products")
+    .update({
+      title: body.title,
+      type: body.type,
+      price: body.price,
+      currency: body.currency || "HTG",
+      plan: body.plan,
+      duration_days: body.duration_days,
+      service_name: body.service_name || body.title,
+      short_description: body.short_description || null,
+      image_url: body.image_url || null,
+      active: body.active ?? true,
+      description: body.description,
+    })
+    .eq("id", id)
+    .select()
+    .single();
+  if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+  return NextResponse.json(data);
+}
+
 export async function DELETE(request: Request) {
   if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
     return NextResponse.json({ error: "SUPABASE_SERVICE_ROLE_KEY manquant" }, { status: 500 });
@@ -59,3 +89,4 @@ export async function DELETE(request: Request) {
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
   return NextResponse.json({ deleted: id });
 }
+

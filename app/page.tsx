@@ -1,11 +1,13 @@
 ﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
+import FooterMain from "@/components/FooterMain";
 
 type Variant = { id: string; label: string; duration_days: number; price: number; currency: string };
 type Product = {
   id: string;
   title: string;
+  service_name?: string | null;
   subtitle?: string | null;
   short_description?: string | null;
   image_url?: string | null;
@@ -18,6 +20,8 @@ type Product = {
 
 type Category = { key: string; label: string; icon: string };
 
+const CART_KEY = "flexipass_cart";
+
 const categories: Category[] = [
   { key: "all", label: "Toutes", icon: "ri-gift-line" },
   { key: "gaming", label: "Gaming", icon: "ri-gamepad-line" },
@@ -27,20 +31,64 @@ const categories: Category[] = [
 ];
 
 const brandLogos = [
-  { name: "Canva", icon: "https://logo-marque.com/wp-content/uploads/2021/11/Canva-Logo.jpg" },
-  { name: "ChatGPT", icon: "https://upload.wikimedia.org/wikipedia/commons/0/04/ChatGPT_logo.svg" },
-  { name: "Copilot", icon: "https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg" },
-  { name: "Prime Video", icon: "https://upload.wikimedia.org/wikipedia/commons/f/f1/Prime_Video.png" },
-  { name: "Netflix", icon: "https://upload.wikimedia.org/wikipedia/commons/0/08/Netflix_2015_logo.svg" },
-  { name: "Coursera", icon: "https://logos-world.net/wp-content/uploads/2021/02/Coursera-Logo.png" },
-  { name: "Claude", icon: "https://seeklogo.com/images/C/claude-ai-logo-A859C5C3E6-seeklogo.com.png" },
-  { name: "Spotify", icon: "https://upload.wikimedia.org/wikipedia/commons/1/19/Spotify_logo_without_text.svg" },
-  { name: "Apple", icon: "https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg" },
-  { name: "Xbox", icon: "https://upload.wikimedia.org/wikipedia/commons/4/43/Xbox_one_logo.svg" },
-  { name: "YouTube", icon: "https://upload.wikimedia.org/wikipedia/commons/b/b8/YouTube_Logo_2017.svg" },
-  { name: "Perplexity", icon: "https://upload.wikimedia.org/wikipedia/commons/4/40/Perplexity_AI_logo_mark.png" },
-  { name: "Slack", icon: "https://upload.wikimedia.org/wikipedia/commons/7/76/Slack_Icon.png" },
+  { name: "Canva", icon: "/assets/images/brands/canva.jpg" },
+  { name: "ChatGPT", icon: "/assets/images/brands/chatgpt.svg" },
+  { name: "Copilot", icon: "/assets/images/brands/microsoft.svg" },
+  { name: "Prime Video", icon: "/assets/images/brands/prime-video.png" },
+  { name: "Netflix", icon: "/assets/images/brands/netflix.svg" },
+  { name: "Coursera", icon: "/assets/images/brands/coursera.svg" },
+  { name: "Claude", icon: "/assets/images/brands/claude.svg" },
+  { name: "Spotify", icon: "/assets/images/brands/spotify.svg" },
+  { name: "Apple", icon: "/assets/images/brands/apple.svg" },
+  { name: "Xbox", icon: "/assets/images/brands/xbox.svg" },
+  { name: "YouTube", icon: "/assets/images/brands/youtube.svg" },
+  { name: "Perplexity", icon: "/assets/images/brands/perplexity.svg" },
+  { name: "Slack", icon: "/assets/images/brands/slack.png" },
 ];
+
+const brandAssetMap: Record<string, string> = {
+  canva: "/assets/images/brands/canva.jpg",
+  chatgpt: "/assets/images/brands/chatgpt.svg",
+  copilot: "/assets/images/brands/microsoft.svg",
+  microsoft: "/assets/images/brands/microsoft.svg",
+  "prime video": "/assets/images/brands/prime-video.png",
+  netflix: "/assets/images/brands/netflix.svg",
+  coursera: "/assets/images/brands/coursera.svg",
+  claude: "/assets/images/brands/claude.svg",
+  spotify: "/assets/images/brands/spotify.svg",
+  apple: "/assets/images/brands/apple.svg",
+  xbox: "/assets/images/brands/xbox.svg",
+  youtube: "/assets/images/brands/youtube.svg",
+  perplexity: "/assets/images/brands/perplexity.svg",
+  slack: "/assets/images/brands/slack.png",
+  playstation: "/assets/images/brands/playstation.svg",
+  steam: "/assets/images/brands/steam.svg",
+  nintendo: "/assets/images/brands/nintendo.svg",
+};
+
+const getBrandAsset = (p: Product) => {
+  const hay = `${p.title ?? ""} ${p.subtitle ?? ""} ${p.short_description ?? ""}`.toLowerCase();
+  const key = Object.keys(brandAssetMap).find((k) => hay.includes(k));
+  return key ? brandAssetMap[key] : "/assets/images/brands/chatgpt.svg";
+};
+
+const getDisplayTitle = (title: string) => title.replace(/\s*haiti\s*/gi, "").trim();
+const normalizeSlug = (value: string) =>
+  value
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "-")
+    .replace(/%20/g, "-");
+const getProductSlug = (p: Product) => (p.id ? p.id : normalizeSlug(p.service_name || p.title));
+
+const getCategoryKey = (p: Product) => {
+  const hay = `${p.title ?? ""} ${p.subtitle ?? ""} ${p.short_description ?? ""}`.toLowerCase();
+  if (/xbox|playstation|psn|steam|nintendo|switch|gaming|game/.test(hay)) return "gaming";
+  if (/netflix|prime|spotify|youtube|stream|musique|video|divert/.test(hay)) return "divertissement";
+  if (/apple|chatgpt|copilot|claude|perplexity|slack|canva|tech|ia|ai|pro/.test(hay)) return "tech";
+  if (/gift|carte|shopping|store|eshop|wallet/.test(hay)) return "shopping";
+  return "all";
+};
 
 // Hook client : récupère la session Supabase et fournit un nom si connecté
 function useSessionUser() {
@@ -97,7 +145,7 @@ export default function Home() {
   const [loginOpen, setLoginOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
-  const [cartItems, setCartItems] = useState<{ id: string; title: string; price: number; qty: number }[]>([]);
+  const [cartItems, setCartItems] = useState<{ id: string; title: string; price: number; qty: number; image?: string }[]>([]);
   const [searchOpen, setSearchOpen] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const [authMessage, setAuthMessage] = useState<string | null>(null);
@@ -158,6 +206,26 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    try {
+      const raw = localStorage.getItem(CART_KEY);
+      const items = raw ? JSON.parse(raw) : [];
+      if (Array.isArray(items)) setCartItems(items);
+    } catch (_) {}
+
+    if (typeof window !== "undefined") {
+      const shouldOpen = window.location.hash === "#cart" || new URLSearchParams(window.location.search).get("cart") === "1";
+      if (shouldOpen) setCartOpen(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(CART_KEY, JSON.stringify(cartItems));
+      window.dispatchEvent(new Event("cart:updated"));
+    } catch (_) {}
+  }, [cartItems]);
+
+  useEffect(() => {
     // Affiche tout de suite un cache local éventuel
     try {
       const cached = localStorage.getItem("products_cache");
@@ -183,13 +251,7 @@ export default function Home() {
 
   const visibleProducts = useMemo(() => {
     const base = Array.isArray(products) ? products : [];
-    const list = base.filter((p) =>
-      active === "all"
-        ? true
-        : p.type === "giftcard"
-        ? active === "gaming" || active === "shopping" || active === "divertissement"
-        : true
-    );
+    const list = base.filter((p) => (active === "all" ? true : getCategoryKey(p) === active));
     if (!query.trim()) return list;
     return list.filter((p) => p.title.toLowerCase().includes(query.toLowerCase()));
   }, [products, active, query]);
@@ -203,10 +265,24 @@ export default function Home() {
   const handleAddToCart = (p: Product, price?: number) => {
     setCartItems((items) => {
       const existing = items.find((i) => i.id === p.id && i.price === (price ?? p.price));
-      if (existing) return items.map((i) => (i.id === p.id && i.price === (price ?? p.price) ? { ...i, qty: i.qty + 1 } : i));
-      return [...items, { id: p.id, title: p.title, price: price ?? p.price, qty: 1 }];
+      if (existing) {
+        return items.map((i) => (i.id === p.id && i.price === (price ?? p.price) ? { ...i, qty: i.qty + 1 } : i));
+      }
+      return [...items, { id: p.id, title: getDisplayTitle(p.title), price: price ?? p.price, qty: 1, image: getBrandAsset(p) }];
     });
     setCartOpen(true);
+  };
+
+  const updateQty = (id: string, price: number, delta: number) => {
+    setCartItems((items) =>
+      items
+        .map((i) => (i.id === id && i.price === price ? { ...i, qty: i.qty + delta } : i))
+        .filter((i) => i.qty > 0)
+    );
+  };
+
+  const removeItem = (id: string, price: number) => {
+    setCartItems((items) => items.filter((i) => !(i.id === id && i.price === price)));
   };
 
   const handleLoginGoogle = async () => {
@@ -333,12 +409,14 @@ export default function Home() {
     <main>
       <header className="nav">
         <div className="nav-inner">
-          <div className="brand">FlexiPass</div>
+          <div className="brand-logo">
+            <img src="/assets/images/brands/flexipass-logo.svg" alt="FlexiPass" />
+          </div>
           <div className="nav-center">
             <nav className="menu">
-              <a href="#giftcards">Cartes Cadeaux</a>
-              <a href="#streaming">Streaming</a>
-              <a href="#premium">Premium</a>
+              <a href="/cartes-cadeaux">Cartes Cadeaux</a>
+              <a href="/streaming">Streaming</a>
+              <a href="/premium">Premium</a>
             </nav>
             <div className="nav-search">
               <input
@@ -347,7 +425,7 @@ export default function Home() {
                 value={query}
                 onChange={(e) => {
                   setQuery(e.target.value);
-                  setSearchOpen(true);
+                  setSearchOpen(Boolean(e.target.value.trim()));
                 }}
                 onFocus={() => setSearchOpen(true)}
               />
@@ -356,8 +434,8 @@ export default function Home() {
                 <div className="nav-results">
                   {searched.length === 0 && <div className="nav-result">Aucun produit</div>}
                   {searched.map((p) => (
-                    <a key={p.id} className="nav-result" href={`/product/${p.id}`} onClick={() => setSearchOpen(false)}>
-                      {p.title}
+                    <a key={p.id} className="nav-result" href={`/product/${encodeURIComponent(getProductSlug(p))}`} onClick={() => setSearchOpen(false)}>
+                      {getDisplayTitle(p.title)}
                     </a>
                   ))}
                 </div>
@@ -405,13 +483,13 @@ export default function Home() {
           </div>
         </div>
         <div className={`mobile-menu ${menuOpen ? "show" : ""}`}>
-          <a href="#giftcards" onClick={() => setMenuOpen(false)}>
+          <a href="/cartes-cadeaux" onClick={() => setMenuOpen(false)}>
             Cartes Cadeaux
           </a>
-          <a href="#streaming" onClick={() => setMenuOpen(false)}>
+          <a href="/streaming" onClick={() => setMenuOpen(false)}>
             Streaming
           </a>
-          <a href="#premium" onClick={() => setMenuOpen(false)}>
+          <a href="/premium" onClick={() => setMenuOpen(false)}>
             Premium
           </a>
         </div>
@@ -420,22 +498,23 @@ export default function Home() {
       <section className="hero">
         <div className="hero-inner">
           <div className="hero-eyebrow">FlexiPass</div>
-          <h1>Cartes Cadeaux Numériques</h1>
+          <h1>Abonnements & Pass Digitaux</h1>
           <p>Offrez le choix avec nos cartes numériques instantanées pour le gaming, le shopping et le streaming.</p>
+          <p className="hero-sub">Simplifiez vos abonnements. Offrez ou profitez d'un accès immédiat à tout votre univers numérique.</p>
           <div className="hero-cta">
-            <button className="btn-primary">Découvrir les cartes</button>
-            <button className="btn-ghost">Voir catalogue</button>
+            <a className="btn-primary" href="/cartes-cadeaux">Découvrir les cartes</a>
+            <a className="btn-ghost" href="/catalogue">Voir catalogue</a>
           </div>
         </div>
         <div className="floating-stack">
           <div className="float-card fc1">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/1/19/Spotify_logo_without_text.svg" alt="Spotify" />
+            <img src="/assets/images/brands/spotify.svg" alt="Spotify" loading="lazy" decoding="async" />
           </div>
           <div className="float-card fc2">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/0/04/ChatGPT_logo.svg" alt="ChatGPT" />
+            <img src="/assets/images/brands/chatgpt.svg" alt="ChatGPT" loading="lazy" decoding="async" />
           </div>
           <div className="float-card fc3">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg" alt="Copilot" />
+            <img src="/assets/images/brands/microsoft.svg" alt="Copilot" loading="lazy" decoding="async" />
           </div>
         </div>
       </section>
@@ -448,6 +527,8 @@ export default function Home() {
                 <img
                   src={b.icon}
                   alt={b.name}
+                  loading="lazy"
+                  decoding="async"
                   onError={(e) => {
                     e.currentTarget.style.display = "none";
                     const fb = e.currentTarget.parentElement?.querySelector(".brand-fallback") as HTMLElement | null;
@@ -467,6 +548,8 @@ export default function Home() {
                 <img
                   src={b.icon}
                   alt={b.name}
+                  loading="lazy"
+                  decoding="async"
                   onError={(e) => {
                     e.currentTarget.style.display = "none";
                     const fb = e.currentTarget.parentElement?.querySelector(".brand-fallback") as HTMLElement | null;
@@ -484,9 +567,9 @@ export default function Home() {
       <section className="section" id="giftcards">
         <div className="section-head">
           <h2>Cartes Populaires</h2>
-          <a className="link" href="#">
+          <button type="button" className="link" onClick={() => (setActive("all"), setQuery(""))}>
             Voir tout →
-          </a>
+          </button>
         </div>
 
         <div className="pills">
@@ -515,7 +598,7 @@ export default function Home() {
             ))}
           </div>
         ) : (
-          <div className="grid">
+          <div className="grid" key={`grid-${active}-${query}`}>
             {visibleProducts.map((p) => {
               const selectedVariant = (p.variants && p.variants[0]) || null;
               const displayPrice = selectedVariant ? `${selectedVariant.price} ${selectedVariant.currency}` : `${p.price} ${p.currency}`;
@@ -523,11 +606,24 @@ export default function Home() {
                 <article key={p.id} className={`card ${p.type === "account" ? "luxe" : ""}`}>
                   <div className="card-top">
                     <div className={`logo-box ${p.type === "account" ? "premium" : ""}`}>
-                      <img src={p.image_url || "https://upload.wikimedia.org/wikipedia/commons/0/04/ChatGPT_logo.svg"} alt={p.title} width={40} height={40} />
+                      <img
+                        src={getBrandAsset(p)}
+                        alt={p.title}
+                        width={48}
+                        height={48}
+                        loading="lazy"
+                        decoding="async"
+                        onError={(e) => {
+                          e.currentTarget.style.display = "none";
+                          const fb = e.currentTarget.parentElement?.querySelector(".logo-fallback") as HTMLElement | null;
+                          if (fb) fb.style.display = "grid";
+                        }}
+                      />
+                      <span className="logo-fallback">{p.title?.[0] ?? "?"}</span>
                     </div>
                   </div>
 
-                  <h3>{p.title}</h3>
+                  <h3 className="brand-name">{getDisplayTitle(p.title)}</h3>
                   <div className="muted">{p.short_description || p.subtitle || p.plan || "Produit numérique"}</div>
 
                   {p.variants && p.variants.length > 0 && (
@@ -555,7 +651,7 @@ export default function Home() {
                     <i className="ri-shopping-cart-2-line" />
                     Ajouter au panier
                   </button>
-                  <a className="btn-full ghost-btn" href={`/product/${p.id}`}>
+                  <a className="btn-full ghost-btn" href={`/product/${encodeURIComponent(getProductSlug(p))}`}>
                     <i className="ri-information-line" />
                     Détails
                   </a>
@@ -569,102 +665,57 @@ export default function Home() {
       <section className="section" id="premium">
         <div className="section-head">
           <h2>Premium</h2>
-          <a className="link" href="#">
+          <button type="button" className="link" onClick={() => (setActive("all"), setQuery(""))}>
             Voir tout →
-          </a>
+          </button>
         </div>
         <div className="premium-grid">
           {visibleProducts
             .filter((p) => p.type === "account")
-            .map((p) => (
+            .map((p) => {
+              const planTag = (p.plan || "").trim();
+              const showPlanTag = planTag.length > 0 && !/prem/i.test(planTag);
+              return (
               <article key={p.id} className="premium-card">
                 <div className="premium-top">
-                  <div className="premium-badge">Premium</div>
-                  <span className="premium-tag">{p.plan || "Plan"}</span>
+                  <div className="premium-left">
+                    <div className="logo-box premium">
+                      <img
+                        src={getBrandAsset(p)}
+                        alt={p.title}
+                        width={48}
+                        height={48}
+                        loading="lazy"
+                        decoding="async"
+                        onError={(e) => {
+                          e.currentTarget.style.display = "none";
+                          const fb = e.currentTarget.parentElement?.querySelector(".logo-fallback") as HTMLElement | null;
+                          if (fb) fb.style.display = "grid";
+                        }}
+                      />
+                      <span className="logo-fallback">{p.title?.[0] ?? "?"}</span>
+                    </div>
+                    <div className="premium-badge">Premium</div>
+                  </div>
+                  {showPlanTag && <span className="premium-tag">{planTag}</span>}
                 </div>
-                <h3>{p.title}</h3>
+                <h3 className="brand-name">{getDisplayTitle(p.title)}</h3>
                 <p className="premium-sub">{p.short_description || p.subtitle}</p>
                 <div className="premium-actions">
                   <button className="btn-full modal-primary" onClick={() => handleAddToCart(p, p.price)}>
                     S'abonner
                   </button>
-                  <a className="btn-full ghost-btn" href={`/product/${p.id}`}>
+                  <a className="btn-full ghost-btn" href={`/product/${encodeURIComponent(getProductSlug(p))}`}>
                     <i className="ri-information-line" />
                     Détails
                   </a>
                 </div>
               </article>
-            ))}
+            )})}
         </div>
       </section>
 
-      <footer className="footer">
-        <div className="footer-inner">
-          <div className="footer-brand">
-            <div className="brand-mark">FlexiPass</div>
-            <p className="footer-tagline">
-              Cartes cadeaux et abonnements numériques pour vos apps et services préférés. Livraison instantanée.
-            </p>
-            <div className="socials">
-              <a aria-label="Twitter" href="#">
-                <i className="ri-twitter-x-line" />
-              </a>
-              <a aria-label="Facebook" href="#">
-                <i className="ri-facebook-circle-line" />
-              </a>
-              <a aria-label="Instagram" href="#">
-                <i className="ri-instagram-line" />
-              </a>
-              <a aria-label="LinkedIn" href="#">
-                <i className="ri-linkedin-box-line" />
-              </a>
-            </div>
-          </div>
-
-          <div className="footer-grid">
-            <div>
-              <h4>Catalogue</h4>
-              <ul>
-                <li><a href="#giftcards">Cartes cadeaux</a></li>
-                <li><a href="#streaming">Streaming</a></li>
-                <li><a href="#premium">Premium</a></li>
-                <li><a href="/product/all">Tous les produits</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4>Support</h4>
-              <ul>
-                <li><a href="mailto:support@flexipass.com">support@flexipass.com</a></li>
-                <li><a href="#">Centre d'aide</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4>Légal</h4>
-              <ul>
-                <li><a href="#">Conditions</a></li>
-                <li><a href="#">Confidentialité</a></li>
-                <li><a href="#">Cookies</a></li>
-              </ul>
-            </div>
-            <div className="newsletter">
-              <h4>Newsletter</h4>
-              <p>Promos exclusives et nouveautés. Pas de spam.</p>
-              <div className="newsletter-form">
-                <input type="email" placeholder="Votre email" />
-                <button type="button">S'inscrire</button>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="footer-bottom">
-          <span>© {new Date().getFullYear()} FlexiPass. Tous droits réservés.</span>
-          <div className="payments">
-            <span className="pay-pill">Visa</span>
-            <span className="pay-pill">Mastercard</span>
-            <span className="pay-pill">PayPal</span>
-          </div>
-        </div>
-      </footer>
+      <FooterMain />
 
       {loginOpen && (
         <div className="modal-overlay" onClick={() => setLoginOpen(false)}>
@@ -789,9 +840,16 @@ export default function Home() {
           <div className="cart-panel" onClick={(e) => e.stopPropagation()}>
             <div className="cart-head">
               <h4>Mon panier</h4>
-              <button className="icon-btn ghost" aria-label="Fermer" onClick={() => setCartOpen(false)}>
-                <i className="ri-close-line" />
-              </button>
+              <div className="cart-head-actions">
+                {cartItems.length > 0 && (
+                  <button className="link-btn" type="button" onClick={() => setCartItems([])}>
+                    Vider
+                  </button>
+                )}
+                <button className="icon-btn ghost" aria-label="Fermer" onClick={() => setCartOpen(false)}>
+                  <i className="ri-close-line" />
+                </button>
+              </div>
             </div>
             {cartItems.length === 0 ? (
               <div className="cart-empty">Votre panier est vide.</div>
@@ -800,11 +858,24 @@ export default function Home() {
                 <div className="cart-list">
                   {cartItems.map((item) => (
                     <div key={`${item.id}-${item.price}`} className="cart-item">
+                      <div className="cart-thumb">
+                        <img src={item.image || "/assets/images/brands/chatgpt.svg"} alt={item.title} />
+                      </div>
                       <div className="cart-info">
                         <div className="cart-title">{item.title}</div>
-                        <div className="cart-qty">Qté: {item.qty}</div>
+                        <div className="cart-qty-row">
+                          <span>Qté</span>
+                          <div className="qty-controls">
+                            <button type="button" onClick={() => updateQty(item.id, item.price, -1)}>-</button>
+                            <span>{item.qty}</span>
+                            <button type="button" onClick={() => updateQty(item.id, item.price, 1)}>+</button>
+                          </div>
+                        </div>
                       </div>
                       <div className="cart-price">{item.price * item.qty} HTG</div>
+                      <button className="icon-btn ghost" aria-label="Supprimer" onClick={() => removeItem(item.id, item.price)}>
+                        <i className="ri-delete-bin-6-line" />
+                      </button>
                     </div>
                   ))}
                 </div>
@@ -825,6 +896,7 @@ export default function Home() {
     </main>
   );
 }
+
 
 
 

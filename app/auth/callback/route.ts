@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
 // OAuth callback (Google, etc.)
@@ -48,3 +48,4 @@ export async function GET(request: Request) {
 
   return response;
 }
+

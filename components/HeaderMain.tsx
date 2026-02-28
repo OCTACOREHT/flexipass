@@ -1,7 +1,18 @@
 ﻿"use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+
+type Product = { id: string; title: string; service_name?: string | null };
+const getDisplayTitle = (title: string) => title.replace(/\s*haiti\s*/gi, "").trim();
+const normalizeSlug = (value: string) =>
+  value
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "-")
+    .replace(/%20/g, "-");
+const getProductSlug = (p: Product) => (p.id ? p.id : normalizeSlug(p.service_name || p.title));
+const CART_KEY = "flexipass_cart";
 
 // Repris du header de la page principale
 function useSessionUser() {
@@ -53,7 +64,8 @@ export default function HeaderMain() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const cartCount = 0;
+  const [products, setProducts] = useState<Product[]>([]);
+  const [cartCount, setCartCount] = useState(0);
   const [loginOpen, setLoginOpen] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const [authMessage, setAuthMessage] = useState<string | null>(null);
@@ -81,6 +93,43 @@ export default function HeaderMain() {
   useEffect(() => {
     if (user) setLoginOpen(false);
   }, [user]);
+
+  useEffect(() => {
+    fetch("/api/products")
+      .then((r) => r.json())
+      .then((data) => setProducts(Array.isArray(data) ? data : []))
+      .catch(() => setProducts([]));
+  }, []);
+
+  useEffect(() => {
+    const readCount = () => {
+      try {
+        const raw = localStorage.getItem(CART_KEY);
+        const items = raw ? JSON.parse(raw) : [];
+        if (!Array.isArray(items)) return setCartCount(0);
+        const total = items.reduce((s, i) => s + (Number(i.qty) || 0), 0);
+        setCartCount(total);
+      } catch {
+        setCartCount(0);
+      }
+    };
+    readCount();
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === CART_KEY) readCount();
+    };
+    const onCustom = () => readCount();
+    window.addEventListener("storage", onStorage);
+    window.addEventListener("cart:updated", onCustom as EventListener);
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener("cart:updated", onCustom as EventListener);
+    };
+  }, []);
+
+  const searched = useMemo(() => {
+    if (!query.trim()) return [];
+    return products.filter((p) => p.title.toLowerCase().includes(query.toLowerCase())).slice(0, 6);
+  }, [products, query]);
 
   const switchAuthMode = (mode: "login" | "signup" | "reset") => {
     setAuthMode(mode);
@@ -166,7 +215,7 @@ export default function HeaderMain() {
       setAuthError(error.message);
       return;
     }
-    setAuthMessage("VÃ©rifiez votre email pour confirmer votre compte.");
+    setAuthMessage("Vérifiez votre email pour confirmer votre compte.");
   };
 
   const handleReset = async () => {
@@ -187,14 +236,14 @@ export default function HeaderMain() {
       setAuthError(error.message);
       return;
     }
-    setAuthMessage("Si un compte existe, un email de rÃ©initialisation a Ã©tÃ© envoyÃ©.");
+    setAuthMessage("Si un compte existe, un email de réinitialisation a été envoyé.");
   };
 
   const handleSignOut = async () => {
     const mod = await import("@/lib/supabase-browser").catch(() => null);
     const supabaseBrowser = mod?.supabaseBrowser;
     if (!supabaseBrowser) {
-      setAuthError("Impossible de se dÃ©connecter : client Supabase indisponible.");
+      setAuthError("Impossible de se déconnecter : client Supabase indisponible.");
       return;
     }
     await supabaseBrowser.auth.signOut();
@@ -207,14 +256,14 @@ export default function HeaderMain() {
     <>
       <header className="nav">
         <div className="nav-inner">
-          <Link href="/" className="brand">
-            FlexiPass
+          <Link href="/" className="brand-logo">
+            <img src="/assets/images/brands/flexipass-logo.svg" alt="FlexiPass" />
           </Link>
           <div className="nav-center">
             <nav className="menu">
-              <Link href="/#giftcards">Cartes Cadeaux</Link>
-              <Link href="/#streaming">Streaming</Link>
-              <Link href="/#premium">Premium</Link>
+              <Link href="/cartes-cadeaux">Cartes Cadeaux</Link>
+              <Link href="/streaming">Streaming</Link>
+              <Link href="/premium">Premium</Link>
             </nav>
             <div className="nav-search">
               <input
@@ -223,14 +272,24 @@ export default function HeaderMain() {
                 value={query}
                 onChange={(e) => {
                   setQuery(e.target.value);
-                  setSearchOpen(true);
+                  setSearchOpen(Boolean(e.target.value.trim()));
                 }}
                 onFocus={() => setSearchOpen(true)}
               />
               <i className="ri-search-line" />
               {searchOpen && query && (
                 <div className="nav-results">
-                  <div className="nav-result">Recherche non connectée</div>
+                  {searched.length === 0 && <div className="nav-result">Aucun produit</div>}
+                  {searched.map((p) => (
+                    <Link
+                      key={p.id}
+                      className="nav-result"
+                      href={`/product/${encodeURIComponent(getProductSlug(p))}`}
+                      onClick={() => setSearchOpen(false)}
+                    >
+                      {getDisplayTitle(p.title)}
+                    </Link>
+                  ))}
                 </div>
               )}
             </div>
@@ -276,13 +335,13 @@ export default function HeaderMain() {
           </div>
         </div>
         <div className={`mobile-menu ${menuOpen ? "show" : ""}`}>
-          <Link href="/#giftcards" onClick={() => setMenuOpen(false)}>
+          <Link href="/cartes-cadeaux" onClick={() => setMenuOpen(false)}>
             Cartes Cadeaux
           </Link>
-          <Link href="/#streaming" onClick={() => setMenuOpen(false)}>
+          <Link href="/streaming" onClick={() => setMenuOpen(false)}>
             Streaming
           </Link>
-          <Link href="/#premium" onClick={() => setMenuOpen(false)}>
+          <Link href="/premium" onClick={() => setMenuOpen(false)}>
             Premium
           </Link>
         </div>
@@ -293,8 +352,8 @@ export default function HeaderMain() {
             <div className="modal-head">
               <h3>
                 {authMode === "login" && "Connexion"}
-                {authMode === "signup" && "CrÃ©er un compte"}
-                {authMode === "reset" && "Mot de passe oubliÃ©"}
+                {authMode === "signup" && "Créer un compte"}
+                {authMode === "reset" && "Mot de passe oublié"}
               </h3>
               <button className="icon-btn ghost" aria-label="Fermer" onClick={() => setLoginOpen(false)}>
                 <i className="ri-close-line" />
@@ -326,10 +385,10 @@ export default function HeaderMain() {
                   </button>
                   <div className="modal-links">
                     <button type="button" className="link-btn" onClick={() => switchAuthMode("signup")}>
-                      Pas encore inscrit ? CrÃ©er un compte
+                      Pas encore inscrit ? Créer un compte
                     </button>
                     <button type="button" className="link-btn" onClick={() => switchAuthMode("reset")}>
-                      Mot de passe oubliÃ©
+                      Mot de passe oublié
                     </button>
                   </div>
                 </>
@@ -357,14 +416,14 @@ export default function HeaderMain() {
                     onChange={(e) => setConfirm(e.target.value)}
                   />
                   <button className="btn-full modal-primary" type="button" onClick={handleSignup} disabled={authLoading}>
-                    {authLoading ? "CrÃ©ation..." : "CrÃ©er un compte"}
+                    {authLoading ? "Création..." : "Créer un compte"}
                   </button>
                   <div className="modal-links">
                     <button type="button" className="link-btn" onClick={() => switchAuthMode("login")}>
-                      DÃ©jÃ  inscrit ? Se connecter
+                      Déjà inscrit ? Se connecter
                     </button>
                     <button type="button" className="link-btn" onClick={() => switchAuthMode("reset")}>
-                      Mot de passe oubliÃ©
+                      Mot de passe oublié
                     </button>
                   </div>
                 </>
@@ -378,10 +437,10 @@ export default function HeaderMain() {
                   </button>
                   <div className="modal-links">
                     <button type="button" className="link-btn" onClick={() => switchAuthMode("login")}>
-                      Revenir Ã  la connexion
+                      Revenir à la connexion
                     </button>
                     <button type="button" className="link-btn" onClick={() => switchAuthMode("signup")}>
-                      CrÃ©er un compte
+                      Créer un compte
                     </button>
                   </div>
                 </>
@@ -393,4 +452,6 @@ export default function HeaderMain() {
     </>
   );
 }
+
+
 
