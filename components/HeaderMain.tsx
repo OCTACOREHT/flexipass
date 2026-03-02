@@ -3,7 +3,33 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
-type Product = { id: string; title: string; service_name?: string | null };
+type Product = {
+  id: string;
+  title: string;
+  service_name?: string | null;
+  subtitle?: string | null;
+  short_description?: string | null;
+  image_url?: string | null;
+};
+const brandAssetMap: Record<string, string> = {
+  canva: "/assets/images/brands/canva.jpg",
+  chatgpt: "/assets/images/brands/chatgpt.svg",
+  copilot: "/assets/images/brands/microsoft.svg",
+  microsoft: "/assets/images/brands/microsoft.svg",
+  "prime video": "/assets/images/brands/prime-video.png",
+  netflix: "/assets/images/brands/netflix.svg",
+  coursera: "/assets/images/brands/coursera.svg",
+  claude: "/assets/images/brands/claude.svg",
+  spotify: "/assets/images/brands/spotify.svg",
+  apple: "/assets/images/brands/apple.svg",
+  xbox: "/assets/images/brands/xbox.svg",
+  youtube: "/assets/images/brands/youtube.svg",
+  perplexity: "/assets/images/brands/perplexity.svg",
+  slack: "/assets/images/brands/slack.png",
+  playstation: "/assets/images/brands/playstation.svg",
+  steam: "/assets/images/brands/steam.svg",
+  nintendo: "/assets/images/brands/nintendo.svg",
+};
 const getDisplayTitle = (title: string) => title.replace(/\s*haiti\s*/gi, "").trim();
 const normalizeSlug = (value: string) =>
   value
@@ -12,6 +38,20 @@ const normalizeSlug = (value: string) =>
     .replace(/\s+/g, "-")
     .replace(/%20/g, "-");
 const getProductSlug = (p: Product) => (p.id ? p.id : normalizeSlug(p.service_name || p.title));
+const getBrandAsset = (p: Product) => {
+  if (p.image_url && p.image_url.trim()) return p.image_url.trim();
+  const hay = `${p.title ?? ""} ${p.subtitle ?? ""} ${p.short_description ?? ""}`.toLowerCase();
+  const key = Object.keys(brandAssetMap).find((k) => hay.includes(k));
+  return key ? brandAssetMap[key] : "/assets/images/brands/chatgpt.svg";
+};
+const toImageSrc = (raw?: string | null) => {
+  const value = raw?.trim();
+  if (!value) return "/assets/images/brands/chatgpt.svg";
+  if (value.startsWith("/")) return value;
+  if (/^https?:\/\//i.test(value)) return `/api/image?url=${encodeURIComponent(value)}`;
+  if (/^(data:|blob:)/i.test(value)) return value;
+  return `/${value.replace(/^\/+/, "")}`;
+};
 const CART_KEY = "flexipass_cart";
 
 // Repris du header de la page principale
@@ -283,11 +323,24 @@ export default function HeaderMain() {
                   {searched.map((p) => (
                     <Link
                       key={p.id}
-                      className="nav-result"
+                      className="nav-result nav-result--thumb"
                       href={`/product/${encodeURIComponent(getProductSlug(p))}`}
                       onClick={() => setSearchOpen(false)}
                     >
-                      {getDisplayTitle(p.title)}
+                      <img
+                        className="nav-result-thumb"
+                        src={toImageSrc(getBrandAsset(p))}
+                        alt=""
+                        aria-hidden="true"
+                        width={20}
+                        height={20}
+                        loading="lazy"
+                        decoding="async"
+                        onError={(e) => {
+                          (e.currentTarget as HTMLImageElement).src = "/assets/images/brands/chatgpt.svg";
+                        }}
+                      />
+                      <span className="nav-result-label">{getDisplayTitle(p.title)}</span>
                     </Link>
                   ))}
                 </div>

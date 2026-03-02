@@ -71,6 +71,18 @@ const getBrandAsset = (p: Product) => {
   const key = Object.keys(brandAssetMap).find((k) => hay.includes(k));
   return key ? brandAssetMap[key] : "/assets/images/brands/chatgpt.svg";
 };
+const getSearchBrandAsset = (p: Product) => {
+  if (p.image_url && p.image_url.trim()) return p.image_url.trim();
+  return getBrandAsset(p);
+};
+const toImageSrc = (raw?: string | null) => {
+  const value = raw?.trim();
+  if (!value) return "/assets/images/brands/chatgpt.svg";
+  if (value.startsWith("/")) return value;
+  if (/^https?:\/\//i.test(value)) return `/api/image?url=${encodeURIComponent(value)}`;
+  if (/^(data:|blob:)/i.test(value)) return value;
+  return `/${value.replace(/^\/+/, "")}`;
+};
 
 const getDisplayTitle = (title: string) => title.replace(/\s*haiti\s*/gi, "").trim();
 const normalizeSlug = (value: string) =>
@@ -434,8 +446,21 @@ export default function Home() {
                 <div className="nav-results">
                   {searched.length === 0 && <div className="nav-result">Aucun produit</div>}
                   {searched.map((p) => (
-                    <a key={p.id} className="nav-result" href={`/product/${encodeURIComponent(getProductSlug(p))}`} onClick={() => setSearchOpen(false)}>
-                      {getDisplayTitle(p.title)}
+                    <a key={p.id} className="nav-result nav-result--thumb" href={`/product/${encodeURIComponent(getProductSlug(p))}`} onClick={() => setSearchOpen(false)}>
+                      <img
+                        className="nav-result-thumb"
+                        src={toImageSrc(getSearchBrandAsset(p))}
+                        alt=""
+                        aria-hidden="true"
+                        width={20}
+                        height={20}
+                        loading="lazy"
+                        decoding="async"
+                        onError={(e) => {
+                          (e.currentTarget as HTMLImageElement).src = "/assets/images/brands/chatgpt.svg";
+                        }}
+                      />
+                      <span className="nav-result-label">{getDisplayTitle(p.title)}</span>
                     </a>
                   ))}
                 </div>

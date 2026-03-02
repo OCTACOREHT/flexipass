@@ -56,8 +56,14 @@ const getBrandAsset = (p: Product) => {
   return key ? brandAssetMap[key] : "/assets/images/brands/chatgpt.svg";
 };
 
-const toImageSrc = (raw?: string | null) =>
-  raw ? `/api/image?url=${encodeURIComponent(raw)}` : "/assets/images/brands/chatgpt.svg";
+const toImageSrc = (raw?: string | null) => {
+  const value = raw?.trim();
+  if (!value) return "/assets/images/brands/chatgpt.svg";
+  if (value.startsWith("/")) return value;
+  if (/^https?:\/\//i.test(value)) return `/api/image?url=${encodeURIComponent(value)}`;
+  if (/^(data:|blob:)/i.test(value)) return value;
+  return `/${value.replace(/^\/+/, "")}`;
+};
 
 const getDisplayTitle = (title: string) => title.replace(/\s*haiti\s*/gi, "").trim();
 const normalizeSlug = (value: string) =>

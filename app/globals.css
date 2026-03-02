@@ -228,11 +228,37 @@ a:hover {
 }
 
 .nav-result {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 10px;
   padding: 10px 12px;
   font-weight: 700;
   color: #2f2a33;
   border-bottom: 1px solid #f7efe2;
+}
+
+.nav-result-thumb {
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  flex: 0 0 20px;
+  border-radius: 6px;
+  border: 1px solid #f2e8dd;
+  background: #fff7ef;
+  object-fit: contain;
+  padding: 2px;
+}
+
+.nav-result-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nav-result--thumb {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
 }
 
 .nav-result:last-child {
@@ -910,21 +936,54 @@ a:hover {
 @media (max-width: 720px) {
   .nav-inner {
     flex-wrap: wrap;
-    gap: 12px;
+    gap: 10px 12px;
     justify-content: space-between;
+    align-items: center;
   }
 
   .menu {
     display: none;
   }
 
+  .brand-logo {
+    order: 1;
+  }
+
+  .brand-logo img {
+    height: 34px;
+  }
+
+  .actions {
+    order: 2;
+    margin-left: auto;
+    width: auto;
+    justify-content: flex-end;
+    gap: 8px;
+    flex-wrap: nowrap;
+  }
+
   .nav-center {
+    order: 3;
     width: 100%;
     justify-content: flex-start;
+    margin-top: 4px;
   }
 
   .nav-search {
     min-width: 100%;
+    max-width: none;
+  }
+
+  .nav-search input {
+    height: 48px;
+    border-radius: 999px;
+    padding: 0 44px 0 16px;
+    font-size: 16px;
+  }
+
+  .nav-search i {
+    right: 14px;
+    font-size: 20px;
   }
 
   .hero-inner {
@@ -955,17 +1014,10 @@ a:hover {
     display: none;
   }
 
-  .actions {
-    width: auto;
-    justify-content: flex-end;
-    gap: 6px;
-    flex-wrap: nowrap;
-  }
-
   .user-chip {
-    max-width: 130px;
-    font-size: 13px;
-    padding: 8px 10px;
+    max-width: 180px;
+    font-size: 14px;
+    padding: 10px 12px;
   }
 
   .user-wrap {
@@ -992,6 +1044,20 @@ a:hover {
 @media (max-width: 520px) {
   .nav-inner {
     padding: 12px 14px;
+  }
+
+  .brand-logo img {
+    height: 30px;
+  }
+
+  .actions {
+    gap: 6px;
+  }
+
+  .user-chip {
+    max-width: 150px;
+    font-size: 13px;
+    padding: 9px 10px;
   }
 
   .hero h1 {

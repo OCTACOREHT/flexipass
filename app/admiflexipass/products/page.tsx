@@ -28,8 +28,14 @@ const normalizeImageUrl = (value: string) => {
   return `https://${trimmed}`;
 };
 
-const toProxyImage = (raw?: string | null) =>
-  raw && raw.trim() ? `/api/image?url=${encodeURIComponent(raw)}` : "/assets/images/brands/chatgpt.svg";
+const toProxyImage = (raw?: string | null) => {
+  const value = raw?.trim();
+  if (!value) return "/assets/images/brands/chatgpt.svg";
+  if (value.startsWith("/")) return value;
+  if (/^https?:\/\//i.test(value)) return `/api/image?url=${encodeURIComponent(value)}`;
+  if (/^(data:|blob:)/i.test(value)) return value;
+  return `/${value.replace(/^\/+/, "")}`;
+};
 
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
