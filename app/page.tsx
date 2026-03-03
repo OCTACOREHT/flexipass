@@ -416,6 +416,13 @@ export default function Home() {
   };
 
   const cartCount = cartItems.reduce((s, i) => s + i.qty, 0);
+  const formatHtg = (value: number) =>
+    `${new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 2 }).format(value)} HTG`;
+  const handleCheckout = () => {
+    if (cartItems.length === 0) return;
+    setCartOpen(false);
+    window.location.href = "/paiement";
+  };
 
   return (
     <main>
@@ -886,30 +893,34 @@ export default function Home() {
                       <div className="cart-thumb">
                         <img src={item.image || "/assets/images/brands/chatgpt.svg"} alt={item.title} />
                       </div>
-                      <div className="cart-info">
-                        <div className="cart-title">{item.title}</div>
-                        <div className="cart-qty-row">
-                          <span>Qté</span>
-                          <div className="qty-controls">
-                            <button type="button" onClick={() => updateQty(item.id, item.price, -1)}>-</button>
-                            <span>{item.qty}</span>
-                            <button type="button" onClick={() => updateQty(item.id, item.price, 1)}>+</button>
+                      <div className="cart-content">
+                        <div className="cart-item-top">
+                          <div className="cart-title">{item.title}</div>
+                          <button type="button" className="icon-btn ghost cart-remove" aria-label="Supprimer" onClick={() => removeItem(item.id, item.price)}>
+                            <i className="ri-delete-bin-6-line" />
+                          </button>
+                        </div>
+                        <div className="cart-item-bottom">
+                          <div className="cart-qty-row">
+                            <span className="cart-qty-label">Qté</span>
+                            <div className="qty-controls">
+                              <button type="button" onClick={() => updateQty(item.id, item.price, -1)}>-</button>
+                              <span>{item.qty}</span>
+                              <button type="button" onClick={() => updateQty(item.id, item.price, 1)}>+</button>
+                            </div>
                           </div>
+                          <div className="cart-price">{formatHtg(item.price * item.qty)}</div>
                         </div>
                       </div>
-                      <div className="cart-price">{item.price * item.qty} HTG</div>
-                      <button className="icon-btn ghost" aria-label="Supprimer" onClick={() => removeItem(item.id, item.price)}>
-                        <i className="ri-delete-bin-6-line" />
-                      </button>
                     </div>
                   ))}
                 </div>
                 <div className="cart-footer">
                   <div className="cart-total">
                     <span>Total</span>
-                    <strong>{cartItems.reduce((s, i) => s + i.price * i.qty, 0)} HTG</strong>
+                    <strong>{formatHtg(cartItems.reduce((s, i) => s + i.price * i.qty, 0))}</strong>
                   </div>
-                  <button className="btn-full modal-primary" onClick={() => alert("Commande simulée")}>
+                  <button className="btn-full modal-primary" onClick={handleCheckout}>
                     Commander
                   </button>
                 </div>
