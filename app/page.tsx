@@ -514,6 +514,44 @@ export default function Home() {
             </button>
           </div>
         </div>
+        <div className="mobile-search-wrap">
+          <div className="nav-search">
+            <input
+              type="search"
+              placeholder="Rechercher un produit..."
+              value={query}
+              onChange={(e) => {
+                setQuery(e.target.value);
+                setSearchOpen(Boolean(e.target.value.trim()));
+              }}
+              onFocus={() => setSearchOpen(true)}
+            />
+            <i className="ri-search-line" />
+            {searchOpen && query && (
+              <div className="nav-results">
+                {searched.length === 0 && <div className="nav-result">Aucun produit</div>}
+                {searched.map((p) => (
+                  <a key={p.id} className="nav-result nav-result--thumb" href={`/product/${encodeURIComponent(getProductSlug(p))}`} onClick={() => setSearchOpen(false)}>
+                    <img
+                      className="nav-result-thumb"
+                      src={toImageSrc(getSearchBrandAsset(p))}
+                      alt=""
+                      aria-hidden="true"
+                      width={20}
+                      height={20}
+                      loading="lazy"
+                      decoding="async"
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).src = "/assets/images/brands/chatgpt.svg";
+                      }}
+                    />
+                    <span className="nav-result-label">{getDisplayTitle(p.title)}</span>
+                  </a>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
         <div className={`mobile-menu ${menuOpen ? "show" : ""}`}>
           <a href="/cartes-cadeaux" onClick={() => setMenuOpen(false)}>
             Cartes Cadeaux

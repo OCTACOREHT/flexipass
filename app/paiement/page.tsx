@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
 import FooterMain from "@/components/FooterMain";
 import HeaderMain from "@/components/HeaderMain";
 
@@ -17,6 +17,10 @@ type BankKey = "sogebank" | "unibank";
 type PaymentMethod = "moncash" | "transfer";
 
 const CART_KEY = "flexipass_cart";
+const EMPTY_CART: CartItem[] = [];
+
+let cachedRawCart = "__INIT__";
+let cachedParsedCart: CartItem[] = EMPTY_CART;
 
 const bankAccounts: Record<
   BankKey,
@@ -49,17 +53,39 @@ const toCheckoutImageSrc = (raw?: string | null) => {
   return `/${value.replace(/^\/+/, "")}`;
 };
 
+const getServerCartSnapshot = (): CartItem[] => EMPTY_CART;
+
+const getCartSnapshot = (): CartItem[] => {
+  if (typeof window === "undefined") return EMPTY_CART;
+  const raw = localStorage.getItem(CART_KEY) ?? "";
+  if (raw === cachedRawCart) return cachedParsedCart;
+  cachedRawCart = raw;
+  try {
+    const parsed = raw ? JSON.parse(raw) : [];
+    cachedParsedCart = Array.isArray(parsed) ? parsed : EMPTY_CART;
+    return cachedParsedCart;
+  } catch {
+    cachedParsedCart = EMPTY_CART;
+    return cachedParsedCart;
+  }
+};
+
+const subscribeCart = (onStoreChange: () => void) => {
+  if (typeof window === "undefined") return () => {};
+  const onStorage = (e: StorageEvent) => {
+    if (e.key === CART_KEY) onStoreChange();
+  };
+  const onCustom = () => onStoreChange();
+  window.addEventListener("storage", onStorage);
+  window.addEventListener("cart:updated", onCustom as EventListener);
+  return () => {
+    window.removeEventListener("storage", onStorage);
+    window.removeEventListener("cart:updated", onCustom as EventListener);
+  };
+};
+
 export default function PaiementPage() {
-  const [items] = useState<CartItem[]>(() => {
-    if (typeof window === "undefined") return [];
-    try {
-      const raw = localStorage.getItem(CART_KEY);
-      const parsed = raw ? JSON.parse(raw) : [];
-      return Array.isArray(parsed) ? parsed : [];
-    } catch {
-      return [];
-    }
-  });
+  const items = useSyncExternalStore(subscribeCart, getCartSnapshot, getServerCartSnapshot);
   const [method, setMethod] = useState<PaymentMethod>("moncash");
   const [bank, setBank] = useState<BankKey>("sogebank");
   const [proofName, setProofName] = useState("");
