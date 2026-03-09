@@ -418,6 +418,10 @@ export default function Home() {
   const cartCount = cartItems.reduce((s, i) => s + i.qty, 0);
   const formatHtg = (value: number) =>
     `${new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 2 }).format(value)} HTG`;
+  const formatPrice = (value: number, currency: string) => {
+    if (currency.toUpperCase() === "HTG") return formatHtg(value);
+    return `${new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 2 }).format(value)} ${currency}`;
+  };
   const handleCheckout = () => {
     if (cartItems.length === 0) return;
     setCartOpen(false);
@@ -570,7 +574,7 @@ export default function Home() {
           <div className="hero-eyebrow">FlexiPass</div>
           <h1>Abonnements & Pass Digitaux</h1>
           <p>Offrez le choix avec nos cartes numériques instantanées pour le gaming, le shopping et le streaming.</p>
-          <p className="hero-sub">Simplifiez vos abonnements. Offrez ou profitez d'un accès immédiat à tout votre univers numérique.</p>
+          <p className="hero-sub">Simplifiez vos abonnements. Offrez ou profitez d&apos;un accès immédiat à tout votre univers numérique.</p>
           <div className="hero-cta">
             <a className="btn-primary" href="/cartes-cadeaux">Découvrir les cartes</a>
             <a className="btn-ghost" href="/catalogue">Voir catalogue</a>
@@ -744,6 +748,10 @@ export default function Home() {
             .filter((p) => p.type === "account")
             .map((p) => {
               const planTag = (p.plan || "").trim();
+              const selectedVariant = (p.variants && p.variants[0]) || null;
+              const premiumPrice = selectedVariant ? selectedVariant.price : p.price;
+              const premiumCurrency = selectedVariant ? selectedVariant.currency : p.currency;
+              const premiumSub = (p.short_description || p.subtitle || "premium").trim();
               const showPlanTag = planTag.length > 0 && !/prem/i.test(planTag);
               return (
               <article key={p.id} className="premium-card">
@@ -769,11 +777,15 @@ export default function Home() {
                   </div>
                   {showPlanTag && <span className="premium-tag">{planTag}</span>}
                 </div>
-                <h3 className="brand-name">{getDisplayTitle(p.title)}</h3>
-                <p className="premium-sub">{p.short_description || p.subtitle}</p>
+                <div className="premium-content">
+                  <h3 className="brand-name">{getDisplayTitle(p.title)}</h3>
+                  <p className="premium-sub">{premiumSub}</p>
+                  <div className="premium-price">{formatPrice(premiumPrice, premiumCurrency)}</div>
+                </div>
                 <div className="premium-actions">
-                  <button className="btn-full modal-primary" onClick={() => handleAddToCart(p, p.price)}>
-                    S'abonner
+                  <button className="btn-full modal-primary" onClick={() => handleAddToCart(p, premiumPrice)}>
+                    <i className="ri-shopping-cart-2-line" />
+                    Ajouter au panier
                   </button>
                   <a className="btn-full ghost-btn" href={`/product/${encodeURIComponent(getProductSlug(p))}`}>
                     <i className="ri-information-line" />
