@@ -194,11 +194,8 @@ export default function CataloguePage() {
                       loading="lazy"
                       onError={(e) => {
                         e.currentTarget.style.display = "none";
-                        const fb = e.currentTarget.parentElement?.querySelector(".logo-fallback") as HTMLElement | null;
-                        if (fb) fb.style.display = "grid";
                       }}
                     />
-                    <span className="logo-fallback" style={{ fontSize: '14px' }}>{p.title?.[0] ?? "?"}</span>
                   </div>
 
                   <div className="compact-info">

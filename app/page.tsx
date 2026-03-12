@@ -684,18 +684,15 @@ export default function Home() {
                 <article key={p.id} className={`compact-card ${p.type === "account" ? "luxe" : ""}`}>
                   <div className="compact-logo">
                     <img
-                      src={getBrandAsset(p)}
+                      src={toImageSrc(getBrandAsset(p))}
                       alt={p.title}
                       width={32}
                       height={32}
                       loading="lazy"
                       onError={(e) => {
                         e.currentTarget.style.display = "none";
-                        const fb = e.currentTarget.parentElement?.querySelector(".logo-fallback") as HTMLElement | null;
-                        if (fb) fb.style.display = "grid";
                       }}
                     />
-                    <span className="logo-fallback" style={{ fontSize: '14px' }}>{p.title?.[0] ?? "?"}</span>
                   </div>
 
                   <div className="compact-info">
@@ -755,11 +752,8 @@ export default function Home() {
                     loading="lazy"
                     onError={(e) => {
                       e.currentTarget.style.display = "none";
-                      const fb = e.currentTarget.parentElement?.querySelector(".logo-fallback") as HTMLElement | null;
-                      if (fb) fb.style.display = "grid";
                     }}
                   />
-                  <span className="logo-fallback" style={{ fontSize: '14px' }}>{p.title?.[0] ?? "?"}</span>
                 </div>
                 
                 <div className="compact-info">

@@ -31,7 +31,6 @@ body {
   letter-spacing: -0.01em;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
-  overflow-x: hidden;
   background: linear-gradient(180deg, #fff9f4 0%, #fffefc 60%, #ffffff 100%);
 }
 
@@ -488,6 +487,12 @@ a:hover {
   flex-wrap: wrap;
 }
 
+@media (max-width: 1024px) {
+  .floating-stack {
+    display: none;
+  }
+}
+
 .brands-bar {
   background: linear-gradient(90deg, #fff7ef, #ffffff);
   border-bottom: 1px solid #f2e8dd;
@@ -639,17 +644,27 @@ a:hover {
   background: none;
   border: none;
   cursor: pointer;
+  white-space: nowrap;
 }
 
 .pills {
   margin-top: 18px;
   display: flex;
   gap: 10px;
-  flex-wrap: wrap;
-  justify-content: center;
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+  overflow-x: auto;
+  padding: 4px 0 12px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.pills::-webkit-scrollbar {
+  display: none;
 }
 
 .pill {
+  flex: 0 0 auto;
   padding: 10px 14px;
   border-radius: 14px;
   border: 1.2px solid #e9e2d6;
@@ -1006,7 +1021,7 @@ a:hover {
   background: #ffffff;
 }
 
-@media (max-width: 720px) {
+@media (max-width: 1024px) {
   .nav-inner {
     flex-wrap: wrap;
     gap: 10px 12px;
@@ -1090,10 +1105,18 @@ a:hover {
     display: none;
   }
 
+  .user-chip .user-name {
+    display: none;
+  }
+
   .user-chip {
-    max-width: 180px;
-    font-size: 14px;
-    padding: 10px 12px;
+    width: 42px;
+    height: 42px;
+    padding: 0;
+    display: grid;
+    place-items: center;
+    border-radius: 14px;
+    font-size: 20px;
   }
 
   .user-wrap {
@@ -3452,11 +3475,8 @@ a:hover {
   }
 
   .grid > .card .logo-box img,
-  .grid > .card .logo-fallback,
   .market-grid > .market-card .logo-box img,
-  .market-grid > .market-card .logo-fallback,
-  .premium-card .logo-box img,
-  .premium-card .logo-fallback {
+  .premium-card .logo-box img {
     width: 36px;
     height: 36px;
   }
