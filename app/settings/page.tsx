@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
@@ -9,23 +9,22 @@ type UserInfo = {
   id: string;
   email?: string | null;
   fullName?: string | null;
-  avatarUrl?: string | null;
   provider?: string | null;
 };
 
 export default function SettingsPage() {
   const [user, setUser] = useState<UserInfo | null>(null);
   const [fullName, setFullName] = useState("");
-  const [avatarUrl, setAvatarUrl] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [newEmail, setNewEmail] = useState("");
-  const [currentPassword, setCurrentPassword] = useState("");
   const [emailSaving, setEmailSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [emailError, setEmailError] = useState<string | null>(null);
   const [emailSuccess, setEmailSuccess] = useState<string | null>(null);
+  const [verificationCode, setVerificationCode] = useState("");
+  const [awaitingVerification, setAwaitingVerification] = useState(false);
   const [oauthProvider, setOauthProvider] = useState<string | null>(null);
   const [oauthReauthing, setOauthReauthing] = useState(false);
   const [oauthInfo, setOauthInfo] = useState<string | null>(null);
@@ -57,7 +56,6 @@ export default function SettingsPage() {
       if (!mounted) return;
       setUser(nextUser);
       setFullName(nextUser?.fullName ?? "");
-      setAvatarUrl(nextUser?.avatarUrl ?? "");
       const nextEmail = nextUser?.email ?? "";
       setNewEmail(nextEmail);
       setEmailOriginal(nextEmail);
@@ -122,7 +120,6 @@ export default function SettingsPage() {
     const { error: updateError, data } = await supabase.auth.updateUser({
       data: {
         full_name: fullName.trim() || null,
-        avatar_url: avatarUrl.trim() || null,
       },
     });
     if (updateError) {
@@ -136,7 +133,6 @@ export default function SettingsPage() {
         id: u.id,
         email: u.email,
         fullName: (u.user_metadata?.full_name as string | undefined) ?? null,
-        avatarUrl: (u.user_metadata?.avatar_url as string | undefined) ?? null,
       });
     }
     setSuccess("Profil mis à jour");
@@ -149,62 +145,65 @@ export default function SettingsPage() {
     setEmailError(null);
     setEmailSuccess(null);
 
-    if (!user?.email) {
-      setEmailError("Utilisateur non connecté.");
-      setEmailSaving(false);
-      return;
-    }
     if (!newEmail.trim()) {
       setEmailError("Veuillez saisir un nouvel email.");
       setEmailSaving(false);
       return;
     }
-    if (newEmail.trim().toLowerCase() === (emailOriginal || "").toLowerCase()) {
-      setEmailError("Le nouvel email doit être différent de l’actuel.");
+
+    try {
+      const res = await fetch("/api/update-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ new_email: newEmail.trim() }),
+      });
+
+      if (!res.ok) throw new Error(await res.text() || "Erreur lors de l'envoi du code.");
+
+      setEmailSuccess(`Code envoyé à ${newEmail.trim()}`);
+      setAwaitingVerification(true);
+    } catch (err: any) {
+      setEmailError(err?.message || "Erreur inattendue");
+    } finally {
       setEmailSaving(false);
-      return;
     }
-    if (oauthProvider && oauthProvider !== "email") {
-      setEmailError("Connecte-toi avec ton fournisseur OAuth pour confirmer.");
-      setEmailSaving(false);
-      return;
-    }
-    if (!currentPassword) {
-      setEmailError("Veuillez saisir votre mot de passe pour confirmer.");
+  };
+
+  const handleVerifyCode = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setEmailSaving(true);
+    setEmailError(null);
+    setEmailSuccess(null);
+
+    if (!verificationCode.trim()) {
+      setEmailError("Veuillez saisir le code de vérification.");
       setEmailSaving(false);
       return;
     }
 
-    const mod = await import("@/lib/supabase-browser").catch(() => null);
-    const supabase = mod?.supabaseBrowser;
-    if (!supabase) {
-      setEmailError("Configuration Supabase manquante.");
-      setEmailSaving(false);
-      return;
-    }
+    try {
+      const res = await fetch("/api/verify-email-change", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: verificationCode.trim() }),
+      });
 
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email: user.email,
-      password: currentPassword,
-    });
-    if (signInError) {
-      setEmailError("Ré-authentification échouée. Vérifiez votre mot de passe.");
-      setEmailSaving(false);
-      return;
-    }
+      if (!res.ok) throw new Error(await res.text() || "Code invalide ou expiré.");
 
-    const { error: updateError } = await supabase.auth.updateUser({
-      email: newEmail.trim(),
-    });
-    if (updateError) {
-      setEmailError(updateError.message);
+      setEmailSuccess("Code valide, email mis à jour !");
+      setEmailOriginal(newEmail.trim());
+      setAwaitingVerification(false);
+      setVerificationCode("");
+      
+      const mod = await import("@/lib/supabase-browser").catch(() => null);
+      if (mod?.supabaseBrowser && user) {
+        setUser({ ...user, email: newEmail.trim() });
+      }
+    } catch (err: any) {
+      setEmailError(err?.message || "Erreur de vérification");
+    } finally {
       setEmailSaving(false);
-      return;
     }
-
-    setEmailSuccess("Un email de confirmation a été envoyé.");
-    setCurrentPassword("");
-    setEmailSaving(false);
   };
 
   const handleOAuthReauth = async () => {
@@ -253,7 +252,8 @@ export default function SettingsPage() {
 
   const handleCancelEmailChange = () => {
     setNewEmail(emailOriginal);
-    setCurrentPassword("");
+    setVerificationCode("");
+    setAwaitingVerification(false);
     setEmailError(null);
     setEmailSuccess(null);
     setOauthInfo(null);
@@ -282,11 +282,7 @@ export default function SettingsPage() {
           <aside className="account-sidebar">
             <div className="account-card profile-card">
               <div className="profile-avatar">
-                {avatarUrl ? (
-                  <img src={avatarUrl} alt="Avatar" />
-                ) : (
-                  <span>{(fullName || user?.email || "U").slice(0, 1).toUpperCase()}</span>
-                )}
+                <span>{(fullName || user?.email || "U").slice(0, 1).toUpperCase()}</span>
               </div>
               <div className="profile-meta">
                 <strong>{fullName || "Compte"}</strong>
@@ -336,14 +332,6 @@ export default function SettingsPage() {
                       <label>Email</label>
                       <input value={user.email ?? ""} disabled />
                     </div>
-                    <div className="field">
-                      <label>URL Avatar</label>
-                      <input
-                        value={avatarUrl}
-                        onChange={(e) => setAvatarUrl(e.target.value)}
-                        placeholder="https://..."
-                      />
-                    </div>
                     {error && <div className="update-error">{error}</div>}
                     {success && <div className="update-success">{success}</div>}
                     <div className="form-actions">
@@ -361,52 +349,54 @@ export default function SettingsPage() {
                       <p className="muted">Une verification par email sera demandee.</p>
                     </div>
                   </div>
-                  <form className="account-form" onSubmit={handleEmailUpdate}>
+                  <form className="account-form" onSubmit={awaitingVerification ? handleVerifyCode : handleEmailUpdate}>
                     <div className="field">
                       <label>Email actuel</label>
                       <input value={user.email ?? ""} disabled />
                     </div>
                     <div className="field">
                       <label>Nouvel email</label>
-                      <input value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="nouveau@email.com" />
+                      <input 
+                        value={newEmail} 
+                        onChange={(e) => setNewEmail(e.target.value)} 
+                        placeholder="nouveau@email.com" 
+                        disabled={awaitingVerification}
+                      />
                     </div>
-                    {oauthProvider && oauthProvider !== "email" ? (
-                      <div className="form-actions">
-                        <button type="button" className="ghost-btn" onClick={handleOAuthReauth} disabled={oauthReauthing}>
-                          {oauthReauthing ? "Ré-auth..." : "Se reconnecter avec OAuth"}
-                        </button>
-                        <button type="button" className="ghost-btn" onClick={handleCancelEmailChange}>
-                          Annuler
-                        </button>
-                      </div>
-                    ) : (
+                    
+                    {awaitingVerification && (
                       <div className="field">
-                        <label>Mot de passe actuel</label>
+                        <label>Code de vérification</label>
                         <input
-                          type="password"
-                          value={currentPassword}
-                          onChange={(e) => setCurrentPassword(e.target.value)}
-                          placeholder="Confirmer votre mot de passe"
+                          type="text"
+                          value={verificationCode}
+                          onChange={(e) => setVerificationCode(e.target.value)}
+                          placeholder="Entrez le code reçu"
+                          required
                         />
                       </div>
                     )}
-                    {oauthInfo && <div className="muted">{oauthInfo}</div>}
+
                     {emailError && <div className="update-error">{emailError}</div>}
                     {emailSuccess && <div className="update-success">{emailSuccess}</div>}
+                    
                     <div className="form-actions">
                       <button
                         type="submit"
                         disabled={
                           emailSaving ||
-                          !newEmail.trim() ||
-                          newEmail.trim().toLowerCase() === (emailOriginal || "").toLowerCase()
+                          (!awaitingVerification && !newEmail.trim()) ||
+                          (!awaitingVerification && newEmail.trim().toLowerCase() === (emailOriginal || "").toLowerCase()) ||
+                          (awaitingVerification && !verificationCode.trim())
                         }
                       >
-                        {emailSaving ? "Mise à jour..." : "Modifier l’email"}
+                        {emailSaving ? "En cours..." : (awaitingVerification ? "Confirmer le code" : "Envoyer code vérif")}
                       </button>
-                      <button type="button" className="ghost-btn" onClick={handleCancelEmailChange}>
-                        Annuler
-                      </button>
+                      {awaitingVerification && (
+                        <button type="button" className="ghost-btn" onClick={handleCancelEmailChange}>
+                          Annuler
+                        </button>
+                      )}
                     </div>
                   </form>
                 </div>

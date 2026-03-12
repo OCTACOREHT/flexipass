@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { Fragment, useEffect, useState } from "react";
 import HeaderMain from "@/components/HeaderMain";
@@ -79,8 +79,9 @@ export default function HistoryPage() {
 
     const baseSelect = "id,status,total_amount,currency,created_at";
     let queryError: { message?: string } | null = null;
+    let finalData: any[] = [];
 
-    let res = await supabase
+    const { data: mainData, error: mainError } = await supabase
       .from("orders")
       .select(
         `${baseSelect},order_items(id,quantity,unit_price,product_id,product_image_url,product:products(title,image_url))`
@@ -89,18 +90,21 @@ export default function HistoryPage() {
       .order("created_at", { ascending: false })
       .limit(50);
 
-    if (res.error) {
-      queryError = res.error;
-      res = await supabase
+    if (mainError) {
+      queryError = mainError;
+      const { data: fallbackData } = await supabase
         .from("orders")
         .select(baseSelect)
         .eq("user_id", currentUser.id)
         .order("created_at", { ascending: false })
         .limit(50);
+      if (fallbackData) finalData = fallbackData;
+    } else if (mainData) {
+      finalData = mainData;
     }
 
-    if (!res.data && currentUser.email) {
-      const fallback = await supabase
+    if (finalData.length === 0 && currentUser.email) {
+      const { data: emailData, error: emailError } = await supabase
         .from("orders")
         .select(
           `${baseSelect},order_items(id,quantity,unit_price,product_id,product_image_url,product:products(title,image_url))`
@@ -108,23 +112,44 @@ export default function HistoryPage() {
         .eq("customer_email", currentUser.email)
         .order("created_at", { ascending: false })
         .limit(50);
-      if (fallback.error) {
-        queryError = fallback.error;
-      } else {
-        res = fallback as any;
+      if (emailError) {
+        queryError = emailError;
+      } else if (emailData) {
+        finalData = emailData;
       }
     }
 
-    if (queryError && !res.data) {
+    if (queryError && finalData.length === 0) {
       setError(toFriendlyError(queryError.message));
     } else {
-      setOrders(Array.isArray(res.data) ? res.data : []);
+      // Pour éviter les erreurs TS strictes avec le array Supabase, on map manuellement le type Order
+      setOrders(
+        finalData.map((o: any): Order => ({
+          id: o.id,
+          status: o.status,
+          total_amount: o.total_amount,
+          currency: o.currency,
+          created_at: o.created_at,
+          order_items: Array.isArray(o.order_items) 
+            ? o.order_items.map((i: any): OrderItem => ({
+                id: i.id,
+                quantity: i.quantity,
+                unit_price: i.unit_price,
+                product_id: i.product_id,
+                product_image_url: i.product_image_url,
+                product: Array.isArray(i.product) ? i.product[0] : i.product
+              }))
+            : []
+        }))
+      );
     }
     setLoading(false);
   };
 
   useEffect(() => {
     loadOrders();
+    const intervalId = setInterval(loadOrders, 10000); // Rafraichissement toutes les 10s
+    return () => clearInterval(intervalId);
   }, []);
 
   return (
@@ -163,7 +188,7 @@ export default function HistoryPage() {
           </aside>
 
           <div className="account-main">
-            {loading && <div className="account-card">Chargement...</div>}
+            {loading && orders.length === 0 && <div className="account-card">Chargement...</div>}
 
             {!loading && !user && (
               <div className="account-card account-empty">

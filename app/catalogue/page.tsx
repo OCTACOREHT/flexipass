@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import FooterMain from "@/components/FooterMain";
@@ -47,6 +47,14 @@ const brandAssetMap: Record<string, string> = {
   playstation: "/assets/images/brands/playstation.svg",
   steam: "/assets/images/brands/steam.svg",
   nintendo: "/assets/images/brands/nintendo.svg",
+  crunchyroll: "https://upload.wikimedia.org/wikipedia/commons/0/08/Crunchyroll_Logo.png",
+  hbo: "https://upload.wikimedia.org/wikipedia/commons/1/17/HBO_Max_Logo.svg",
+  midjourney: "https://upload.wikimedia.org/wikipedia/commons/e/e6/Midjourney_Emblem.png",
+  adobe: "https://upload.wikimedia.org/wikipedia/commons/4/4c/Adobe_Creative_Cloud_Express_logo.svg",
+  zoom: "https://upload.wikimedia.org/wikipedia/commons/7/7b/Zoom_Communications_Logo.svg",
+  notion: "https://upload.wikimedia.org/wikipedia/commons/4/45/Notion_app_logo.png",
+  roblox: "https://upload.wikimedia.org/wikipedia/commons/c/c5/Roblox_Logo_2022.svg",
+  fortnite: "https://upload.wikimedia.org/wikipedia/commons/1/1a/FortniteLogo.svg",
 };
 
 const getBrandAsset = (p: Product) => {
@@ -60,7 +68,7 @@ const toImageSrc = (raw?: string | null) => {
   const value = raw?.trim();
   if (!value) return "/assets/images/brands/chatgpt.svg";
   if (value.startsWith("/")) return value;
-  if (/^https?:\/\//i.test(value)) return `/api/image?url=${encodeURIComponent(value)}`;
+  if (/^https?:\/\//i.test(value)) return value;
   if (/^(data:|blob:)/i.test(value)) return value;
   return `/${value.replace(/^\/+/, "")}`;
 };
@@ -162,46 +170,60 @@ export default function CataloguePage() {
           </div>
 
           {loading ? (
-            <div className="market-grid">
+            <div className="compact-grid">
               {Array.from({ length: 6 }).map((_, i) => (
-                <article className="market-card skeleton" key={`sk-${i}`}>
-                  <div className="skeleton-line w40" />
-                  <div className="skeleton-line w70" />
-                  <div className="skeleton-line w60" />
-                  <div className="skeleton-pill" />
-                  <div className="skeleton-btn" />
+                <article className="compact-card skeleton" key={`sk-${i}`}>
+                  <div className="compact-logo" />
+                  <div className="compact-info">
+                    <div className="compact-title" />
+                    <div className="compact-subtitle" />
+                  </div>
                 </article>
               ))}
             </div>
           ) : (
-            <div className="market-grid">
+            <div className="compact-grid">
               {visible.map((p) => (
-                <article key={p.id} className={`market-card ${p.type === "account" ? "market-card--premium" : ""}`}>
-                  <div className="market-card-top">
-                    <div className={`logo-box ${p.type === "account" ? "premium" : ""}`}>
-                      <img
-                        src={toImageSrc(getBrandAsset(p))}
-                        alt={p.title}
-                        width={48}
-                        height={48}
-                        loading="lazy"
-                        decoding="async"
-                        referrerPolicy="no-referrer"
-                        onError={(e) => {
-                          (e.currentTarget as HTMLImageElement).src = "/assets/images/brands/chatgpt.svg";
-                        }}
-                      />
-                      <span className="logo-fallback">{p.title?.[0] ?? "?"}</span>
-                    </div>
-                    <span className="market-pill">{p.type === "account" ? "Abonnement" : "Giftcard"}</span>
+                <article key={p.id} className={`compact-card ${p.type === "account" ? "luxe" : ""}`}>
+                  <div className="compact-logo">
+                    <img
+                      src={toImageSrc(getBrandAsset(p))}
+                      alt={p.title}
+                      width={32}
+                      height={32}
+                      loading="lazy"
+                      onError={(e) => {
+                        e.currentTarget.style.display = "none";
+                        const fb = e.currentTarget.parentElement?.querySelector(".logo-fallback") as HTMLElement | null;
+                        if (fb) fb.style.display = "grid";
+                      }}
+                    />
+                    <span className="logo-fallback" style={{ fontSize: '14px' }}>{p.title?.[0] ?? "?"}</span>
                   </div>
-                  <h3 className="brand-name">{getDisplayTitle(p.title)}</h3>
-                  <div className="muted">{p.short_description || p.subtitle || p.plan || "Produit numérique"}</div>
-                  <div className="market-meta">
-                    <div className="price">{p.price} {p.currency}</div>
-                    <a className="link" href={`/product/${encodeURIComponent(getProductSlug(p))}`}>Details</a>
+
+                  <div className="compact-info">
+                    <h3 className="compact-title">{getDisplayTitle(p.title)}</h3>
+                    <div className="compact-subtitle">{p.short_description || p.subtitle || p.plan || "Produit"}</div>
+                    <div className="compact-price">{p.price} {p.currency}</div>
                   </div>
-                  <a className="btn-full ghost-btn" href={`/product/${encodeURIComponent(getProductSlug(p))}`}>Voir le produit</a>
+
+                  <div className="compact-actions">
+                    <button 
+                      type="button" 
+                      className="btn-icon primary" 
+                      onClick={() => {/* logic handled by handleAddToCart in a real implementation, but catalogue page seems to missing it or use Details only */}}
+                      title="Détails"
+                    >
+                      <i className="ri-arrow-right-line" />
+                    </button>
+                    <a 
+                      className="btn-icon" 
+                      href={`/product/${encodeURIComponent(getProductSlug(p))}`}
+                      title="Voir le produit"
+                    >
+                      <i className="ri-eye-line" />
+                    </a>
+                  </div>
                 </article>
               ))}
             </div>

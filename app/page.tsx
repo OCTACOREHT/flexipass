@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import FooterMain from "@/components/FooterMain";
@@ -64,22 +64,27 @@ const brandAssetMap: Record<string, string> = {
   playstation: "/assets/images/brands/playstation.svg",
   steam: "/assets/images/brands/steam.svg",
   nintendo: "/assets/images/brands/nintendo.svg",
+  crunchyroll: "https://upload.wikimedia.org/wikipedia/commons/0/08/Crunchyroll_Logo.png",
+  hbo: "https://upload.wikimedia.org/wikipedia/commons/1/17/HBO_Max_Logo.svg",
+  midjourney: "https://upload.wikimedia.org/wikipedia/commons/e/e6/Midjourney_Emblem.png",
+  adobe: "https://upload.wikimedia.org/wikipedia/commons/4/4c/Adobe_Creative_Cloud_Express_logo.svg",
+  zoom: "https://upload.wikimedia.org/wikipedia/commons/7/7b/Zoom_Communications_Logo.svg",
+  notion: "https://upload.wikimedia.org/wikipedia/commons/4/45/Notion_app_logo.png",
+  roblox: "https://upload.wikimedia.org/wikipedia/commons/c/c5/Roblox_Logo_2022.svg",
+  fortnite: "https://upload.wikimedia.org/wikipedia/commons/1/1a/FortniteLogo.svg",
 };
 
 const getBrandAsset = (p: Product) => {
+  if (p.image_url && p.image_url.trim()) return p.image_url.trim();
   const hay = `${p.title ?? ""} ${p.subtitle ?? ""} ${p.short_description ?? ""}`.toLowerCase();
   const key = Object.keys(brandAssetMap).find((k) => hay.includes(k));
   return key ? brandAssetMap[key] : "/assets/images/brands/chatgpt.svg";
-};
-const getSearchBrandAsset = (p: Product) => {
-  if (p.image_url && p.image_url.trim()) return p.image_url.trim();
-  return getBrandAsset(p);
 };
 const toImageSrc = (raw?: string | null) => {
   const value = raw?.trim();
   if (!value) return "/assets/images/brands/chatgpt.svg";
   if (value.startsWith("/")) return value;
-  if (/^https?:\/\//i.test(value)) return `/api/image?url=${encodeURIComponent(value)}`;
+  if (/^https?:\/\//i.test(value)) return value;
   if (/^(data:|blob:)/i.test(value)) return value;
   return `/${value.replace(/^\/+/, "")}`;
 };
@@ -326,7 +331,6 @@ export default function Home() {
     const { error } = await supabaseBrowser.auth.signInWithPassword({
       email: email.trim(),
       password,
-      options: { shouldCreateUser: false },
     });
     setAuthLoading(false);
     if (error) {
@@ -460,7 +464,7 @@ export default function Home() {
                     <a key={p.id} className="nav-result nav-result--thumb" href={`/product/${encodeURIComponent(getProductSlug(p))}`} onClick={() => setSearchOpen(false)}>
                       <img
                         className="nav-result-thumb"
-                        src={toImageSrc(getSearchBrandAsset(p))}
+                              src={toImageSrc(getBrandAsset(p))}
                         alt=""
                         aria-hidden="true"
                         width={20}
@@ -538,7 +542,7 @@ export default function Home() {
                   <a key={p.id} className="nav-result nav-result--thumb" href={`/product/${encodeURIComponent(getProductSlug(p))}`} onClick={() => setSearchOpen(false)}>
                     <img
                       className="nav-result-thumb"
-                      src={toImageSrc(getSearchBrandAsset(p))}
+                      src={toImageSrc(getBrandAsset(p))}
                       alt=""
                       aria-hidden="true"
                       width={20}
@@ -640,10 +644,10 @@ export default function Home() {
 
       <section className="section" id="giftcards">
         <div className="section-head">
-          <h2>Cartes Populaires</h2>
-          <button type="button" className="link" onClick={() => (setActive("all"), setQuery(""))}>
+          <h2>Explorer</h2>
+          <a href="/catalogue" className="link">
             Voir tout →
-          </button>
+          </a>
         </div>
 
         <div className="pills">
@@ -660,75 +664,63 @@ export default function Home() {
         </div>
 
         {loadingProducts && visibleProducts.length === 0 ? (
-          <div className="grid">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <article className="card skeleton" key={`sk-${i}`}>
-                <div className="skeleton-line w40" />
-                <div className="skeleton-line w70" />
-                <div className="skeleton-line w60" />
-                <div className="skeleton-pill" />
-                <div className="skeleton-btn" />
+          <div className="compact-grid">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <article className="compact-card skeleton" key={`sk-${i}`}>
+                <div className="compact-logo" />
+                <div className="compact-info">
+                  <div className="compact-title" />
+                  <div className="compact-subtitle" />
+                </div>
               </article>
             ))}
           </div>
         ) : (
-          <div className="grid" key={`grid-${active}-${query}`}>
-            {visibleProducts.map((p) => {
+          <div className="compact-grid" key={`grid-${active}-${query}`}>
+            {visibleProducts.slice(0, 8).map((p) => {
               const selectedVariant = (p.variants && p.variants[0]) || null;
               const displayPrice = selectedVariant ? `${selectedVariant.price} ${selectedVariant.currency}` : `${p.price} ${p.currency}`;
               return (
-                <article key={p.id} className={`card ${p.type === "account" ? "luxe" : ""}`}>
-                  <div className="card-top">
-                    <div className={`logo-box ${p.type === "account" ? "premium" : ""}`}>
-                      <img
-                        src={getBrandAsset(p)}
-                        alt={p.title}
-                        width={48}
-                        height={48}
-                        loading="lazy"
-                        decoding="async"
-                        onError={(e) => {
-                          e.currentTarget.style.display = "none";
-                          const fb = e.currentTarget.parentElement?.querySelector(".logo-fallback") as HTMLElement | null;
-                          if (fb) fb.style.display = "grid";
-                        }}
-                      />
-                      <span className="logo-fallback">{p.title?.[0] ?? "?"}</span>
-                    </div>
+                <article key={p.id} className={`compact-card ${p.type === "account" ? "luxe" : ""}`}>
+                  <div className="compact-logo">
+                    <img
+                      src={getBrandAsset(p)}
+                      alt={p.title}
+                      width={32}
+                      height={32}
+                      loading="lazy"
+                      onError={(e) => {
+                        e.currentTarget.style.display = "none";
+                        const fb = e.currentTarget.parentElement?.querySelector(".logo-fallback") as HTMLElement | null;
+                        if (fb) fb.style.display = "grid";
+                      }}
+                    />
+                    <span className="logo-fallback" style={{ fontSize: '14px' }}>{p.title?.[0] ?? "?"}</span>
                   </div>
 
-                  <h3 className="brand-name">{getDisplayTitle(p.title)}</h3>
-                  <div className="muted">{p.short_description || p.subtitle || p.plan || "Produit numérique"}</div>
+                  <div className="compact-info">
+                    <h3 className="compact-title">{getDisplayTitle(p.title)}</h3>
+                    <div className="compact-subtitle">{p.short_description || p.subtitle || p.plan || "Produit"}</div>
+                    <div className="compact-price">{displayPrice}</div>
+                  </div>
 
-                  {p.variants && p.variants.length > 0 && (
-                    <div className="field">
-                      <label htmlFor={`select-${p.id}`}>Montant</label>
-                      <select id={`select-${p.id}`} name={`select-${p.id}`} onChange={(e) => {
-                        const v = p.variants?.find((v) => v.id === e.target.value);
-                        if (v) handleAddToCart(p, v.price);
-                      }}>
-                        {p.variants.map((v) => (
-                          <option key={v.id} value={v.id}>
-                            {v.label} - {v.price} {v.currency}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
-
-                  {!p.variants?.length && (
-                    <div className="price-row">
-                      <div className="price">{displayPrice}</div>
-                    </div>
-                  )}
-                  <button type="button" className="btn-full" onClick={() => handleAddToCart(p, selectedVariant?.price)}>
-                    <i className="ri-shopping-cart-2-line" />
-                    Ajouter au panier
-                  </button>
-                  <a className="btn-full ghost-btn" href={`/product/${encodeURIComponent(getProductSlug(p))}`}>
-                    <i className="ri-information-line" />
-                    Détails
-                  </a>
+                  <div className="compact-actions">
+                    <button 
+                      type="button" 
+                      className="btn-icon primary" 
+                      onClick={() => handleAddToCart(p, selectedVariant?.price)}
+                      title="Ajouter au panier"
+                    >
+                      <i className="ri-shopping-cart-2-line" />
+                    </button>
+                    <a 
+                      className="btn-icon" 
+                      href={`/product/${encodeURIComponent(getProductSlug(p))}`}
+                      title="Détails"
+                    >
+                      <i className="ri-arrow-right-line" />
+                    </a>
+                  </div>
                 </article>
               );
             })}
@@ -739,57 +731,57 @@ export default function Home() {
       <section className="section" id="premium">
         <div className="section-head">
           <h2>Premium</h2>
-          <button type="button" className="link" onClick={() => (setActive("all"), setQuery(""))}>
+          <a href="/catalogue" className="link">
             Voir tout →
-          </button>
+          </a>
         </div>
-        <div className="premium-grid">
+        <div className="compact-grid">
           {visibleProducts
             .filter((p) => p.type === "account")
+            .slice(0, 4)
             .map((p) => {
-              const planTag = (p.plan || "").trim();
               const selectedVariant = (p.variants && p.variants[0]) || null;
               const premiumPrice = selectedVariant ? selectedVariant.price : p.price;
               const premiumCurrency = selectedVariant ? selectedVariant.currency : p.currency;
               const premiumSub = (p.short_description || p.subtitle || "premium").trim();
-              const showPlanTag = planTag.length > 0 && !/prem/i.test(planTag);
               return (
-              <article key={p.id} className="premium-card">
-                <div className="premium-top">
-                  <div className="premium-left">
-                    <div className="logo-box premium">
-                      <img
-                        src={getBrandAsset(p)}
-                        alt={p.title}
-                        width={48}
-                        height={48}
-                        loading="lazy"
-                        decoding="async"
-                        onError={(e) => {
-                          e.currentTarget.style.display = "none";
-                          const fb = e.currentTarget.parentElement?.querySelector(".logo-fallback") as HTMLElement | null;
-                          if (fb) fb.style.display = "grid";
-                        }}
-                      />
-                      <span className="logo-fallback">{p.title?.[0] ?? "?"}</span>
-                    </div>
-                    <div className="premium-badge">Premium</div>
-                  </div>
-                  {showPlanTag && <span className="premium-tag">{planTag}</span>}
+              <article key={p.id} className="compact-card luxe">
+                <div className="compact-logo">
+                  <img
+                    src={getBrandAsset(p)}
+                    alt={p.title}
+                    width={32}
+                    height={32}
+                    loading="lazy"
+                    onError={(e) => {
+                      e.currentTarget.style.display = "none";
+                      const fb = e.currentTarget.parentElement?.querySelector(".logo-fallback") as HTMLElement | null;
+                      if (fb) fb.style.display = "grid";
+                    }}
+                  />
+                  <span className="logo-fallback" style={{ fontSize: '14px' }}>{p.title?.[0] ?? "?"}</span>
                 </div>
-                <div className="premium-content">
-                  <h3 className="brand-name">{getDisplayTitle(p.title)}</h3>
-                  <p className="premium-sub">{premiumSub}</p>
-                  <div className="premium-price">{formatPrice(premiumPrice, premiumCurrency)}</div>
+                
+                <div className="compact-info">
+                  <h3 className="compact-title">{getDisplayTitle(p.title)}</h3>
+                  <div className="compact-subtitle">{premiumSub}</div>
+                  <div className="compact-price">{formatPrice(premiumPrice, premiumCurrency)}</div>
                 </div>
-                <div className="premium-actions">
-                  <button className="btn-full modal-primary" onClick={() => handleAddToCart(p, premiumPrice)}>
+
+                <div className="compact-actions">
+                  <button 
+                    className="btn-icon primary" 
+                    onClick={() => handleAddToCart(p, premiumPrice)}
+                    title="Ajouter au panier"
+                  >
                     <i className="ri-shopping-cart-2-line" />
-                    Ajouter au panier
                   </button>
-                  <a className="btn-full ghost-btn" href={`/product/${encodeURIComponent(getProductSlug(p))}`}>
-                    <i className="ri-information-line" />
-                    Détails
+                  <a 
+                    className="btn-icon" 
+                    href={`/product/${encodeURIComponent(getProductSlug(p))}`}
+                    title="Détails"
+                  >
+                    <i className="ri-arrow-right-line" />
                   </a>
                 </div>
               </article>

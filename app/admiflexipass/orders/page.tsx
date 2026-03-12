@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState } from "react";
 
@@ -9,6 +9,7 @@ type Order = {
   currency?: string | null;
   created_at?: string | null;
   customer_email?: string | null;
+  payment_method?: string | null;
 };
 
 type OrdersSummary = {
@@ -29,11 +30,35 @@ export default function AdminOrdersPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/admin/orders");
-      if (!res.ok) throw new Error(await res.text());
-      const data = await res.json();
-      setSummary(data ?? null);
-      setOrders(Array.isArray(data?.orders) ? data.orders : []);
+      const mod = await import("@/lib/supabase-browser").catch(() => null);
+      const supabase = mod?.supabaseBrowser;
+      if (!supabase) throw new Error("Client Supabase introuvable");
+
+      const { data: userRes, error: userErr } = await supabase.auth.getUser();
+      if (userErr || !userRes?.user) throw new Error("Non autorisé");
+
+      const { data, error: fetchErr } = await supabase
+        .from("orders")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (fetchErr) throw new Error(fetchErr.message);
+
+      const items = Array.isArray(data) ? data : [];
+      setOrders(items);
+
+      const pending = items.filter((o) => o.status === "pending_payment").length;
+      const counts = items.reduce((acc: Record<string, number>, o) => {
+        const st = o.status || "unknown";
+        acc[st] = (acc[st] || 0) + 1;
+        return acc;
+      }, {});
+
+      setSummary({
+        pending_payment: pending,
+        grouped: Object.entries(counts).map(([k, v]) => ({ status: k, count: v })),
+        orders: items,
+      });
     } catch (err: any) {
       setError(err?.message || "Erreur de chargement");
     } finally {
@@ -41,21 +66,13 @@ export default function AdminOrdersPage() {
     }
   };
 
-  const handleStatusChange = async (id: string, status: string) => {
-    setSavingId(id);
-    try {
-      const res = await fetch("/api/admin/orders", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, status }),
-      });
-      if (!res.ok) throw new Error(await res.text());
-      await loadOrders();
-    } catch (err: any) {
-      setError(err?.message || "Erreur de mise à jour");
-    } finally {
-      setSavingId(null);
-    }
+  const getStatusClass = (status?: string | null) => {
+    if (!status) return "status-unknown";
+    if (status === "paid" || status === "completed") return "status-success";
+    if (status === "processing") return "status-info";
+    if (status === "pending_payment") return "status-warn";
+    if (status === "cancelled") return "status-danger";
+    return "status-unknown";
   };
 
   useEffect(() => {
@@ -98,9 +115,11 @@ export default function AdminOrdersPage() {
         <div className="admin-card wide">
           <h3>Liste des commandes</h3>
           <div className="admin-table">
-            <div className="admin-row head" style={{ gridTemplateColumns: "1.1fr 0.8fr 0.8fr 0.8fr 0.8fr" }}>
+            <div className="admin-row head" style={{ gridTemplateColumns: "1.1fr 1.2fr 0.8fr 0.8fr 1fr 0.8fr 0.8fr" }}>
               <span>ID</span>
+              <span>Client</span>
               <span>Statut</span>
+              <span>Paiement</span>
               <span>Total</span>
               <span>Date</span>
               <span>Actions</span>
@@ -110,10 +129,16 @@ export default function AdminOrdersPage() {
               <div
                 className="admin-row"
                 key={o.id}
-                style={{ gridTemplateColumns: "1.1fr 0.8fr 0.8fr 0.8fr 0.8fr" }}
+                style={{ gridTemplateColumns: "1.1fr 1.2fr 0.8fr 0.8fr 1fr 0.8fr 0.8fr" }}
               >
-                <span>{o.id}</span>
-                <span>{o.status ?? "—"}</span>
+                <span title={o.id} style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{o.id}</span>
+                <span title={o.customer_email ?? ""} style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{o.customer_email ?? "—"}</span>
+                <span>
+                  <div className={`status-pill ${getStatusClass(o.status)}`} style={{fontSize: "0.85em", padding: "2px 6px"}}>
+                    {o.status ?? "—"}
+                  </div>
+                </span>
+                <span>{o.payment_method ?? "—"}</span>
                 <span>{o.total_amount ?? 0} {o.currency ?? "HTG"}</span>
                 <span>{o.created_at ? new Date(o.created_at).toLocaleDateString() : "—"}</span>
                 <span>
@@ -121,17 +146,6 @@ export default function AdminOrdersPage() {
                     <button type="button" className="link" onClick={() => setSelected(o)}>
                       Détails
                     </button>
-                    <select
-                      value={o.status ?? "pending_payment"}
-                      onChange={(e) => handleStatusChange(o.id, e.target.value)}
-                      disabled={savingId === o.id}
-                    >
-                      <option value="pending_payment">pending_payment</option>
-                      <option value="paid">paid</option>
-                      <option value="processing">processing</option>
-                      <option value="completed">completed</option>
-                      <option value="cancelled">cancelled</option>
-                    </select>
                   </div>
                 </span>
               </div>

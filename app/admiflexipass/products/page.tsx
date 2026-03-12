@@ -32,7 +32,7 @@ const toProxyImage = (raw?: string | null) => {
   const value = raw?.trim();
   if (!value) return "/assets/images/brands/chatgpt.svg";
   if (value.startsWith("/")) return value;
-  if (/^https?:\/\//i.test(value)) return `/api/image?url=${encodeURIComponent(value)}`;
+  if (/^https?:\/\//i.test(value)) return value;
   if (/^(data:|blob:)/i.test(value)) return value;
   return `/${value.replace(/^\/+/, "")}`;
 };
@@ -43,8 +43,10 @@ export default function AdminProductsPage() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
-  const [confirmDelete, setConfirmDelete] = useState<Product | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState<Product | null>(null);
+  const [newImagePreview, setNewImagePreview] = useState<string | null>(null);
+  const [editImagePreview, setEditImagePreview] = useState<string | null>(null);
   const addFormRef = useRef<HTMLFormElement>(null);
 
   const { toasts, pushToast, dismissToast } = useToasts();
@@ -76,8 +78,26 @@ export default function AdminProductsPage() {
     loadData();
   }, []);
 
+  const uploadImageFile = async (file: File): Promise<string> => {
+    const formData = new FormData();
+    formData.append("file", file);
+    const res = await fetch("/api/upload-product-image", {
+      method: "POST",
+      body: formData,
+    });
+    if (!res.ok) throw new Error(await res.text() || "Erreur upload image");
+    const data = await res.json();
+    return data.image_url;
+  };
+
   const handleAddProduct = async (formData: FormData) => {
-    const imageUrl = normalizeImageUrl(String(formData.get("image_url") || ""));
+    let imageUrl = "";
+    const imageFile = formData.get("image_file") as File | null;
+    
+    if (imageFile && imageFile.size > 0) {
+      imageUrl = await uploadImageFile(imageFile);
+    }
+
     const payload = {
       title: String(formData.get("title") || ""),
       type: String(formData.get("type") || "account"),
@@ -96,11 +116,21 @@ export default function AdminProductsPage() {
     });
     if (!res.ok) throw new Error(await res.text());
     await loadData();
+    setNewImagePreview(null);
   };
 
   const handleUpdateProduct = async (formData: FormData) => {
     if (!editing) return;
-    const imageUrl = normalizeImageUrl(String(formData.get("image_url") || ""));
+    
+    let imageUrl = editing.image_url || "";
+    const imageFile = formData.get("image_file") as File | null;
+    
+    if (imageFile && imageFile.size > 0) {
+      imageUrl = await uploadImageFile(imageFile);
+    } else if (formData.get("remove_image") === "true") {
+      imageUrl = "";
+    }
+
     const payload = {
       id: editing.id,
       title: String(formData.get("title") || ""),
@@ -120,6 +150,7 @@ export default function AdminProductsPage() {
     });
     if (!res.ok) throw new Error(await res.text());
     await loadData();
+    setEditImagePreview(null);
   };
 
   const handleDeleteProduct = async (product: Product) => {
@@ -219,10 +250,27 @@ export default function AdminProductsPage() {
               <input name="duration_days" type="number" />
             </label>
             <label>
-              Image URL
-              <input name="image_url" placeholder="https://..." />
+              Image Produit
+              <input
+                name="image_file"
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    setNewImagePreview(URL.createObjectURL(file));
+                  } else {
+                    setNewImagePreview(null);
+                  }
+                }}
+              />
             </label>
-            <p className="muted">Utilisez un lien https pour garantir l’affichage de l’image.</p>
+            {newImagePreview && (
+              <div className="admin-image-preview">
+                <img src={newImagePreview} alt="Aperçu" style={{ maxWidth: 100, borderRadius: 4 }} />
+              </div>
+            )}
+            <p className="muted">L'image sera stockée dans Supabase lors de la création.</p>
             <label>
               Description courte
               <input name="short_description" placeholder="Résumé produit" />
@@ -232,8 +280,20 @@ export default function AdminProductsPage() {
         </div>
 
         {editing && (
-          <div className="admin-card">
-            <h3>Modifier le produit</h3>
+          <div className="modal-overlay" onClick={() => !loading && setEditing(null)}>
+            <div className="modal confirm-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 600 }}>
+              <div className="modal-head">
+                <h3>Modifier le produit</h3>
+                <button
+                  className="icon-btn ghost"
+                  type="button"
+                  aria-label="Fermer"
+                  onClick={() => !loading && setEditing(null)}
+                >
+                  <i className="ri-close-line" />
+                </button>
+              </div>
+              <div className="modal-body">
             <form
               onSubmit={async (e) => {
                 e.preventDefault();
@@ -273,21 +333,40 @@ export default function AdminProductsPage() {
                 <input name="duration_days" type="number" defaultValue={editing.duration_days ?? ""} />
               </label>
               <label>
-                Image URL
-                <input name="image_url" defaultValue={editing.image_url ?? ""} />
+                Image Produit
+                <input
+                  name="image_file"
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      setEditImagePreview(URL.createObjectURL(file));
+                    } else {
+                      setEditImagePreview(null);
+                    }
+                  }}
+                />
               </label>
-              <p className="muted">Utilisez un lien https pour garantir l’affichage de l’image.</p>
-              {editing.image_url && (
-                <div className="admin-image-preview">
+              {(editImagePreview || editing.image_url) && (
+                <div className="admin-image-preview" style={{ display: "flex", gap: "10px", alignItems: "center" }}>
                   <img
-                    src={toProxyImage(editing.image_url)}
+                    src={editImagePreview || toProxyImage(editing.image_url)}
                     alt={editing.title}
+                    style={{ maxWidth: 100, borderRadius: 4 }}
                     onError={(e) => {
                       (e.currentTarget as HTMLImageElement).src = "/assets/images/brands/chatgpt.svg";
                     }}
                   />
+                  {!editImagePreview && editing.image_url && (
+                    <label style={{ display: "inline-flex", gap: "5px", cursor: "pointer", alignItems: "center" }}>
+                      <input type="checkbox" name="remove_image" value="true" />
+                      Supprimer l'image actuelle
+                    </label>
+                  )}
                 </div>
               )}
+              <p className="muted">Sélectionnez une nouvelle image pour remplacer l'ancienne.</p>
               <label>
                 Description courte
                 <input name="short_description" defaultValue={editing.short_description ?? ""} />
@@ -303,6 +382,8 @@ export default function AdminProductsPage() {
                 </button>
               </div>
             </form>
+          </div>
+          </div>
           </div>
         )}
 

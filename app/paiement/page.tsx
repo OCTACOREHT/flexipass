@@ -92,28 +92,67 @@ export default function PaiementPage() {
   const [message, setMessage] = useState<string | null>(null);
   const [moncashRef] = useState("FPMON-001");
 
+  const [orderError, setOrderError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [orderId, setOrderId] = useState<string | null>(null);
+
   const total = useMemo(() => items.reduce((sum, item) => sum + item.price * item.qty, 0), [items]);
   const selectedBank = bankAccounts[bank];
   const transferCode = `${selectedBank.reference}-001`;
 
-  const handleMoncash = () => {
-    setMessage("Paiement Moncash lance. Validation automatique en cours.");
-  };
-
-  const handleTransfer = () => {
-    if (!proofName) {
-      setMessage("Ajoutez la preuve de virement avant de soumettre.");
+  const handleSubmitPayment = async () => {
+    if (method === "transfer" && !proofName) {
+      setOrderError("Ajoutez la preuve de virement avant de soumettre.");
       return;
     }
-    setMessage("Preuve recue. Verification manuelle sous environ 24 h.");
-  };
 
-  const handleSubmitPayment = () => {
-    if (method === "moncash") {
-      handleMoncash();
-      return;
+    setSubmitting(true);
+    setOrderError(null);
+    setMessage(null);
+
+    try {
+      const mod = await import("@/lib/supabase-browser").catch(() => null);
+      const supabaseBrowser = mod?.supabaseBrowser;
+      let currentUser = null;
+
+      if (supabaseBrowser) {
+        const { data } = await supabaseBrowser.auth.getUser();
+        currentUser = data?.user || null;
+      }
+
+      const payload = {
+        customer_email: currentUser?.email || "guest@example.com",
+        user_id: currentUser?.id || null,
+        items: items.map(i => ({ product_id: i.id, quantity: i.qty, price: i.price })),
+        total,
+        payment_method: method === "moncash" ? "moncash_test" : "virement"
+      };
+
+      const res = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        throw new Error(await res.text() || "Erreur de création de commande");
+      }
+
+      const data = await res.json();
+      setOrderId(data.order_id);
+      
+      // Clear cart
+      if (typeof window !== "undefined") {
+        localStorage.setItem(CART_KEY, JSON.stringify([]));
+        window.dispatchEvent(new Event("cart:updated"));
+      }
+
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Échec création commande, réessayez.";
+      setOrderError(message);
+    } finally {
+      setSubmitting(false);
     }
-    handleTransfer();
   };
 
   return (
@@ -313,22 +352,47 @@ export default function PaiementPage() {
                 <button
                   className="btn-full modal-primary"
                   type="button"
-                  disabled={!items.length}
+                  disabled={!items.length || submitting}
                   onClick={handleSubmitPayment}
                 >
-                  {method === "moncash" ? "Payer avec Moncash" : "Soumettre le virement"}
+                  {submitting ? "Création en cours..." : (method === "moncash" ? "Payer avec Moncash" : "Soumettre le virement")}
                 </button>
                 <Link className="btn-full ghost-btn" href="/#cart">
                   Retour au panier
                 </Link>
               </div>
 
-              {message && <div className="auth-success">{message}</div>}
+              {orderError && <div className="auth-error" style={{ color: "red", marginTop: 12 }}>{orderError}</div>}
+              {message && <div className="auth-success" style={{ marginTop: 12 }}>{message}</div>}
             </div>
           </div>
         </section>
       </main>
       <FooterMain />
+
+      {/* Success Modal */}
+      {orderId && (
+        <div className="modal-overlay">
+          <div className="modal text-center" style={{ padding: "40px 20px" }}>
+            <div className="modal-icon" style={{ fontSize: 48, color: "#10b981", marginBottom: 16 }}>
+              <i className="ri-checkbox-circle-fill" />
+            </div>
+            <h2>Commande Confirmée !</h2>
+            <p className="muted" style={{ margin: "12px 0 24px" }}>
+              Commande <strong>#{orderId.slice(0, 8).toUpperCase()}</strong> créée avec succès.<br/>
+              Statut : processing.
+            </p>
+            <div className="cta-stack">
+              <Link href="/history" className="btn-primary" style={{ display: "block" }}>
+                Consulter mon historique
+              </Link>
+              <Link href="/catalogue" className="btn-ghost" style={{ display: "block", marginTop: 8 }}>
+                Continuer mes achats
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

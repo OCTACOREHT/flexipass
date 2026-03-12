@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
@@ -53,6 +53,14 @@ const brandAssetMap: Record<string, string> = {
   playstation: "/assets/images/brands/playstation.svg",
   steam: "/assets/images/brands/steam.svg",
   nintendo: "/assets/images/brands/nintendo.svg",
+  crunchyroll: "https://upload.wikimedia.org/wikipedia/commons/0/08/Crunchyroll_Logo.png",
+  hbo: "https://upload.wikimedia.org/wikipedia/commons/1/17/HBO_Max_Logo.svg",
+  midjourney: "https://upload.wikimedia.org/wikipedia/commons/e/e6/Midjourney_Emblem.png",
+  adobe: "https://upload.wikimedia.org/wikipedia/commons/4/4c/Adobe_Creative_Cloud_Express_logo.svg",
+  zoom: "https://upload.wikimedia.org/wikipedia/commons/7/7b/Zoom_Communications_Logo.svg",
+  notion: "https://upload.wikimedia.org/wikipedia/commons/4/45/Notion_app_logo.png",
+  roblox: "https://upload.wikimedia.org/wikipedia/commons/c/c5/Roblox_Logo_2022.svg",
+  fortnite: "https://upload.wikimedia.org/wikipedia/commons/1/1a/FortniteLogo.svg",
 };
 
 const getBrandAsset = (p: { title?: string; subtitle?: string; short_description?: string; image_url?: string | null }) => {
@@ -66,7 +74,7 @@ const toImageSrc = (raw?: string | null) => {
   const value = raw?.trim();
   if (!value) return "/assets/images/brands/chatgpt.svg";
   if (value.startsWith("/")) return value;
-  if (/^https?:\/\//i.test(value)) return `/api/image?url=${encodeURIComponent(value)}`;
+  if (/^https?:\/\//i.test(value)) return value;
   if (/^(data:|blob:)/i.test(value)) return value;
   return `/${value.replace(/^\/+/, "")}`;
 };
