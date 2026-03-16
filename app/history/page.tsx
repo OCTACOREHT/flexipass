@@ -148,8 +148,44 @@ export default function HistoryPage() {
 
   useEffect(() => {
     loadOrders();
-    const intervalId = setInterval(loadOrders, 10000); // Rafraichissement toutes les 10s
-    return () => clearInterval(intervalId);
+    
+    // REAL-TIME SYNC
+    let channel: any;
+    const setupRealtime = async () => {
+      const mod = await import("@/lib/supabase-browser").catch(() => null);
+      const supabase = mod?.supabaseBrowser;
+      if (!supabase) return;
+
+      const { data } = await supabase.auth.getUser();
+      if (!data.user) return;
+
+      channel = supabase
+        .channel(`history-sync-${data.user.id}`)
+        .on(
+          "postgres_changes",
+          { 
+            event: "*", 
+            schema: "public", 
+            table: "orders",
+            filter: `user_id=eq.${data.user.id}` 
+          },
+          () => {
+            console.log("Realtime order update (History)");
+            loadOrders();
+          }
+        )
+        .subscribe();
+    };
+
+    setupRealtime();
+
+    return () => {
+      if (channel) {
+        import("@/lib/supabase-browser").then(mod => {
+          mod.supabaseBrowser?.removeChannel(channel);
+        });
+      }
+    };
   }, []);
 
   return (

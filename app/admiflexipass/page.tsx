@@ -1,158 +1,212 @@
-﻿"use client";
+"use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
+import StatCard from "./components/StatCard";
+import OrderTable from "./components/OrderTable";
+import OrderModal from "./components/OrderModal";
+import { Order } from "./components/OrderRow";
+import { 
+  DollarSign, 
+  Clock, 
+  Users, 
+  Layers, 
+  ArrowRight,
+  Sparkles,
+  Zap,
+  RefreshCcw
+} from "lucide-react";
+import Link from "next/link";
 
-type Product = {
-  id: string;
-  title: string;
-  price: number;
-};
+export default function AdminDashboard() {
+  const [stats, setStats] = useState({
+    totalSales: 0,
+    pendingApprovals: 0,
+    totalUsers: 0,
+    activeProducts: 0
+  });
+  const [recentOrders, setRecentOrders] = useState<Order[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-type Variant = {
-  id: string;
-  product_id: string;
-};
-
-type OrdersSummary = {
-  grouped?: { status: string; count: number }[];
-  pending_payment?: number;
-};
-
-export default function AdminDashboardPage() {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [variants, setVariants] = useState<Variant[]>([]);
-  const [orders, setOrders] = useState<OrdersSummary | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const loadDashboard = async () => {
-    setLoading(true);
-    setError(null);
-    const safeJson = async (resp: Response) => {
-      if (!resp.ok) {
-        const text = await resp.text().catch(() => "");
-        throw new Error(text || resp.statusText);
-      }
-      return resp.json();
-    };
+  const fetchDashboardData = async () => {
+    setIsLoading(true);
     try {
-      const [pRes, oRes, vRes] = await Promise.all([
-        fetch("/api/admin/products").then(safeJson),
-        fetch("/api/admin/orders").then(safeJson),
-        fetch("/api/admin/variants").then(safeJson),
-      ]);
-      setProducts(pRes?.products ?? []);
-      setOrders(oRes ?? null);
-      setVariants(Array.isArray(vRes) ? vRes : []);
-    } catch (err: any) {
-      setError(err?.message || "Erreur de chargement");
+      // 1. Fetch Stats
+      const { data: salesData } = await supabase
+        .from("orders")
+        .select("total_amount")
+        .eq("status", "completed");
+      
+      const { count: pendingCount } = await supabase
+        .from("orders")
+        .select("*", { count: 'exact', head: true })
+        .eq("status", "pending");
+
+      const { count: userCount } = await supabase
+        .from("users")
+        .select("*", { count: 'exact', head: true });
+
+      const { count: productCount } = await supabase
+        .from("products")
+        .select("*", { count: 'exact', head: true })
+        .eq("active", true);
+
+      const totalSalesValue = salesData?.reduce((sum, o) => sum + (Number(o.total_amount) || 0), 0) || 0;
+
+      setStats({
+        totalSales: totalSalesValue,
+        pendingApprovals: pendingCount || 0,
+        totalUsers: userCount || 0,
+        activeProducts: productCount || 0
+      });
+
+      const { data: pending, error: pendingError } = await supabase
+        .from("orders")
+        .select(`
+          *,
+          userProfile:users (
+            name,
+            email
+          )
+        `)
+        .eq("status", "pending")
+        .order("created_at", { ascending: false })
+        .limit(10);
+      
+      if (pendingError) {
+        console.warn("Jointure Dashboard échouée, fallback sur requête simple:", pendingError.message);
+        const { data: simpleData, error: simpleError } = await supabase
+          .from("orders")
+          .select("*")
+          .eq("status", "pending")
+          .order("created_at", { ascending: false })
+          .limit(10);
+        
+        if (simpleError) throw simpleError;
+        
+        const safeFormatted = (simpleData || []).map((o: any) => ({
+          ...o,
+          email: o.customer_email || "Inconnu",
+          user_name: o.customer_name || "Client"
+        }));
+        setRecentOrders(safeFormatted);
+      } else {
+        const formatted = (pending || []).map((o: any) => ({
+          ...o,
+          email: o.userProfile?.email || o.customer_email || "Inconnu",
+          user_name: o.userProfile?.name || o.customer_name || "Client"
+        }));
+        setRecentOrders(formatted);
+      }
+    } catch (err) {
+      console.error("Error fetching dashboard data:", err);
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    loadDashboard();
+    fetchDashboardData();
+
+    // Real-time synchronization
+    const channel = supabase
+      .channel("dashboard_updates")
+      .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, () => fetchDashboardData())
+      .on("postgres_changes", { event: "*", schema: "public", table: "users" }, () => fetchDashboardData())
+      .on("postgres_changes", { event: "*", schema: "public", table: "products" }, () => fetchDashboardData())
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
-  const totalRevenue = products.reduce((s, p) => s + Number(p.price || 0), 0);
-  const totalOrders =
-    orders?.grouped?.reduce((s, r) => s + Number(r.count || 0), 0) ?? 0;
+  const handleViewOrder = (order: Order) => {
+    setSelectedOrder(order);
+    setIsModalOpen(true);
+  };
 
   return (
-    <>
-      <div className="admin-hero">
+    <div className="space-y-8 pb-12">
+      {/* Header section */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <p className="admin-eyebrow">Admin</p>
-          <h1 className="admin-title">Dashboard</h1>
-          <p className="admin-hero-sub">Vue globale des ventes, commandes et catalogue.</p>
+          <h1 className="text-4xl font-black italic uppercase tracking-tighter text-zinc-100 flex items-center gap-3">
+            Vue d'ensemble <span className="text-red-500">Admin</span> <Sparkles className="text-red-500" size={32} />
+          </h1>
+          <p className="text-zinc-500 font-medium uppercase tracking-widest text-xs mt-1">
+            Hub d'Intelligence d'Affaires FlexiPass
+          </p>
         </div>
-        <div className="admin-hero-actions">
-          <button className="btn-primary" type="button" onClick={loadDashboard}>
-            Actualiser
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={fetchDashboardData}
+            className="p-4 bg-[#1e1e2e] border border-zinc-800 rounded-2xl text-zinc-400 hover:text-white transition-all shadow-lg shadow-black/20"
+          >
+            <RefreshCcw size={20} className={isLoading ? "animate-spin" : ""} />
           </button>
-          {loading && <span className="muted">Chargement...</span>}
-          {error && <span className="update-error">{error}</span>}
-        </div>
-      </div>
-
-      <div className="admin-stats-grid">
-        <div className="stat-card">
-          <div className="stat-label">Produits</div>
-          <div className="stat-value">{products.length}</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-label">Variants</div>
-          <div className="stat-value">{variants.length}</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-label">Commandes</div>
-          <div className="stat-value">{totalOrders}</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-label">Revenu estimé</div>
-          <div className="stat-value">{totalRevenue} HTG</div>
-        </div>
-      </div>
-
-      <div className="charts-grid">
-        <div className="chart-card">
-          <div className="chart-head">
-            <span>Ventes (mock)</span>
-          </div>
-          <div className="mini-bars big">
-            {["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"].map((m, i) => {
-              const h = 12 + (i % 6) * 12 + 18;
-              return (
-                <div key={m} className="bar">
-                  <div className="bar-fill" style={{ height: `${h}px` }} />
-                  <span>{m}</span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        <div className="chart-card donut-card">
-          <div className="chart-head">
-            <span>Commandes en attente</span>
-          </div>
-          <div className="donut">
-            <div className="donut-inner">
-              <strong>{orders?.pending_payment ?? 0}</strong>
-              <span>pending</span>
-            </div>
+          <div className="bg-red-500/10 border border-red-500/20 px-6 py-4 rounded-2xl flex items-center gap-3 text-red-500">
+            <Zap size={20} fill="currentColor" className="animate-pulse" />
+            <span className="text-[10px] font-black uppercase tracking-[0.2em]">Synchro en temps réel active</span>
           </div>
         </div>
       </div>
 
-      <div className="admin-grid">
-        <div className="admin-card">
-          <h3>Statuts commandes</h3>
-          <div className="admin-stats">
-            {(orders?.grouped ?? []).map((s) => (
-              <div key={s.status} className="stat-pill">
-                <strong>{s.status}</strong>
-                <span>{s.count}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-        <div className="admin-card">
-          <h3>Actions rapides</h3>
-          <div className="admin-actions">
-            <a className="btn-full ghost-btn" href="/admiflexipass/products">
-              Gérer les produits
-            </a>
-            <a className="btn-full ghost-btn" href="/admiflexipass/orders">
-              Voir les commandes
-            </a>
-            <a className="btn-full ghost-btn" href="/admiflexipass/settings">
-              Réglages
-            </a>
-          </div>
-        </div>
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <StatCard 
+          title="Chiffre d'Affaires Total" 
+          value={`${stats.totalSales.toLocaleString()} HTG`} 
+          icon={DollarSign} 
+        />
+        <StatCard 
+          title="File d'Attente" 
+          value={stats.pendingApprovals} 
+          icon={Clock} 
+          trend={`${stats.pendingApprovals} à vérifier`}
+          trendUp={false}
+        />
+        <StatCard 
+          title="Base Utilisateurs" 
+          value={stats.totalUsers} 
+          icon={Users} 
+        />
+        <StatCard 
+          title="SKUs au Catalogue" 
+          value={stats.activeProducts} 
+          icon={Layers} 
+        />
       </div>
-    </>
+
+      {/* Recent Activity Section */}
+      <div className="space-y-6">
+        <div className="flex items-center justify-between px-2">
+          <h2 className="text-2xl font-black italic uppercase tracking-tight text-zinc-100 flex items-center gap-3">
+            Flux Prioritaire
+          </h2>
+          <Link 
+            href="/admiflexipass/orders" 
+            className="px-4 py-2 bg-zinc-800/50 hover:bg-zinc-800 rounded-xl text-zinc-400 hover:text-red-500 text-xs font-black uppercase tracking-widest flex items-center gap-2 transition-all"
+          >
+            Voir tout <ArrowRight size={14} />
+          </Link>
+        </div>
+        
+        <OrderTable 
+          orders={recentOrders} 
+          onView={handleViewOrder} 
+          isLoading={isLoading} 
+        />
+      </div>
+
+      <OrderModal 
+        isOpen={isModalOpen} 
+        order={selectedOrder} 
+        onClose={() => setIsModalOpen(false)} 
+        onSuccess={fetchDashboardData}
+      />
+    </div>
   );
 }

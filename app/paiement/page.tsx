@@ -88,6 +88,7 @@ export default function PaiementPage() {
   const items = useSyncExternalStore(subscribeCart, getCartSnapshot, getServerCartSnapshot);
   const [method, setMethod] = useState<PaymentMethod>("moncash");
   const [bank, setBank] = useState<BankKey>("sogebank");
+  const [proofFile, setProofFile] = useState<File | null>(null);
   const [proofName, setProofName] = useState("");
   const [message, setMessage] = useState<string | null>(null);
   const [moncashRef] = useState("FPMON-001");
@@ -120,12 +121,53 @@ export default function PaiementPage() {
         currentUser = data?.user || null;
       }
 
+      let proofUrl = null;
+      if (method === "transfer" && proofFile && supabaseBrowser) {
+        const fileExt = proofFile.name.split('.').pop();
+        const fileName = `${Math.random()}-${Date.now()}.${fileExt}`;
+        const filePath = `proofs/${fileName}`;
+
+        const { error: uploadError } = await supabaseBrowser.storage
+          .from('orders')
+          .upload(filePath, proofFile);
+
+        if (uploadError) throw new Error("Échec de l'upload de la preuve : " + uploadError.message);
+
+        const { data: urlData } = supabaseBrowser.storage
+          .from('orders')
+          .getPublicUrl(filePath);
+        
+        proofUrl = urlData.publicUrl;
+      }
+
+      // SI MONCASH : Appel au placeholder API
+      if (method === "moncash") {
+        try {
+          const moncashRes = await fetch("/api/payments/moncash", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              amount: total,
+              customerEmail: currentUser?.email || "guest@example.com",
+              items: items
+            })
+          });
+          const moncashData = await moncashRes.json();
+          console.log("MonCash Initiation Response:", moncashData);
+          // Le développeur suivant pourra utiliser moncashData.redirect_url ici
+        } catch (e) {
+          console.warn("Erreur initiation MonCash (normal en mode placeholder):", e);
+        }
+      }
+
       const payload = {
         customer_email: currentUser?.email || "guest@example.com",
+        customer_name: currentUser?.user_metadata?.full_name || "Client",
         user_id: currentUser?.id || null,
         items: items.map(i => ({ product_id: i.id, quantity: i.qty, price: i.price })),
         total,
-        payment_method: method === "moncash" ? "moncash_test" : "virement"
+        payment_method: method === "moncash" ? "moncash_test" : "virement",
+        payment_proof_url: proofUrl
       };
 
       const res = await fetch("/api/orders", {
@@ -339,7 +381,11 @@ export default function PaiementPage() {
                       id="proof"
                       type="file"
                       accept="image/*,application/pdf"
-                      onChange={(e) => setProofName(e.target.files?.[0]?.name ?? "")}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0] || null;
+                        setProofFile(file);
+                        setProofName(file?.name ?? "");
+                      }}
                     />
                     {proofName ? <small>Fichier: {proofName}</small> : <small>Aucun fichier selectionne.</small>}
                   </div>

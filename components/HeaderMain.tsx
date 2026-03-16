@@ -293,7 +293,12 @@ export default function HeaderMain() {
       setAuthError("Impossible de se déconnecter : client Supabase indisponible.");
       return;
     }
-    await supabaseBrowser.auth.signOut();
+    try {
+      await supabaseBrowser.auth.signOut();
+    } catch (err) {
+      console.warn("La déconnexion Supabase a renvoyé une erreur (souvent réseau) :", err);
+      // On continue quand même le nettoyage local pour éviter que l'utilisateur soit bloqué
+    }
     setSettingsOpen(false);
     switchAuthMode("login");
     setLoginOpen(true);

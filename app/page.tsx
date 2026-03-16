@@ -253,17 +253,50 @@ export default function Home() {
     } catch (_) {}
 
     setLoadingProducts(true);
-    fetch("/api/products")
-      .then((r) => r.json())
-      .then((data) => {
-        const list = Array.isArray(data) ? data : [];
-        setProducts(list);
-        try {
-          localStorage.setItem("products_cache", JSON.stringify(list));
-        } catch (_) {}
-      })
-      .catch(() => setProducts((prev) => prev || []))
-      .finally(() => setLoadingProducts(false));
+    const fetchProducts = () => {
+      fetch("/api/products")
+        .then((r) => r.json())
+        .then((data) => {
+          const list = Array.isArray(data) ? data : [];
+          setProducts(list);
+          try {
+            localStorage.setItem("products_cache", JSON.stringify(list));
+          } catch (_) {}
+        })
+        .catch(() => setProducts((prev) => prev || []))
+        .finally(() => setLoadingProducts(false));
+    };
+
+    fetchProducts();
+
+    let channel: any;
+    const setupRealtime = async () => {
+       const mod = await import("@/lib/supabase-browser").catch(() => null);
+       const supabase = mod?.supabaseBrowser;
+       if (!supabase) return;
+
+       channel = supabase
+         .channel("home-products-sync")
+         .on(
+           "postgres_changes",
+           { event: "*", schema: "public", table: "products" },
+           () => {
+             console.log("Syncing products (Home)...");
+             fetchProducts();
+           }
+         )
+         .subscribe();
+    };
+
+    setupRealtime();
+
+    return () => {
+      if (channel) {
+         import("@/lib/supabase-browser").then(mod => {
+            mod.supabaseBrowser?.removeChannel(channel);
+         });
+      }
+    };
   }, []);
 
   const visibleProducts = useMemo(() => {
@@ -413,7 +446,11 @@ export default function Home() {
       setAuthError("Impossible de se déconnecter : client Supabase indisponible.");
       return;
     }
-    await supabaseBrowser.auth.signOut();
+    try {
+      await supabaseBrowser.auth.signOut();
+    } catch (err) {
+      console.warn("La déconnexion Supabase a renvoyé une erreur (souvent réseau) :", err);
+    }
     setSettingsOpen(false);
     switchAuthMode("login");
     setLoginOpen(true);

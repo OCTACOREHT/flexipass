@@ -98,12 +98,46 @@ export default function CataloguePage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setLoading(true);
-    fetch("/api/products")
-      .then((r) => r.json())
-      .then((data) => setProducts(Array.isArray(data) ? data : []))
-      .catch(() => setProducts([]))
-      .finally(() => setLoading(false));
+    const loadProducts = () => {
+      setLoading(true);
+      fetch("/api/products")
+        .then((r) => r.json())
+        .then((data) => setProducts(Array.isArray(data) ? data : []))
+        .catch(() => setProducts([]))
+        .finally(() => setLoading(false));
+    };
+
+    loadProducts();
+
+    // REAL-TIME SYNC
+    let channel: any;
+    const setupRealtime = async () => {
+      const mod = await import("@/lib/supabase-browser").catch(() => null);
+      const supabase = mod?.supabaseBrowser;
+      if (!supabase) return;
+
+      channel = supabase
+        .channel("catalogue-realtime")
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "products" },
+          () => {
+            console.log("Realtime update (Catalogue)");
+            loadProducts();
+          }
+        )
+        .subscribe();
+    };
+
+    setupRealtime();
+
+    return () => {
+      if (channel) {
+        import("@/lib/supabase-browser").then(mod => {
+          mod.supabaseBrowser?.removeChannel(channel);
+        });
+      }
+    };
   }, []);
 
   const visible = useMemo(() => {

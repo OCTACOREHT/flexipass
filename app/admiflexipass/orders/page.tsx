@@ -1,203 +1,308 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
+import OrderTable from "@/app/admiflexipass/components/OrderTable";
+import OrderModal from "@/app/admiflexipass/components/OrderModal";
+import SearchInput from "@/app/admiflexipass/components/SearchInput";
+import SuccessToast from "@/app/admiflexipass/components/SuccessToast";
+import { Package, RefreshCcw, Sparkles, CheckCircle2, Clock } from "lucide-react";
+import { Order } from "@/app/admiflexipass/components/OrderRow";
 
-type Order = {
-  id: string;
-  status?: string | null;
-  total_amount?: number | null;
-  currency?: string | null;
-  created_at?: string | null;
-  customer_email?: string | null;
-  payment_method?: string | null;
-};
-
-type OrdersSummary = {
-  grouped?: { status: string; count: number }[];
-  pending_payment?: number;
-  orders?: Order[];
-};
-
-export default function AdminOrdersPage() {
-  const [summary, setSummary] = useState<OrdersSummary | null>(null);
+export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
-  const [savingId, setSavingId] = useState<string | null>(null);
-  const [selected, setSelected] = useState<Order | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<"pending" | "all">("pending");
+  const [timeFilter, setTimeFilter] = useState<"all" | "today" | "week" | "month" | "year" | "custom">("all");
+  const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth());
+  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
-  const loadOrders = async () => {
-    setLoading(true);
-    setError(null);
+  // ROBUST FETCH: Handles empty state and network errors without crashing
+  const fetchOrders = async () => {
+    setIsLoading(true);
     try {
-      const mod = await import("@/lib/supabase-browser").catch(() => null);
-      const supabase = mod?.supabaseBrowser;
-      if (!supabase) throw new Error("Client Supabase introuvable");
-
-      const { data: userRes, error: userErr } = await supabase.auth.getUser();
-      if (userErr || !userRes?.user) throw new Error("Non autorisé");
-
-      const { data, error: fetchErr } = await supabase
+      // ÉTAPE 1 : Tenter la requête avec JOINTURE (plus riche)
+      let query = supabase
         .from("orders")
-        .select("*")
-        .order("created_at", { ascending: false });
+        .select(`
+          *,
+          userProfile:users (
+            name,
+            email
+          )
+        `);
 
-      if (fetchErr) throw new Error(fetchErr.message);
+      // Filtre Statut
+      if (statusFilter === "pending") {
+        query = query.eq("status", "pending");
+      }
 
-      const items = Array.isArray(data) ? data : [];
-      setOrders(items);
+      // Filtre Temps
+      const now = new Date();
+      if (timeFilter === "today") {
+        const startOfDay = new Date(now.setHours(0,0,0,0)).toISOString();
+        query = query.gte("created_at", startOfDay);
+      } else if (timeFilter === "week") {
+        const lastWeek = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
+        query = query.gte("created_at", lastWeek);
+      } else if (timeFilter === "month") {
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+        query = query.gte("created_at", startOfMonth);
+      } else if (timeFilter === "year") {
+        const startOfYear = new Date(now.getFullYear(), 0, 1).toISOString();
+        query = query.gte("created_at", startOfYear);
+      } else if (timeFilter === "custom") {
+        const start = new Date(selectedYear, selectedMonth, 1).toISOString();
+        const end = new Date(selectedYear, selectedMonth + 1, 0, 23, 59, 59).toISOString();
+        query = query.gte("created_at", start).lte("created_at", end);
+      }
 
-      const pending = items.filter((o) => o.status === "pending_payment").length;
-      const counts = items.reduce((acc: Record<string, number>, o) => {
-        const st = o.status || "unknown";
-        acc[st] = (acc[st] || 0) + 1;
-        return acc;
-      }, {});
+      const { data, error } = await query.order("created_at", { ascending: false });
 
-      setSummary({
-        pending_payment: pending,
-        grouped: Object.entries(counts).map(([k, v]) => ({ status: k, count: v })),
-        orders: items,
-      });
-    } catch (err: any) {
-      setError(err?.message || "Erreur de chargement");
+      if (error) {
+        console.warn("Jointure échouée, fallback sur requête simple:", error.message);
+        // ÉTAPE 2 : FALLBACK : Requête simple si la jointure échoue
+        let fallbackQuery = supabase
+          .from("orders")
+          .select("*");
+
+        if (statusFilter === "pending") {
+          fallbackQuery = fallbackQuery.eq("status", "pending");
+        }
+
+        const now = new Date();
+        if (timeFilter === "today") {
+          const startOfDay = new Date(now.setHours(0,0,0,0)).toISOString();
+          fallbackQuery = fallbackQuery.gte("created_at", startOfDay);
+        } else if (timeFilter === "week") {
+          const lastWeek = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
+          fallbackQuery = fallbackQuery.gte("created_at", lastWeek);
+        } else if (timeFilter === "month") {
+          const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+          fallbackQuery = fallbackQuery.gte("created_at", startOfMonth);
+        } else if (timeFilter === "year") {
+          const startOfYear = new Date(now.getFullYear(), 0, 1).toISOString();
+          fallbackQuery = fallbackQuery.gte("created_at", startOfYear);
+        } else if (timeFilter === "custom") {
+          const start = new Date(selectedYear, selectedMonth, 1).toISOString();
+          const end = new Date(selectedYear, selectedMonth + 1, 0, 23, 59, 59).toISOString();
+          fallbackQuery = fallbackQuery.gte("created_at", start).lte("created_at", end);
+        }
+
+        const { data: simpleData, error: simpleError } = await fallbackQuery.order("created_at", { ascending: false });
+        
+        if (simpleError) throw simpleError;
+        
+        const safeFormatted = (simpleData || []).map((o: any) => ({
+          ...o,
+          email: o.customer_email || "Inconnu",
+          user_name: o.customer_name || "Client"
+        }));
+        setOrders(safeFormatted);
+      } else {
+        // Map data pour harmoniser
+        const formatted = (data || []).map((o: any) => ({
+          ...o,
+          email: o.userProfile?.email || o.customer_email || "Inconnu",
+          user_name: o.userProfile?.name || o.customer_name || "Client"
+        }));
+        setOrders(formatted);
+      }
+    } catch (err) {
+      console.error("Critical Fetch Error:", err);
+      setOrders([]);
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
-  const getStatusClass = (status?: string | null) => {
-    if (!status) return "status-unknown";
-    if (status === "paid" || status === "completed") return "status-success";
-    if (status === "processing") return "status-info";
-    if (status === "pending_payment") return "status-warn";
-    if (status === "cancelled") return "status-danger";
-    return "status-unknown";
+  useEffect(() => {
+    fetchOrders();
+
+    let channel: any;
+    const setupRealtime = () => {
+      channel = supabase
+        .channel("orders-live-stream")
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "orders" },
+          () => {
+            console.log("Realtime order update detected");
+            fetchOrders();
+          }
+        )
+        .subscribe();
+    };
+
+    setupRealtime();
+
+    return () => {
+      if (channel) supabase.removeChannel(channel);
+    };
+  }, [timeFilter, statusFilter, selectedMonth, selectedYear]);
+
+  // STATUS CONTROL: Function to update order status
+  const updateOrderStatus = async (orderId: string, newStatus: string) => {
+    try {
+      const { error } = await supabase
+        .from("orders")
+        .update({ status: newStatus })
+        .eq("id", orderId);
+      
+      if (error) throw error;
+      setToast({ message: `Commande marquée comme ${newStatus}`, type: "success" });
+      fetchOrders();
+    } catch (err: any) {
+      setToast({ message: err.message || "Échec de la mise à jour", type: "error" });
+    }
   };
 
-  useEffect(() => {
-    loadOrders();
-  }, []);
+  const filteredOrders = orders.filter(o => 
+    (o.id || "").toLowerCase().includes(searchTerm.toLowerCase()) || 
+    (o.user_id || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+    ((o as any).email || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+    ((o as any).user_name || "").toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
-    <>
-      <div className="admin-hero">
-        <div>
-          <p className="admin-eyebrow">Admin</p>
-          <h1 className="admin-title">Commandes</h1>
-          <p className="admin-hero-sub">Gérez les statuts et suivez les commandes récentes.</p>
+    <div className="space-y-10 pb-20">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 bg-[#0d0d12]/60 p-10 rounded-[2.5rem] border border-zinc-900 backdrop-blur-xl shadow-2xl shadow-black">
+        <div className="flex items-center gap-6">
+          <div className="p-5 bg-red-500/10 rounded-3xl border border-red-500/20 text-red-500 shadow-inner">
+            <Package size={36} />
+          </div>
+          <div>
+            <h1 className="text-5xl font-black italic uppercase tracking-tighter text-zinc-100 italic">
+              File de <span className="text-red-600">Vérification</span>
+            </h1>
+            <div className="flex items-center gap-4 mt-2">
+               <p className="text-zinc-500 font-bold uppercase tracking-[0.3em] text-[10px]">
+                Transactions en attente
+              </p>
+              <div className="h-1 w-1 bg-zinc-700 rounded-full"></div>
+              <p className="text-emerald-500 font-black uppercase tracking-[0.3em] text-[9px] flex items-center gap-2">
+                <Sparkles size={12} className="animate-pulse" />
+                Flux en direct actif
+              </p>
+            </div>
+          </div>
         </div>
-        <div className="admin-hero-actions">
-          <button className="btn-primary" type="button" onClick={loadOrders}>
-            Actualiser
+        
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={fetchOrders}
+            className="p-5 bg-zinc-900 border border-zinc-800 rounded-[1.5rem] text-zinc-400 hover:text-white transition-all shadow-lg active:scale-90"
+          >
+            <RefreshCcw size={22} className={isLoading ? "animate-spin" : ""} />
           </button>
-          {loading && <span className="muted">Chargement...</span>}
-          {error && <span className="update-error">{error}</span>}
+          
+          <div className="flex bg-zinc-900/80 p-1.5 rounded-[1.5rem] border border-zinc-800">
+            <button
+               onClick={() => setStatusFilter("pending")}
+               className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                 statusFilter === "pending" ? "bg-red-600 text-white shadow-lg" : "text-zinc-500 hover:text-zinc-300"
+               }`}
+            >
+              En attente ({orders.filter(o => o.status === 'pending').length})
+            </button>
+            <button
+               onClick={() => setStatusFilter("all")}
+               className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                 statusFilter === "all" ? "bg-zinc-800 text-white shadow-lg" : "text-zinc-500 hover:text-zinc-300"
+               }`}
+            >
+              Toutes les Commandes
+            </button>
+          </div>
         </div>
       </div>
 
-      <div className="admin-grid">
-        <div className="admin-card">
-          <h3>Résumé</h3>
-          <div className="admin-stats">
-            <div className="stat-pill">
-              <strong>pending_payment</strong>
-              <span>{summary?.pending_payment ?? 0}</span>
-            </div>
-            {(summary?.grouped ?? []).map((s) => (
-              <div key={s.status} className="stat-pill">
-                <strong>{s.status}</strong>
-                <span>{s.count}</span>
-              </div>
-            ))}
-          </div>
+      <div className="flex flex-col md:flex-row gap-6 items-center">
+        <div className="flex-1 w-full overflow-hidden">
+          <SearchInput 
+            value={searchTerm} 
+            onChange={setSearchTerm} 
+            placeholder="Recherche par ID, Nom ou Email..." 
+          />
         </div>
-        <div className="admin-card wide">
-          <h3>Liste des commandes</h3>
-          <div className="admin-table">
-            <div className="admin-row head" style={{ gridTemplateColumns: "1.1fr 1.2fr 0.8fr 0.8fr 1fr 0.8fr 0.8fr" }}>
-              <span>ID</span>
-              <span>Client</span>
-              <span>Statut</span>
-              <span>Paiement</span>
-              <span>Total</span>
-              <span>Date</span>
-              <span>Actions</span>
-            </div>
-            {orders.length === 0 && <div className="admin-empty">Aucune commande pour le moment.</div>}
-            {orders.map((o) => (
-              <div
-                className="admin-row"
-                key={o.id}
-                style={{ gridTemplateColumns: "1.1fr 1.2fr 0.8fr 0.8fr 1fr 0.8fr 0.8fr" }}
+        
+        {/* FILTRES DE DATE */}
+        <div className="flex flex-wrap items-center gap-4 bg-zinc-900/50 p-2 rounded-2xl border border-zinc-800 backdrop-blur-md">
+          <div className="flex bg-zinc-800/50 p-1 rounded-xl border border-zinc-700/50">
+            {[
+              { id: "all", label: "Tout" },
+              { id: "today", label: "Aujourd'hui" },
+              { id: "week", label: "Semaine" },
+              { id: "custom", label: "Archive" }
+            ].map((f) => (
+              <button
+                key={f.id}
+                onClick={() => setTimeFilter(f.id as any)}
+                className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
+                  timeFilter === f.id 
+                    ? "bg-red-600 text-white shadow-lg shadow-red-500/20" 
+                    : "text-zinc-500 hover:text-zinc-300"
+                }`}
               >
-                <span title={o.id} style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{o.id}</span>
-                <span title={o.customer_email ?? ""} style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{o.customer_email ?? "—"}</span>
-                <span>
-                  <div className={`status-pill ${getStatusClass(o.status)}`} style={{fontSize: "0.85em", padding: "2px 6px"}}>
-                    {o.status ?? "—"}
-                  </div>
-                </span>
-                <span>{o.payment_method ?? "—"}</span>
-                <span>{o.total_amount ?? 0} {o.currency ?? "HTG"}</span>
-                <span>{o.created_at ? new Date(o.created_at).toLocaleDateString() : "—"}</span>
-                <span>
-                  <div className="admin-inline">
-                    <button type="button" className="link" onClick={() => setSelected(o)}>
-                      Détails
-                    </button>
-                  </div>
-                </span>
-              </div>
+                {f.label}
+              </button>
             ))}
           </div>
+
+          {timeFilter === "custom" && (
+            <div className="flex items-center gap-2 animate-in fade-in slide-in-from-left-4 duration-300">
+              <select 
+                value={selectedMonth} 
+                onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+                className="bg-zinc-800 border border-zinc-700 text-zinc-200 text-[10px] font-bold uppercase tracking-widest px-3 py-2 rounded-lg outline-none focus:ring-1 focus:ring-red-500"
+              >
+                {["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Août", "Sep", "Oct", "Nov", "Déc"].map((m, i) => (
+                  <option key={m} value={i}>{m}</option>
+                ))}
+              </select>
+              <select 
+                value={selectedYear} 
+                onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                className="bg-zinc-800 border border-zinc-700 text-zinc-200 text-[10px] font-bold uppercase tracking-widest px-3 py-2 rounded-lg outline-none focus:ring-1 focus:ring-red-500"
+              >
+                {[2024, 2025, 2026].map(y => (
+                  <option key={y} value={y}>{y}</option>
+                ))}
+              </select>
+            </div>
+          )}
         </div>
       </div>
 
-      {selected && (
-        <div className="modal-overlay" onClick={() => setSelected(null)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-head">
-              <h3>Détails de la commande</h3>
-              <button className="icon-btn ghost" aria-label="Fermer" onClick={() => setSelected(null)}>
-                <i className="ri-close-line" />
-              </button>
-            </div>
-            <div className="modal-body">
-              <div className="admin-detail-grid">
-                <div>
-                  <div className="admin-detail-label">ID</div>
-                  <div className="admin-detail-value">{selected.id}</div>
-                </div>
-                <div>
-                  <div className="admin-detail-label">Statut</div>
-                  <div className="admin-detail-value">{selected.status ?? "—"}</div>
-                </div>
-                <div>
-                  <div className="admin-detail-label">Total</div>
-                  <div className="admin-detail-value">{selected.total_amount ?? 0} {selected.currency ?? "HTG"}</div>
-                </div>
-                <div>
-                  <div className="admin-detail-label">Date</div>
-                  <div className="admin-detail-value">
-                    {selected.created_at ? new Date(selected.created_at).toLocaleString() : "—"}
-                  </div>
-                </div>
-                <div>
-                  <div className="admin-detail-label">Client</div>
-                  <div className="admin-detail-value">{selected.customer_email ?? "—"}</div>
-                </div>
-              </div>
-              <div className="admin-json">
-                <pre>{JSON.stringify(selected, null, 2)}</pre>
-              </div>
-            </div>
-          </div>
-        </div>
+      <div className="bg-[#0d0d12] rounded-[3rem] border border-zinc-800/50 overflow-hidden shadow-2xl">
+         <OrderTable 
+            orders={filteredOrders} 
+            isLoading={isLoading} 
+            onView={(order) => { setSelectedOrder(order); setIsModalOpen(true); }}
+          />
+      </div>
+
+      <OrderModal 
+        isOpen={isModalOpen} 
+        order={selectedOrder} 
+        onClose={() => setIsModalOpen(false)} 
+        onSuccess={() => {
+          setToast({ message: "Commande traitée avec succès", type: "success" });
+        }}
+      />
+
+      {toast && (
+        <SuccessToast 
+          message={toast.message} 
+          type={toast.type} 
+          onClose={() => setToast(null)} 
+        />
       )}
-    </>
+    </div>
   );
 }
-
-
-
