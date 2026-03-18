@@ -1,4 +1,4 @@
--- EXÉCUTER CE SCRIPT DANS LE SQL EDITOR DE SUPABASE
+﻿-- EXÉCUTER CE SCRIPT DANS LE SQL EDITOR DE SUPABASE
 
 -- 1. Création du bucket 'orders' pour les preuves de paiement
 INSERT INTO storage.buckets (id, name, public) 

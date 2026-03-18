@@ -261,3 +261,14 @@ Definition of done:
 - Construire le mode test maintenant, puis remplacer la couche de paiement plus tard.
 - Garder une seule source de verite pour les commandes: la table `orders`.
 - Eviter de dupliquer la logique de statut entre frontend et backend.
+
+
+## Environnement (paiements, email, uploads)
+
+Variables dans `.env.local` ou `.env` (voir `.env.example`) :
+- `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_USER`, `EMAIL_PASSWORD`, `EMAIL_FROM`
+- `MONCASH_CLIENT_ID`, `MONCASH_CLIENT_SECRET`, `MONCASH_MODE`
+- `UPLOAD_STORAGE_PATH`
+- `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
+
+Schema SQL a appliquer dans Supabase : `orders_schema.sql`.

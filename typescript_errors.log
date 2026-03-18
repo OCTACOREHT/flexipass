@@ -1,2 +1,0 @@
-﻿app/page.tsx(329,18): error TS2353: Object literal may only specify known properties, and 'shouldCreateUser' does not exist in type '{ captchaToken?: string | undefined; }'.
-components/HeaderMain.tsx(211,18): error TS2353: Object literal may only specify known properties, and 'shouldCreateUser' does not exist in type '{ captchaToken?: string | undefined; }'.

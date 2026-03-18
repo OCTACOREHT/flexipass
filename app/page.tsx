@@ -208,19 +208,31 @@ export default function Home() {
     return () => document.removeEventListener("click", onClickOutside);
   }, [settingsOpen]);
 
-  useEffect(() => {
-    // Récupère une éventuelle erreur OAuth dans l'URL et ouvre le modal
-    const params = new URLSearchParams(window.location.search);
-    const err = params.get("auth_error");
-    if (err) {
-      setAuthError(err);
-      setLoginOpen(true);
-      switchAuthMode("login");
-      params.delete("auth_error");
-      const next = `${window.location.pathname}${params.toString() ? `?${params.toString()}` : ""}${window.location.hash}`;
-      window.history.replaceState({}, "", next);
-    }
-  }, []);
+    useEffect(() => {
+      // Ouvre le modal de connexion selon l'URL
+      const params = new URLSearchParams(window.location.search);
+      const err = params.get("auth_error");
+      const login = params.get("login");
+
+      if (login === "1") {
+        setLoginOpen(true);
+        switchAuthMode("login");
+        params.delete("login");
+        const next = `${window.location.pathname}${params.toString() ? `?${params.toString()}` : ""}${window.location.hash}`;
+        window.history.replaceState({}, "", next);
+        return;
+      }
+
+      // Récupère une éventuelle erreur OAuth dans l'URL et ouvre le modal
+      if (err) {
+        setAuthError(err);
+        setLoginOpen(true);
+        switchAuthMode("login");
+        params.delete("auth_error");
+        const next = `${window.location.pathname}${params.toString() ? `?${params.toString()}` : ""}${window.location.hash}`;
+        window.history.replaceState({}, "", next);
+      }
+    }, []);
 
   useEffect(() => {
     try {

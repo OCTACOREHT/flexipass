@@ -1,4 +1,4 @@
--- EXÉCUTER CE SCRIPT DANS LE SQL EDITOR DE SUPABASE
+﻿-- EXÉCUTER CE SCRIPT DANS LE SQL EDITOR DE SUPABASE
 -- Résout l'erreur "new row violates row-level security policy" pour les uploads.
 
 -- 1. Configuration du bucket 'products'

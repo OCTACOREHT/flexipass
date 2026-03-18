@@ -9,7 +9,7 @@ export interface Order {
   user_id: string;
   product_id: string;
   total_amount: number;
-  status: "pending" | "completed";
+  status: "pending" | "completed" | "delivered";
   payment_proof_url: string;
   gift_code?: string;
   created_at: string;
@@ -40,11 +40,11 @@ export default function OrderRow({ order, onView }: OrderRowProps) {
       <td className="py-4 px-4 font-semibold text-zinc-100">${order.total_amount.toFixed(2)}</td>
       <td className="py-4 px-4">
         <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-          order.status === "completed" 
+          order.status === "completed" || order.status === "delivered" 
             ? "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20" 
             : "bg-amber-500/10 text-amber-500 border border-amber-500/20"
         }`}>
-          {order.status === "completed" ? "Terminée" : "En attente"}
+          {order.status === "completed" || order.status === "delivered" ? "Terminée" : "En attente"}
         </span>
       </td>
       <td className="py-4 px-4 text-zinc-500 text-xs">

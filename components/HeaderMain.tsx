@@ -386,7 +386,15 @@ export default function HeaderMain() {
                 </button>
               </div>
             )}
-            <button className="icon-btn cart-btn" aria-label="Panier">
+            <button
+              className="icon-btn cart-btn"
+              aria-label="Panier"
+              onClick={() => {
+                if (typeof window !== "undefined") {
+                  window.location.href = "/?cart=1";
+                }
+              }}
+            >
               <i className="ri-shopping-bag-3-line" />
               <span className="cart-badge">{cartCount}</span>
             </button>

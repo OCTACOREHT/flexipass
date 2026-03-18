@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import FooterMain from "@/components/FooterMain";
 import HeaderMain from "@/components/HeaderMain";
 
@@ -96,10 +96,36 @@ export default function PaiementPage() {
   const [orderError, setOrderError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [orderId, setOrderId] = useState<string | null>(null);
+  const [authRequired, setAuthRequired] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
+  const [emailSentToast, setEmailSentToast] = useState(false);
+  const [moncashConfirmed, setMoncashConfirmed] = useState(false);
 
   const total = useMemo(() => items.reduce((sum, item) => sum + item.price * item.qty, 0), [items]);
   const selectedBank = bankAccounts[bank];
   const transferCode = `${selectedBank.reference}-001`;
+  const isTransferReady = method !== "transfer" || Boolean(proofName);
+  const canSubmit = items.length > 0 && !submitting && isTransferReady;
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const transactionId = params.get("transactionId") || params.get("transaction_id");
+    if (!transactionId) return;
+
+    fetch("/api/payments/moncash/verify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ transactionId }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.success) {
+          setMoncashConfirmed(true);
+        }
+      })
+      .catch(() => null);
+  }, []);
 
   const handleSubmitPayment = async () => {
     if (method === "transfer" && !proofName) {
@@ -110,15 +136,26 @@ export default function PaiementPage() {
     setSubmitting(true);
     setOrderError(null);
     setMessage(null);
+    setAuthRequired(false);
+    setEmailSent(false);
+    setEmailSentToast(false);
 
     try {
       const mod = await import("@/lib/supabase-browser").catch(() => null);
       const supabaseBrowser = mod?.supabaseBrowser;
       let currentUser = null;
 
+      let accessToken: string | null = null;
       if (supabaseBrowser) {
         const { data } = await supabaseBrowser.auth.getUser();
         currentUser = data?.user || null;
+        const sessionData = await supabaseBrowser.auth.getSession();
+        accessToken = sessionData.data.session?.access_token || null;
+      }
+
+      if (!accessToken) {
+        setAuthRequired(true);
+        return;
       }
 
       let proofUrl = null;
@@ -140,26 +177,6 @@ export default function PaiementPage() {
         proofUrl = urlData.publicUrl;
       }
 
-      // SI MONCASH : Appel au placeholder API
-      if (method === "moncash") {
-        try {
-          const moncashRes = await fetch("/api/payments/moncash", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              amount: total,
-              customerEmail: currentUser?.email || "guest@example.com",
-              items: items
-            })
-          });
-          const moncashData = await moncashRes.json();
-          console.log("MonCash Initiation Response:", moncashData);
-          // Le développeur suivant pourra utiliser moncashData.redirect_url ici
-        } catch (e) {
-          console.warn("Erreur initiation MonCash (normal en mode placeholder):", e);
-        }
-      }
-
       const payload = {
         customer_email: currentUser?.email || "guest@example.com",
         customer_name: currentUser?.user_metadata?.full_name || "Client",
@@ -172,7 +189,10 @@ export default function PaiementPage() {
 
       const res = await fetch("/api/orders", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+        },
         body: JSON.stringify(payload)
       });
 
@@ -181,9 +201,46 @@ export default function PaiementPage() {
       }
 
       const data = await res.json();
-      setOrderId(data.order_id);
-      
-      // Clear cart
+      const createdOrderId = (data?.order?.id || data?.order_id) as string;
+      if (method === "transfer" && data?.email_sent) {
+        setEmailSentToast(true);
+        setTimeout(() => setEmailSentToast(false), 1200);
+      }
+
+      if (method === "moncash") {
+        const moncashRes = await fetch("/api/payments/moncash", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            amount: total,
+            orderId: createdOrderId,
+            customerEmail: currentUser?.email || "guest@example.com",
+          }),
+        });
+
+        if (!moncashRes.ok) {
+          throw new Error((await moncashRes.text()) || "Erreur d'initiation MonCash");
+        }
+
+        const moncashData = await moncashRes.json();
+        const paymentUrl = moncashData?.redirect_url || moncashData?.payment_url;
+
+        if (!paymentUrl) {
+          throw new Error("MonCash n'a pas renvoye d'URL de paiement");
+        }
+
+        if (typeof window !== "undefined") {
+          localStorage.setItem(CART_KEY, JSON.stringify([]));
+          window.dispatchEvent(new Event("cart:updated"));
+          window.location.href = paymentUrl;
+        }
+
+        return;
+      }
+
+      setOrderId(createdOrderId);
+      setEmailSent(Boolean(data?.email_sent));
+
       if (typeof window !== "undefined") {
         localStorage.setItem(CART_KEY, JSON.stringify([]));
         window.dispatchEvent(new Event("cart:updated"));
@@ -398,8 +455,9 @@ export default function PaiementPage() {
                 <button
                   className="btn-full modal-primary"
                   type="button"
-                  disabled={!items.length || submitting}
+                  disabled={!canSubmit}
                   onClick={handleSubmitPayment}
+                  style={!canSubmit ? { opacity: 0.6, cursor: "not-allowed" } : undefined}
                 >
                   {submitting ? "Création en cours..." : (method === "moncash" ? "Payer avec Moncash" : "Soumettre le virement")}
                 </button>
@@ -416,8 +474,8 @@ export default function PaiementPage() {
       </main>
       <FooterMain />
 
-      {/* Success Modal */}
-      {orderId && (
+      {/* MonCash Confirmed Modal */}
+      {moncashConfirmed && (
         <div className="modal-overlay">
           <div className="modal text-center" style={{ padding: "40px 20px" }}>
             <div className="modal-icon" style={{ fontSize: 48, color: "#10b981", marginBottom: 16 }}>
@@ -425,7 +483,7 @@ export default function PaiementPage() {
             </div>
             <h2>Commande Confirmée !</h2>
             <p className="muted" style={{ margin: "12px 0 24px" }}>
-              Commande <strong>#{orderId.slice(0, 8).toUpperCase()}</strong> créée avec succès.<br/>
+              Votre paiement MonCash a été confirmé.<br/>
               Statut : processing.
             </p>
             <div className="cta-stack">
@@ -436,6 +494,51 @@ export default function PaiementPage() {
                 Continuer mes achats
               </Link>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Auth Required Modal */}
+      {authRequired && (
+        <div className="modal-overlay" onClick={() => setAuthRequired(false)}>
+          <div className="modal text-center" style={{ padding: "40px 20px" }} onClick={(e) => e.stopPropagation()}>
+            <div className="modal-icon" style={{ fontSize: 48, color: "#ef4444", marginBottom: 16 }}>
+              <i className="ri-lock-2-line" />
+            </div>
+            <h2>Connexion requise</h2>
+            <p className="muted" style={{ margin: "12px 0 24px" }}>
+              Vous devez etre connecte pour passer une commande.
+            </p>
+            <div className="cta-stack">
+              <Link href="/?login=1" className="btn-primary" style={{ display: "block" }}>
+                Se connecter
+              </Link>
+              <button className="btn-ghost" style={{ display: "block", marginTop: 8 }} onClick={() => setAuthRequired(false)}>
+                Annuler
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Email Sent Toast Modal */}
+      {emailSentToast && (
+        <div className="modal-overlay" style={{ animation: "fadeIn 180ms ease-out" }}>
+          <div
+            className="modal text-center"
+            style={{
+              padding: "40px 20px",
+              transform: "translateY(6px)",
+              animation: "popIn 180ms ease-out forwards",
+            }}
+          >
+            <div className="modal-icon" style={{ fontSize: 48, color: "#10b981", marginBottom: 16 }}>
+              <i className="ri-checkbox-circle-fill" />
+            </div>
+            <h2>Email envoyé</h2>
+            <p className="muted" style={{ margin: "12px 0 0" }}>
+              Un email de confirmation vient d'être envoyé.
+            </p>
           </div>
         </div>
       )}

@@ -1,33 +1,49 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
+import { createPayment, getRedirectUrl } from "@/lib/moncash";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 
-/**
- * PLACEHOLDER POUR L'INTÉGRATION MONCASH
- * Ce fichier est destiné au développeur qui s'occupera de l'API MonCash.
- */
+export const runtime = "nodejs";
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { amount, orderId, customerEmail } = body;
+    const amount = Number(body?.amount);
+    const orderId = String(body?.orderId || "");
 
-    console.log("--- MONCASH TRANSACTION INITIATED ---");
-    console.log("Order ID:", orderId);
-    console.log("Amount:", amount);
-    console.log("Customer:", customerEmail);
+    if (!amount || !orderId) {
+      return NextResponse.json({ error: "amount ou orderId manquant" }, { status: 400 });
+    }
 
-    // TODO: Implémenter ici l'appel vers MonCash API (Get Token -> Create Payment)
-    // Exemple : 
-    // 1. Authentification MonCash
-    // 2. Création du paiement
-    // 3. Retourner l'URL de redirection MonCash
+    const payment = await createPayment(amount, orderId);
+    const paymentToken = payment?.payment_token?.token;
 
-    return NextResponse.json({ 
-      success: true, 
-      message: "Point d'entrée MonCash prêt.",
-      redirect_url: "https://sandbox.moncash.com/..." // URL à générer dynamiquement
-    }, { status: 200 });
+    if (!paymentToken) {
+      return NextResponse.json(
+        { error: "MonCash n'a pas retourne de payment_token", details: payment },
+        { status: 502 }
+      );
+    }
 
+    if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      const supabase = supabaseAdmin();
+      await supabase
+        .from("orders")
+        .update({ status: "pending_payment" })
+        .eq("id", orderId);
+    }
+
+    return NextResponse.json(
+      {
+        success: true,
+        order_id: orderId,
+        payment_token: paymentToken,
+        redirect_url: getRedirectUrl(paymentToken),
+        moncash: payment,
+      },
+      { status: 200 }
+    );
   } catch (error: any) {
-    console.error("MonCash API Placeholder Error:", error);
+    console.error("MonCash init error:", error);
     return NextResponse.json({ error: "Erreur lors de l'initiation MonCash" }, { status: 500 });
   }
 }

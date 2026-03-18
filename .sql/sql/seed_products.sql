@@ -1,4 +1,4 @@
--- seed_products.sql
+﻿-- seed_products.sql
 -- Run this script in the Supabase SQL Editor to seed 24 new active products.
 -- This assumes the table is named `products` and has columns:
 -- id (UUID), title (text), type (text), price (numeric), currency (text), 
