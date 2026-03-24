@@ -14,6 +14,7 @@ interface OrderModalProps {
 
 export default function OrderModal({ order, isOpen, onClose, onSuccess }: OrderModalProps) {
   const [isApproving, setIsApproving] = useState(false);
+  const [isRejecting, setIsRejecting] = useState(false);
   const [accounts, setAccounts] = useState<any[]>([]);
   const [loadingAccounts, setLoadingAccounts] = useState(false);
   const [selectedAccountId, setSelectedAccountId] = useState("");
@@ -100,6 +101,36 @@ export default function OrderModal({ order, isOpen, onClose, onSuccess }: OrderM
       alert(`Échec de l'approbation : ${errorMsg}`);
     } finally {
       setIsApproving(false);
+    }
+  };
+
+  const handleReject = async () => {
+    if (!order?.id) {
+      alert("ID de commande manquant.");
+      return;
+    }
+    const ok = confirm("Confirmer le refus de cette commande ?");
+    if (!ok) return;
+    setIsRejecting(true);
+    try {
+      const res = await fetch(`/api/orders/${order.id}/reject`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ order_id: order.id }),
+      });
+
+      if (!res.ok) {
+        throw new Error(await res.text());
+      }
+
+      onSuccess();
+      onClose();
+    } catch (err: any) {
+      console.error("Erreur lors du refus de la commande:", err);
+      const errorMsg = err.message || JSON.stringify(err);
+      alert(`Echec du refus : ${errorMsg}`);
+    } finally {
+      setIsRejecting(false);
     }
   };
 
@@ -227,11 +258,19 @@ export default function OrderModal({ order, isOpen, onClose, onSuccess }: OrderM
           <div className="flex items-center gap-2">
             <div
               className={`w-2 h-2 rounded-full ${
-                order.status === "completed" || order.status === "delivered" ? "bg-emerald-500" : "bg-amber-500"
+                order.status === "completed" || order.status === "delivered"
+                  ? "bg-emerald-500"
+                  : order.status === "rejected"
+                  ? "bg-red-500"
+                  : "bg-amber-500"
               }`}
             ></div>
             <span className="text-xs text-zinc-400 capitalize">
-              {order.status === "completed" || order.status === "delivered" ? "Terminée" : "En attente"}
+              {order.status === "completed" || order.status === "delivered"
+                ? "Terminee"
+                : order.status === "rejected"
+                ? "Refusee"
+                : "En attente"}
             </span>
           </div>
           <div className="flex gap-3">
@@ -242,18 +281,32 @@ export default function OrderModal({ order, isOpen, onClose, onSuccess }: OrderM
               Fermer
             </button>
             {order.status === "pending" && (
-              <button
-                onClick={handleApprove}
-                disabled={isApproving}
-                className="px-8 py-2.5 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl transition-all flex items-center gap-2 shadow-lg shadow-red-500/20 disabled:opacity-50"
-              >
-                {isApproving ? (
-                  <div className="w-6 h-6 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
-                ) : (
-                  <ShieldCheck size={20} />
-                )}
-                Approuver & Délivrer
-              </button>
+              <>
+                <button
+                  onClick={handleReject}
+                  disabled={isRejecting || isApproving}
+                  className="px-6 py-2.5 rounded-xl font-bold transition-all flex items-center gap-2 bg-red-600 hover:bg-red-400 text-white shadow-lg shadow-red-500/20 disabled:opacity-50"
+                >
+                  {isRejecting ? (
+                    <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+                  ) : (
+                    <X size={18} />
+                  )}
+                  Refuser
+                </button>
+                <button
+                  onClick={handleApprove}
+                  disabled={isApproving || isRejecting}
+                  className="px-8 py-2.5 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl transition-all flex items-center gap-2 shadow-lg shadow-red-500/20 disabled:opacity-50"
+                >
+                  {isApproving ? (
+                    <div className="w-6 h-6 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+                  ) : (
+                    <ShieldCheck size={20} />
+                  )}
+                  Approuver & Délivrer
+                </button>
+              </>
             )}
           </div>
         </div>

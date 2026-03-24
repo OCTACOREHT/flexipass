@@ -23,6 +23,9 @@ type AccountDeliveryArgs = {
   accountPassword: string;
   profile?: string | null;
 };
+type OrderRejectedArgs = {
+  order: any;
+};
 
 const buildItemsHtml = (items: OrderItemEmail[]) =>
   items
@@ -292,6 +295,57 @@ export async function sendAccountDeliveryEmail({
         ${profile ? `<p style="margin:0;"><strong>Profil :</strong> ${profile}</p>` : ""}
       </div>
       <p style="margin:16px 0 0;color:#666;font-size:12px;">Si vous avez un souci, contactez notre support.</p>
+    </div>
+  `;
+
+  try {
+    await transporter.sendMail({
+      from,
+      to: order.customer_email,
+      subject,
+      html,
+    });
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error?.message || "Email send failed" };
+  }
+}
+
+export async function sendOrderRejectedEmail({ order }: OrderRejectedArgs): Promise<EmailResult | null> {
+  const host = process.env.EMAIL_HOST || "";
+  const user = process.env.EMAIL_USER || "";
+  const pass = process.env.EMAIL_PASSWORD || "";
+  const port = Number(process.env.EMAIL_PORT || 587);
+  const from = process.env.EMAIL_FROM || "pitonrodjy@gmail.com";
+
+  if (!host || !user || !pass) {
+    return { success: false, error: "EMAIL_* variables manquantes" };
+  }
+
+  const transporter = nodemailer.createTransport({
+    host,
+    port,
+    secure: port === 465,
+    auth: { user, pass },
+  });
+
+  const subject = `Commande #${order.id} refusee`;
+  const createdAt = order.created_at ? new Date(order.created_at) : new Date();
+  const dateLabel = new Intl.DateTimeFormat("fr-FR", {
+    dateStyle: "full",
+    timeStyle: "short",
+  }).format(createdAt);
+
+  const html = `
+    <div style="font-family:Arial,sans-serif;color:#111;max-width:640px;margin:0 auto;border:1px solid #eee;border-radius:16px;padding:24px;">
+      <h2 style="margin:0 0 8px;">Commande refusee</h2>
+      <p style="margin:0 0 16px;color:#555;">Commande #${order.id} • ${dateLabel}</p>
+      <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:16px;">
+        <p style="margin:0;font-size:14px;color:#9a3412;">
+          Votre paiement n'a pas pu etre valide. Merci de re-verifier la preuve et de relancer votre commande ou de contacter le support.
+        </p>
+      </div>
+      <p style="margin:16px 0 0;color:#666;font-size:12px;">Besoin d'aide ? Contactez notre support.</p>
     </div>
   `;
 

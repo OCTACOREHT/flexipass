@@ -1,5 +1,78 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Packages a installer (avant push / apres clone)
+
+Prerequis:
+
+- Node.js (version LTS recommandee)
+- npm (ou yarn/pnpm/bun)
+
+Installation:
+
+```bash
+npm install
+```
+
+Ensuite:
+
+```bash
+npm run dev
+```
+
+Dependances (runtime):
+
+- `next`
+- `react`
+- `react-dom`
+- `@supabase/auth-helpers-nextjs`
+- `@supabase/ssr`
+- `@supabase/storage-js`
+- `@supabase/supabase-js`
+- `clsx`
+- `date-fns`
+- `lucide-react`
+- `resend`
+- `xlsx`
+- `nodemailer`
+
+Dependances de developpement:
+
+- `@tailwindcss/postcss`
+- `tailwindcss`
+- `typescript`
+- `eslint`
+- `eslint-config-next`
+- `@types/node`
+- `@types/react`
+- `@types/react-dom`
+
+## Configuration locale
+
+Copier le modele d'environnement et renseigner les variables:
+
+```bash
+copy ".env.example(modele)" ".env.local"
+```
+
+Variables utilisees (email):
+
+- `EMAIL_HOST`
+- `EMAIL_PORT`
+- `EMAIL_USER`
+- `EMAIL_PASSWORD`
+- `EMAIL_FROM`
+- `EMAIL_LOGO_URL`
+
+Variables utilisees (Supabase):
+
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+
+Variable optionnelle (site URL):
+
+- `NEXT_PUBLIC_SITE_URL` (ou `SITE_URL` / `APP_URL`)
+
 ## Getting Started
 
 First, run the development server:
