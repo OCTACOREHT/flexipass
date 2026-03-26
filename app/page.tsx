@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import FooterMain from "@/components/FooterMain";
+import { getProductImageSrc, handleProductImageError } from "@/lib/product-brand";
 
 type Variant = { id: string; label: string; duration_days: number; price: number; currency: string };
 type Product = {
@@ -45,49 +46,6 @@ const brandLogos = [
   { name: "Perplexity", icon: "/assets/images/brands/perplexity.svg" },
   { name: "Slack", icon: "/assets/images/brands/slack.png" },
 ];
-
-const brandAssetMap: Record<string, string> = {
-  canva: "/assets/images/brands/canva.jpg",
-  chatgpt: "/assets/images/brands/chatgpt.svg",
-  copilot: "/assets/images/brands/microsoft.svg",
-  microsoft: "/assets/images/brands/microsoft.svg",
-  "prime video": "/assets/images/brands/prime-video.png",
-  netflix: "/assets/images/brands/netflix.svg",
-  coursera: "/assets/images/brands/coursera.svg",
-  claude: "/assets/images/brands/claude.svg",
-  spotify: "/assets/images/brands/spotify.svg",
-  apple: "/assets/images/brands/apple.svg",
-  xbox: "/assets/images/brands/xbox.svg",
-  youtube: "/assets/images/brands/youtube.svg",
-  perplexity: "/assets/images/brands/perplexity.svg",
-  slack: "/assets/images/brands/slack.png",
-  playstation: "/assets/images/brands/playstation.svg",
-  steam: "/assets/images/brands/steam.svg",
-  nintendo: "/assets/images/brands/nintendo.svg",
-  crunchyroll: "https://upload.wikimedia.org/wikipedia/commons/0/08/Crunchyroll_Logo.png",
-  hbo: "https://upload.wikimedia.org/wikipedia/commons/1/17/HBO_Max_Logo.svg",
-  midjourney: "https://upload.wikimedia.org/wikipedia/commons/e/e6/Midjourney_Emblem.png",
-  adobe: "https://upload.wikimedia.org/wikipedia/commons/4/4c/Adobe_Creative_Cloud_Express_logo.svg",
-  zoom: "https://upload.wikimedia.org/wikipedia/commons/7/7b/Zoom_Communications_Logo.svg",
-  notion: "https://upload.wikimedia.org/wikipedia/commons/4/45/Notion_app_logo.png",
-  roblox: "https://upload.wikimedia.org/wikipedia/commons/c/c5/Roblox_Logo_2022.svg",
-  fortnite: "https://upload.wikimedia.org/wikipedia/commons/1/1a/FortniteLogo.svg",
-};
-
-const getBrandAsset = (p: Product) => {
-  if (p.image_url && p.image_url.trim()) return p.image_url.trim();
-  const hay = `${p.title ?? ""} ${p.subtitle ?? ""} ${p.short_description ?? ""}`.toLowerCase();
-  const key = Object.keys(brandAssetMap).find((k) => hay.includes(k));
-  return key ? brandAssetMap[key] : "/assets/images/brands/chatgpt.svg";
-};
-const toImageSrc = (raw?: string | null) => {
-  const value = raw?.trim();
-  if (!value) return "/assets/images/brands/chatgpt.svg";
-  if (value.startsWith("/")) return value;
-  if (/^https?:\/\//i.test(value)) return value;
-  if (/^(data:|blob:)/i.test(value)) return value;
-  return `/${value.replace(/^\/+/, "")}`;
-};
 
 const getDisplayTitle = (title: string) => title.replace(/\s*haiti\s*/gi, "").trim();
 const normalizeSlug = (value: string) =>
@@ -155,6 +113,7 @@ function useSessionUser() {
 
 export default function Home() {
   const user = useSessionUser();
+  const userLabel = user?.name?.trim() || "Connexion";
   const [products, setProducts] = useState<Product[]>([]);
   const [active, setActive] = useState<string>("all");
   const [query, setQuery] = useState("");
@@ -207,6 +166,29 @@ export default function Home() {
     document.addEventListener("click", onClickOutside);
     return () => document.removeEventListener("click", onClickOutside);
   }, [settingsOpen]);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setMenuOpen(false);
+      }
+    };
+    const closeOnResize = () => {
+      if (window.innerWidth > 1024) {
+        setMenuOpen(false);
+      }
+    };
+
+    window.addEventListener("keydown", closeOnEscape);
+    window.addEventListener("resize", closeOnResize);
+
+    return () => {
+      window.removeEventListener("keydown", closeOnEscape);
+      window.removeEventListener("resize", closeOnResize);
+    };
+  }, [menuOpen]);
 
     useEffect(() => {
       // Ouvre le modal de connexion selon l'URL
@@ -330,7 +312,7 @@ export default function Home() {
       if (existing) {
         return items.map((i) => (i.id === p.id && i.price === (price ?? p.price) ? { ...i, qty: i.qty + 1 } : i));
       }
-      return [...items, { id: p.id, title: getDisplayTitle(p.title), price: price ?? p.price, qty: 1, image: getBrandAsset(p) }];
+      return [...items, { id: p.id, title: getDisplayTitle(p.title), price: price ?? p.price, qty: 1, image: getProductImageSrc(p) }];
     });
     setCartOpen(true);
   };
@@ -468,6 +450,16 @@ export default function Home() {
     setLoginOpen(true);
   };
 
+  const closeMobileMenu = () => {
+    setMenuOpen(false);
+  };
+
+  const toggleMobileMenu = () => {
+    setSearchOpen(false);
+    setSettingsOpen(false);
+    setMenuOpen((value) => !value);
+  };
+
   const cartCount = cartItems.reduce((s, i) => s + i.qty, 0);
   const formatHtg = (value: number) =>
     `${new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 2 }).format(value)} HTG`;
@@ -483,7 +475,7 @@ export default function Home() {
 
   return (
     <main>
-      <header className="nav">
+      <header className={`nav ${menuOpen ? "menu-open" : ""}`}>
         <div className="nav-inner">
           <div className="brand-logo">
             <img src="/assets/images/brands/flexipass-logo.svg" alt="FlexiPass" />
@@ -513,7 +505,7 @@ export default function Home() {
                     <a key={p.id} className="nav-result nav-result--thumb" href={`/product/${encodeURIComponent(getProductSlug(p))}`} onClick={() => setSearchOpen(false)}>
                       <img
                         className="nav-result-thumb"
-                              src={toImageSrc(getBrandAsset(p))}
+                              src={getProductImageSrc(p)}
                         alt=""
                         aria-hidden="true"
                         width={20}
@@ -521,7 +513,7 @@ export default function Home() {
                         loading="lazy"
                         decoding="async"
                         onError={(e) => {
-                          (e.currentTarget as HTMLImageElement).src = "/assets/images/brands/chatgpt.svg";
+                          handleProductImageError(e.currentTarget, p);
                         }}
                       />
                       <span className="nav-result-label">{getDisplayTitle(p.title)}</span>
@@ -535,12 +527,32 @@ export default function Home() {
             <button
               type="button"
               className="user-chip"
-              title={user?.name ?? "Se connecter"}
+              title={userLabel}
               onClick={() => (user ? setSettingsOpen((v) => !v) : (switchAuthMode("login"), setLoginOpen(true)))}
               aria-expanded={settingsOpen}
+              style={{
+                width: "auto",
+                minWidth: 0,
+                maxWidth: "clamp(96px, 34vw, 156px)",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                padding: "0 10px",
+              }}
             >
               <i className="ri-user-smile-line" />
-              <span className="user-name">{user?.name ?? "Connexion"}</span>
+              <span
+                className="user-name"
+                style={{
+                  display: "inline-block",
+                  maxWidth: "calc(100% - 22px)",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {userLabel}
+              </span>
             </button>
             {user && settingsOpen && (
               <div className="settings-dropdown">
@@ -565,7 +577,9 @@ export default function Home() {
             <button
               className="icon-btn hamburger-btn"
               aria-label="Menu"
-              onClick={() => setMenuOpen((v) => !v)}
+              aria-expanded={menuOpen}
+              aria-controls="mobile-nav-panel"
+              onClick={toggleMobileMenu}
             >
               <i className={menuOpen ? "ri-close-line" : "ri-menu-line"} />
             </button>
@@ -591,7 +605,7 @@ export default function Home() {
                   <a key={p.id} className="nav-result nav-result--thumb" href={`/product/${encodeURIComponent(getProductSlug(p))}`} onClick={() => setSearchOpen(false)}>
                     <img
                       className="nav-result-thumb"
-                      src={toImageSrc(getBrandAsset(p))}
+                      src={getProductImageSrc(p)}
                       alt=""
                       aria-hidden="true"
                       width={20}
@@ -599,7 +613,7 @@ export default function Home() {
                       loading="lazy"
                       decoding="async"
                       onError={(e) => {
-                        (e.currentTarget as HTMLImageElement).src = "/assets/images/brands/chatgpt.svg";
+                        handleProductImageError(e.currentTarget, p);
                       }}
                     />
                     <span className="nav-result-label">{getDisplayTitle(p.title)}</span>
@@ -608,17 +622,58 @@ export default function Home() {
               </div>
             )}
           </div>
-        </div>
-        <div className={`mobile-menu ${menuOpen ? "show" : ""}`}>
-          <a href="/cartes-cadeaux" onClick={() => setMenuOpen(false)}>
-            Cartes Cadeaux
-          </a>
-          <a href="/streaming" onClick={() => setMenuOpen(false)}>
-            Streaming
-          </a>
-          <a href="/premium" onClick={() => setMenuOpen(false)}>
-            Premium
-          </a>
+          <div
+            id="mobile-nav-panel"
+            className={`mobile-menu ${menuOpen ? "show" : ""}`}
+            role="navigation"
+            aria-hidden={!menuOpen}
+            aria-label="Navigation mobile"
+          >
+            {user ? <div className="mobile-menu-user">{userLabel}</div> : null}
+            <div className="mobile-menu-links">
+              <a className="mobile-menu-link" href="/cartes-cadeaux" onClick={closeMobileMenu}>
+                Cartes Cadeaux
+              </a>
+              <a className="mobile-menu-link" href="/streaming" onClick={closeMobileMenu}>
+                Streaming
+              </a>
+              <a className="mobile-menu-link" href="/premium" onClick={closeMobileMenu}>
+                Premium
+              </a>
+              {user ? (
+                <>
+                  <a className="mobile-menu-link" href="/settings" onClick={closeMobileMenu}>
+                    Paramètres
+                  </a>
+                  <a className="mobile-menu-link" href="/history" onClick={closeMobileMenu}>
+                    Historique
+                  </a>
+                  <button
+                    type="button"
+                    className="mobile-menu-link mobile-menu-link--danger"
+                    onClick={() => {
+                      closeMobileMenu();
+                      handleSignOut();
+                    }}
+                  >
+                    Déconnexion
+                  </button>
+                </>
+              ) : (
+                <button
+                  type="button"
+                  className="mobile-menu-link mobile-menu-link--primary"
+                  onClick={() => {
+                    closeMobileMenu();
+                    switchAuthMode("login");
+                    setLoginOpen(true);
+                  }}
+                >
+                  Se connecter
+                </button>
+              )}
+            </div>
+          </div>
         </div>
       </header>
 
@@ -692,7 +747,7 @@ export default function Home() {
       </div>
 
       <section className="section" id="giftcards">
-        <div className="section-head">
+        <div className="section-head section-head--mobile-center">
           <h2>Explorer</h2>
           <a href="/catalogue" className="link">
             Voir tout →
@@ -733,13 +788,13 @@ export default function Home() {
                 <article key={p.id} className={`compact-card ${p.type === "account" ? "luxe" : ""}`}>
                   <div className="compact-logo">
                     <img
-                      src={toImageSrc(getBrandAsset(p))}
+                      src={getProductImageSrc(p)}
                       alt={p.title}
                       width={32}
                       height={32}
                       loading="lazy"
                       onError={(e) => {
-                        e.currentTarget.style.display = "none";
+                        handleProductImageError(e.currentTarget, p);
                       }}
                     />
                   </div>
@@ -775,7 +830,7 @@ export default function Home() {
       </section>
 
       <section className="section" id="premium">
-        <div className="section-head">
+        <div className="section-head section-head--mobile-center">
           <h2>Premium</h2>
           <a href="/catalogue" className="link">
             Voir tout →
@@ -794,13 +849,13 @@ export default function Home() {
               <article key={p.id} className="compact-card luxe">
                 <div className="compact-logo">
                   <img
-                    src={getBrandAsset(p)}
+                    src={getProductImageSrc(p)}
                     alt={p.title}
                     width={32}
                     height={32}
                     loading="lazy"
                     onError={(e) => {
-                      e.currentTarget.style.display = "none";
+                      handleProductImageError(e.currentTarget, p);
                     }}
                   />
                 </div>

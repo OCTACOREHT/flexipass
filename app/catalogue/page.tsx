@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import type { RealtimeChannel } from "@supabase/supabase-js";
 import FooterMain from "@/components/FooterMain";
 import HeaderMain from "@/components/HeaderMain";
+import { getProductImageSrc, handleProductImageError } from "@/lib/product-brand";
 
 type Variant = { id: string; label: string; duration_days: number; price: number; currency: string };
 type Product = {
@@ -29,50 +31,6 @@ const categories: Category[] = [
   { key: "divertissement", label: "Divertissement", icon: "ri-music-2-line" },
 ];
 
-const brandAssetMap: Record<string, string> = {
-  canva: "/assets/images/brands/canva.jpg",
-  chatgpt: "/assets/images/brands/chatgpt.svg",
-  copilot: "/assets/images/brands/microsoft.svg",
-  microsoft: "/assets/images/brands/microsoft.svg",
-  "prime video": "/assets/images/brands/prime-video.png",
-  netflix: "/assets/images/brands/netflix.svg",
-  coursera: "/assets/images/brands/coursera.svg",
-  claude: "/assets/images/brands/claude.svg",
-  spotify: "/assets/images/brands/spotify.svg",
-  apple: "/assets/images/brands/apple.svg",
-  xbox: "/assets/images/brands/xbox.svg",
-  youtube: "/assets/images/brands/youtube.svg",
-  perplexity: "/assets/images/brands/perplexity.svg",
-  slack: "/assets/images/brands/slack.png",
-  playstation: "/assets/images/brands/playstation.svg",
-  steam: "/assets/images/brands/steam.svg",
-  nintendo: "/assets/images/brands/nintendo.svg",
-  crunchyroll: "https://upload.wikimedia.org/wikipedia/commons/0/08/Crunchyroll_Logo.png",
-  hbo: "https://upload.wikimedia.org/wikipedia/commons/1/17/HBO_Max_Logo.svg",
-  midjourney: "https://upload.wikimedia.org/wikipedia/commons/e/e6/Midjourney_Emblem.png",
-  adobe: "https://upload.wikimedia.org/wikipedia/commons/4/4c/Adobe_Creative_Cloud_Express_logo.svg",
-  zoom: "https://upload.wikimedia.org/wikipedia/commons/7/7b/Zoom_Communications_Logo.svg",
-  notion: "https://upload.wikimedia.org/wikipedia/commons/4/45/Notion_app_logo.png",
-  roblox: "https://upload.wikimedia.org/wikipedia/commons/c/c5/Roblox_Logo_2022.svg",
-  fortnite: "https://upload.wikimedia.org/wikipedia/commons/1/1a/FortniteLogo.svg",
-};
-
-const getBrandAsset = (p: Product) => {
-  if (p.image_url && p.image_url.trim()) return p.image_url.trim();
-  const hay = `${p.title ?? ""} ${p.subtitle ?? ""} ${p.short_description ?? ""}`.toLowerCase();
-  const key = Object.keys(brandAssetMap).find((k) => hay.includes(k));
-  return key ? brandAssetMap[key] : "/assets/images/brands/chatgpt.svg";
-};
-
-const toImageSrc = (raw?: string | null) => {
-  const value = raw?.trim();
-  if (!value) return "/assets/images/brands/chatgpt.svg";
-  if (value.startsWith("/")) return value;
-  if (/^https?:\/\//i.test(value)) return value;
-  if (/^(data:|blob:)/i.test(value)) return value;
-  return `/${value.replace(/^\/+/, "")}`;
-};
-
 const getDisplayTitle = (title: string) => title.replace(/\s*haiti\s*/gi, "").trim();
 const normalizeSlug = (value: string) =>
   value
@@ -94,7 +52,6 @@ const getCategoryKey = (p: Product) => {
 export default function CataloguePage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [active, setActive] = useState<string>("all");
-  const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -110,7 +67,7 @@ export default function CataloguePage() {
     loadProducts();
 
     // REAL-TIME SYNC
-    let channel: any;
+    let channel: RealtimeChannel | null = null;
     const setupRealtime = async () => {
       const mod = await import("@/lib/supabase-browser").catch(() => null);
       const supabase = mod?.supabaseBrowser;
@@ -141,10 +98,8 @@ export default function CataloguePage() {
   }, []);
 
   const visible = useMemo(() => {
-    const base = active === "all" ? products : products.filter((p) => getCategoryKey(p) === active);
-    if (!query.trim()) return base;
-    return base.filter((p) => p.title.toLowerCase().includes(query.toLowerCase()));
-  }, [products, query, active]);
+    return active === "all" ? products : products.filter((p) => getCategoryKey(p) === active);
+  }, [products, active]);
 
   const categoryCounts = useMemo(() => {
     const counts: Record<string, number> = { all: products.length };
@@ -159,38 +114,12 @@ export default function CataloguePage() {
     <>
       <HeaderMain />
       <main className="market-shell">
-        <section className="market-hero">
-          <div className="market-hero-inner">
-            <div>
-              <p className="hero-eyebrow">FlexiPass</p>
-              <h1>Catalogue</h1>
-              <p>Tout l'inventaire en un coup d'oeil : cartes cadeaux et abonnements premium.</p>
-              <div className="market-hero-actions">
-                <a className="btn-primary" href="/cartes-cadeaux">Cartes cadeaux</a>
-                <a className="btn-ghost" href="/premium">Premium</a>
-              </div>
-            </div>
-            <div className="market-search">
-              <input
-                type="search"
-                placeholder="Rechercher un produit..."
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-              />
-              <i className="ri-search-line" />
-            </div>
-          </div>
-        </section>
-
         <section className="market-section">
-          <div className="section-head market-head">
-            <h2>Tous les produits</h2>
-            <button type="button" className="link" onClick={() => (setActive("all"), setQuery(""))}>
-              Voir tout
-            </button>
+          <div className="section-head market-head" style={{ justifyContent: "center" }}>
+            <h2 style={{ textAlign: "center", width: "100%" }}>Tous les produits</h2>
           </div>
 
-          <div className="pills market-pills">
+          <div className="pills market-pills" style={{ justifyContent: "center" }}>
             {categories.map((c) => (
               <button
                 key={c.key}
@@ -221,13 +150,13 @@ export default function CataloguePage() {
                 <article key={p.id} className={`compact-card ${p.type === "account" ? "luxe" : ""}`}>
                   <div className="compact-logo">
                     <img
-                      src={toImageSrc(getBrandAsset(p))}
+                      src={getProductImageSrc(p)}
                       alt={p.title}
                       width={32}
                       height={32}
                       loading="lazy"
                       onError={(e) => {
-                        e.currentTarget.style.display = "none";
+                        handleProductImageError(e.currentTarget, p);
                       }}
                     />
                   </div>

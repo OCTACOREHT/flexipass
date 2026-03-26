@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { getProductImageSrc, handleProductImageError } from "@/lib/product-brand";
 
 type Product = {
   id: string;
@@ -11,33 +12,6 @@ type Product = {
   short_description?: string | null;
   image_url?: string | null;
 };
-const brandAssetMap: Record<string, string> = {
-  canva: "/assets/images/brands/canva.jpg",
-  chatgpt: "/assets/images/brands/chatgpt.svg",
-  copilot: "/assets/images/brands/microsoft.svg",
-  microsoft: "/assets/images/brands/microsoft.svg",
-  "prime video": "/assets/images/brands/prime-video.png",
-  netflix: "/assets/images/brands/netflix.svg",
-  coursera: "/assets/images/brands/coursera.svg",
-  claude: "/assets/images/brands/claude.svg",
-  spotify: "/assets/images/brands/spotify.svg",
-  apple: "/assets/images/brands/apple.svg",
-  xbox: "/assets/images/brands/xbox.svg",
-  youtube: "/assets/images/brands/youtube.svg",
-  perplexity: "/assets/images/brands/perplexity.svg",
-  slack: "/assets/images/brands/slack.png",
-  playstation: "/assets/images/brands/playstation.svg",
-  steam: "/assets/images/brands/steam.svg",
-  nintendo: "/assets/images/brands/nintendo.svg",
-  crunchyroll: "https://upload.wikimedia.org/wikipedia/commons/0/08/Crunchyroll_Logo.png",
-  hbo: "https://upload.wikimedia.org/wikipedia/commons/1/17/HBO_Max_Logo.svg",
-  midjourney: "https://upload.wikimedia.org/wikipedia/commons/e/e6/Midjourney_Emblem.png",
-  adobe: "https://upload.wikimedia.org/wikipedia/commons/4/4c/Adobe_Creative_Cloud_Express_logo.svg",
-  zoom: "https://upload.wikimedia.org/wikipedia/commons/7/7b/Zoom_Communications_Logo.svg",
-  notion: "https://upload.wikimedia.org/wikipedia/commons/4/45/Notion_app_logo.png",
-  roblox: "https://upload.wikimedia.org/wikipedia/commons/c/c5/Roblox_Logo_2022.svg",
-  fortnite: "https://upload.wikimedia.org/wikipedia/commons/1/1a/FortniteLogo.svg",
-};
 const getDisplayTitle = (title: string) => title.replace(/\s*haiti\s*/gi, "").trim();
 const normalizeSlug = (value: string) =>
   value
@@ -46,20 +20,6 @@ const normalizeSlug = (value: string) =>
     .replace(/\s+/g, "-")
     .replace(/%20/g, "-");
 const getProductSlug = (p: Product) => (p.id ? p.id : normalizeSlug(p.service_name || p.title));
-const getBrandAsset = (p: Product) => {
-  if (p.image_url && p.image_url.trim()) return p.image_url.trim();
-  const hay = `${p.title ?? ""} ${p.subtitle ?? ""} ${p.short_description ?? ""}`.toLowerCase();
-  const key = Object.keys(brandAssetMap).find((k) => hay.includes(k));
-  return key ? brandAssetMap[key] : "/assets/images/brands/chatgpt.svg";
-};
-const toImageSrc = (raw?: string | null) => {
-  const value = raw?.trim();
-  if (!value) return "/assets/images/brands/chatgpt.svg";
-  if (value.startsWith("/")) return value;
-  if (/^https?:\/\//i.test(value)) return value;
-  if (/^(data:|blob:)/i.test(value)) return value;
-  return `/${value.replace(/^\/+/, "")}`;
-};
 const CART_KEY = "flexipass_cart";
 
 // Repris du header de la page principale
@@ -108,6 +68,7 @@ function useSessionUser() {
 
 export default function HeaderMain() {
   const user = useSessionUser();
+  const userLabel = user?.name?.trim() || "Connexion";
   const [menuOpen, setMenuOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -137,6 +98,29 @@ export default function HeaderMain() {
     document.addEventListener("click", onClickOutside);
     return () => document.removeEventListener("click", onClickOutside);
   }, [settingsOpen]);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setMenuOpen(false);
+      }
+    };
+    const closeOnResize = () => {
+      if (window.innerWidth > 1024) {
+        setMenuOpen(false);
+      }
+    };
+
+    window.addEventListener("keydown", closeOnEscape);
+    window.addEventListener("resize", closeOnResize);
+
+    return () => {
+      window.removeEventListener("keydown", closeOnEscape);
+      window.removeEventListener("resize", closeOnResize);
+    };
+  }, [menuOpen]);
 
   useEffect(() => {
     if (user) setLoginOpen(false);
@@ -304,9 +288,19 @@ export default function HeaderMain() {
     setLoginOpen(true);
   };
 
+  const closeMobileMenu = () => {
+    setMenuOpen(false);
+  };
+
+  const toggleMobileMenu = () => {
+    setSearchOpen(false);
+    setSettingsOpen(false);
+    setMenuOpen((value) => !value);
+  };
+
   return (
     <>
-      <header className="nav">
+      <header className={`nav ${menuOpen ? "menu-open" : ""}`}>
         <div className="nav-inner">
           <Link href="/" className="brand-logo">
             <img src="/assets/images/brands/flexipass-logo.svg" alt="FlexiPass" />
@@ -341,7 +335,7 @@ export default function HeaderMain() {
                     >
                       <img
                         className="nav-result-thumb"
-                        src={toImageSrc(getBrandAsset(p))}
+                        src={getProductImageSrc(p)}
                         alt=""
                         aria-hidden="true"
                         width={20}
@@ -349,7 +343,7 @@ export default function HeaderMain() {
                         loading="lazy"
                         decoding="async"
                         onError={(e) => {
-                          (e.currentTarget as HTMLImageElement).src = "/assets/images/brands/chatgpt.svg";
+                          handleProductImageError(e.currentTarget, p);
                         }}
                       />
                       <span className="nav-result-label">{getDisplayTitle(p.title)}</span>
@@ -363,12 +357,32 @@ export default function HeaderMain() {
             <button
               type="button"
               className="user-chip"
-              title={user?.name ?? "Connexion"}
+              title={userLabel}
               onClick={() => (user ? setSettingsOpen((v) => !v) : setLoginOpen(true))}
               aria-expanded={settingsOpen}
+              style={{
+                width: "auto",
+                minWidth: 0,
+                maxWidth: "clamp(96px, 34vw, 156px)",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                padding: "0 10px",
+              }}
             >
               <i className="ri-user-smile-line" />
-              <span className="user-name">{user?.name ?? "Connexion"}</span>
+              <span
+                className="user-name"
+                style={{
+                  display: "inline-block",
+                  maxWidth: "calc(100% - 22px)",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {userLabel}
+              </span>
             </button>
             {user && settingsOpen && (
               <div className="settings-dropdown">
@@ -401,7 +415,9 @@ export default function HeaderMain() {
             <button
               className="icon-btn hamburger-btn"
               aria-label="Menu"
-              onClick={() => setMenuOpen((v) => !v)}
+              aria-expanded={menuOpen}
+              aria-controls="mobile-nav-panel"
+              onClick={toggleMobileMenu}
             >
               <i className={menuOpen ? "ri-close-line" : "ri-menu-line"} />
             </button>
@@ -432,7 +448,7 @@ export default function HeaderMain() {
                   >
                     <img
                       className="nav-result-thumb"
-                      src={toImageSrc(getBrandAsset(p))}
+                      src={getProductImageSrc(p)}
                       alt=""
                       aria-hidden="true"
                       width={20}
@@ -440,7 +456,7 @@ export default function HeaderMain() {
                       loading="lazy"
                       decoding="async"
                       onError={(e) => {
-                        (e.currentTarget as HTMLImageElement).src = "/assets/images/brands/chatgpt.svg";
+                        handleProductImageError(e.currentTarget, p);
                       }}
                     />
                     <span className="nav-result-label">{getDisplayTitle(p.title)}</span>
@@ -449,17 +465,58 @@ export default function HeaderMain() {
               </div>
             )}
           </div>
-        </div>
-        <div className={`mobile-menu ${menuOpen ? "show" : ""}`}>
-          <Link href="/cartes-cadeaux" onClick={() => setMenuOpen(false)}>
-            Cartes Cadeaux
-          </Link>
-          <Link href="/streaming" onClick={() => setMenuOpen(false)}>
-            Streaming
-          </Link>
-          <Link href="/premium" onClick={() => setMenuOpen(false)}>
-            Premium
-          </Link>
+          <div
+            id="mobile-nav-panel"
+            className={`mobile-menu ${menuOpen ? "show" : ""}`}
+            role="navigation"
+            aria-hidden={!menuOpen}
+            aria-label="Navigation mobile"
+          >
+            {user ? <div className="mobile-menu-user">{userLabel}</div> : null}
+            <div className="mobile-menu-links">
+              <Link className="mobile-menu-link" href="/cartes-cadeaux" onClick={closeMobileMenu}>
+                Cartes Cadeaux
+              </Link>
+              <Link className="mobile-menu-link" href="/streaming" onClick={closeMobileMenu}>
+                Streaming
+              </Link>
+              <Link className="mobile-menu-link" href="/premium" onClick={closeMobileMenu}>
+                Premium
+              </Link>
+              {user ? (
+                <>
+                  <Link className="mobile-menu-link" href="/settings" onClick={closeMobileMenu}>
+                    Paramètres
+                  </Link>
+                  <Link className="mobile-menu-link" href="/history" onClick={closeMobileMenu}>
+                    Historique
+                  </Link>
+                  <button
+                    type="button"
+                    className="mobile-menu-link mobile-menu-link--danger"
+                    onClick={() => {
+                      closeMobileMenu();
+                      handleSignOut();
+                    }}
+                  >
+                    Déconnexion
+                  </button>
+                </>
+              ) : (
+                <button
+                  type="button"
+                  className="mobile-menu-link mobile-menu-link--primary"
+                  onClick={() => {
+                    closeMobileMenu();
+                    switchAuthMode("login");
+                    setLoginOpen(true);
+                  }}
+                >
+                  Se connecter
+                </button>
+              )}
+            </div>
+          </div>
         </div>
       </header>
       {loginOpen && (

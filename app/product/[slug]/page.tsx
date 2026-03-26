@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import HeaderMain from "@/components/HeaderMain";
 import FooterMain from "@/components/FooterMain";
+import { getProductImageSrc, handleProductImageError } from "@/lib/product-brand";
 
 type Plan = { name: string; note: string; price: string; label?: string };
 type CatalogEntry = {
@@ -33,50 +34,6 @@ type Product = {
   currency: string;
   plan?: string | null;
   duration_days?: number | null;
-};
-
-const brandAssetMap: Record<string, string> = {
-  canva: "/assets/images/brands/canva.jpg",
-  chatgpt: "/assets/images/brands/chatgpt.svg",
-  copilot: "/assets/images/brands/microsoft.svg",
-  microsoft: "/assets/images/brands/microsoft.svg",
-  "prime video": "/assets/images/brands/prime-video.png",
-  netflix: "/assets/images/brands/netflix.svg",
-  coursera: "/assets/images/brands/coursera.svg",
-  claude: "/assets/images/brands/claude.svg",
-  spotify: "/assets/images/brands/spotify.svg",
-  apple: "/assets/images/brands/apple.svg",
-  xbox: "/assets/images/brands/xbox.svg",
-  youtube: "/assets/images/brands/youtube.svg",
-  perplexity: "/assets/images/brands/perplexity.svg",
-  slack: "/assets/images/brands/slack.png",
-  playstation: "/assets/images/brands/playstation.svg",
-  steam: "/assets/images/brands/steam.svg",
-  nintendo: "/assets/images/brands/nintendo.svg",
-  crunchyroll: "https://upload.wikimedia.org/wikipedia/commons/0/08/Crunchyroll_Logo.png",
-  hbo: "https://upload.wikimedia.org/wikipedia/commons/1/17/HBO_Max_Logo.svg",
-  midjourney: "https://upload.wikimedia.org/wikipedia/commons/e/e6/Midjourney_Emblem.png",
-  adobe: "https://upload.wikimedia.org/wikipedia/commons/4/4c/Adobe_Creative_Cloud_Express_logo.svg",
-  zoom: "https://upload.wikimedia.org/wikipedia/commons/7/7b/Zoom_Communications_Logo.svg",
-  notion: "https://upload.wikimedia.org/wikipedia/commons/4/45/Notion_app_logo.png",
-  roblox: "https://upload.wikimedia.org/wikipedia/commons/c/c5/Roblox_Logo_2022.svg",
-  fortnite: "https://upload.wikimedia.org/wikipedia/commons/1/1a/FortniteLogo.svg",
-};
-
-const getBrandAsset = (p: { title?: string; subtitle?: string; short_description?: string; image_url?: string | null }) => {
-  if (p.image_url && p.image_url.trim()) return p.image_url.trim();
-  const hay = `${p.title ?? ""} ${p.subtitle ?? ""} ${p.short_description ?? ""}`.toLowerCase();
-  const key = Object.keys(brandAssetMap).find((k) => hay.includes(k));
-  return key ? brandAssetMap[key] : "/assets/images/brands/chatgpt.svg";
-};
-
-const toImageSrc = (raw?: string | null) => {
-  const value = raw?.trim();
-  if (!value) return "/assets/images/brands/chatgpt.svg";
-  if (value.startsWith("/")) return value;
-  if (/^https?:\/\//i.test(value)) return value;
-  if (/^(data:|blob:)/i.test(value)) return value;
-  return `/${value.replace(/^\/+/, "")}`;
 };
 
 const normalize = (value: string | undefined | null) =>
@@ -287,7 +244,7 @@ export default function ProductPage() {
                 "Livraison rapide",
               ],
               bullets: ["Paiement sécurisé", "Support 24/7", "Satisfaction garantie"],
-              icon: getBrandAsset(dbProduct),
+              icon: getProductImageSrc(dbProduct),
             }
           : fallbackCatalog[slug] || fallbackCatalog[slug.split("-")[0]] || null;
         setProduct(mapped);
@@ -369,10 +326,14 @@ export default function ProductPage() {
                 <div className="detail-head">
                   <div className="detail-icon">
                     <img
-                      src={toImageSrc(product.icon)}
+                      src={product.icon}
                       alt={product.title}
                       onError={(e) => {
-                        (e.currentTarget as HTMLImageElement).src = "/assets/images/brands/chatgpt.svg";
+                        handleProductImageError(e.currentTarget, {
+                          title: product.title,
+                          subtitle: product.subtitle,
+                          image_url: product.icon,
+                        });
                       }}
                     />
                     {product.badge && <span className="detail-badge">{product.badge}</span>}
