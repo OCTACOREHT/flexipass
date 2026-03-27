@@ -3,9 +3,9 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 
 export const runtime = "nodejs";
 
-export async function GET(request: Request, { params }: { params: { id: string } }) {
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const supabase = supabaseAdmin();
-  const id = params?.id;
+  const { id } = await params;
   if (!id) return NextResponse.json({ error: "id manquant" }, { status: 400 });
 
   const { data, error } = await supabase

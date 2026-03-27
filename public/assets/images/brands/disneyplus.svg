@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Disney Plus">
+  <rect width="128" height="128" rx="24" fill="#ffffff"/>
+  <path d="M28 56c10-16 26-25 45-25 18 0 34 7 45 20" fill="none" stroke="#2e58ff" stroke-width="4" stroke-linecap="round"/>
+  <text x="26" y="78" font-family="Arial, sans-serif" font-size="22" font-weight="700" fill="#1f2d7a">Disney+</text>
+</svg>

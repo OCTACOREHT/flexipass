@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import HeaderMain from "@/components/HeaderMain";
 import FooterMain from "@/components/FooterMain";
 import { getProductImageSrc, handleProductImageError } from "@/lib/product-brand";
 
-type Plan = { name: string; note: string; price: string; label?: string };
+type Plan = { name: string; note: string; price: string; label?: string; href?: string };
 type CatalogEntry = {
   title: string;
   subtitle: string;
@@ -76,6 +76,15 @@ const getNumericPrice = (value?: string) => {
   if (!value) return 0;
   const num = Number(String(value).replace(/[^\d.-]/g, ""));
   return Number.isFinite(num) ? num : 0;
+};
+const isNetflixProduct = (p: Pick<Product, "title" | "service_name">) =>
+  /netflix/i.test(`${p.title || ""} ${p.service_name || ""}`);
+const isCanvaProduct = (p: Pick<Product, "title" | "service_name">) =>
+  /canva/i.test(`${p.title || ""} ${p.service_name || ""}`);
+const getPlanGroupKey = (p: Pick<Product, "title" | "service_name">) => {
+  if (isNetflixProduct(p)) return "netflix";
+  if (isCanvaProduct(p)) return "canva";
+  return null;
 };
 
 const fallbackCatalog: Record<string, CatalogEntry> = {
@@ -202,8 +211,11 @@ const fallbackCatalog: Record<string, CatalogEntry> = {
 
 export default function ProductPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const rawSlug = typeof params?.slug === "string" ? params.slug : "";
   const slug = normalize(decodeURIComponent(rawSlug));
+  const requestedPlan = normalize(searchParams.get("plan"));
+  const requestedPrice = getNumericPrice(searchParams.get("price") || "");
   const [product, setProduct] = useState<CatalogEntry | null>(null);
   const [loading, setLoading] = useState(true);
   const [cartNote, setCartNote] = useState<string | null>(null);
@@ -215,11 +227,37 @@ export default function ProductPage() {
       .then((r) => r.json())
       .then((data) => {
         const products = Array.isArray(data) ? data : [];
-        const dbProduct = products.find((p: Product) =>
+        const slugMatches = products.filter((p: Product) =>
           normalize(p.id) === slug ||
           normalize(p.title) === slug ||
           normalize(p.service_name) === slug
         );
+        const dbProduct =
+          slugMatches.find((p: Product) => {
+            const planMatch = requestedPlan ? normalize(p.plan) === requestedPlan : true;
+            const priceMatch = requestedPrice ? Number(p.price) === requestedPrice : true;
+            return planMatch && priceMatch;
+          }) || slugMatches[0];
+        const groupKey = dbProduct ? getPlanGroupKey(dbProduct) : null;
+        const relatedPlansFromDb = products
+          .filter((p: Product) => (groupKey ? getPlanGroupKey(p) === groupKey : false))
+          .map((p: Product) => ({
+            name: p.plan || "Standard",
+            note: p.description || "Accès streaming",
+            price: `${p.price} ${p.currency}`,
+            href: `/product/${encodeURIComponent(
+              p.id ? p.id : normalize(p.service_name || p.title)
+            )}?plan=${encodeURIComponent(normalize(p.plan || "standard"))}&price=${encodeURIComponent(
+              String(p.price)
+            )}`,
+          }))
+          .sort((a: Plan, b: Plan) => getNumericPrice(a.price) - getNumericPrice(b.price))
+          .filter((plan: Plan, index: number, arr: Plan[]) => {
+            const duplicateIndex = arr.findIndex(
+              (item: Plan) => item.name === plan.name && item.price === plan.price
+            );
+            return duplicateIndex === index;
+          });
         const mapped = dbProduct
           ? {
               id: dbProduct.id,
@@ -229,13 +267,16 @@ export default function ProductPage() {
               rawPrice: dbProduct.price,
               currency: dbProduct.currency,
               badge: "Actif",
-              plans: [
-                {
-                  name: dbProduct.plan || "Standard",
-                  note: "Plan de base",
-                  price: `${dbProduct.price} ${dbProduct.currency}`,
-                },
-              ],
+              plans:
+                groupKey && relatedPlansFromDb.length > 0
+                  ? relatedPlansFromDb
+                  : [
+                      {
+                        name: dbProduct.plan || "Standard",
+                        note: "Plan de base",
+                        price: `${dbProduct.price} ${dbProduct.currency}`,
+                      },
+                    ],
               description: dbProduct.description || "Offre disponible immédiatement.",
               features: [
                 dbProduct.type === "giftcard" ? "Giftcard" : "Compte/Abonnement",
@@ -248,11 +289,17 @@ export default function ProductPage() {
             }
           : fallbackCatalog[slug] || fallbackCatalog[slug.split("-")[0]] || null;
         setProduct(mapped);
-        setSelectedPlan(mapped?.plans?.[0] ?? null);
+        setSelectedPlan(
+          mapped?.plans?.find(
+            (plan: Plan) =>
+              normalize(plan.name) === normalize(dbProduct?.plan) &&
+              getNumericPrice(plan.price) === Number(dbProduct?.price || 0)
+          ) ?? mapped?.plans?.[0] ?? null
+        );
       })
       .catch(() => setProduct(fallbackCatalog[slug] || fallbackCatalog[slug.split("-")[0]] || null))
       .finally(() => setLoading(false));
-  }, [slug]);
+  }, [slug, requestedPlan, requestedPrice]);
 
   const ready = useMemo(() => !loading && product, [loading, product]);
 
@@ -294,6 +341,14 @@ export default function ProductPage() {
   const handleBuyNow = () => {
     handleAddToCart();
     window.location.href = "/#cart";
+  };
+
+  const handleOpenPlan = (plan: Plan) => {
+    if (plan.href) {
+      window.location.assign(plan.href);
+      return;
+    }
+    setSelectedPlan(plan);
   };
 
   const activePrice = selectedPlan?.price ?? product?.price;
@@ -369,24 +424,22 @@ export default function ProductPage() {
                   ))}
                 </div>
               </div>
-            </div>
 
-            <div className="detail-right">
               <div className="detail-card">
-                {activePrice && (
-                  <div className="detail-price">
-                    <span className="big">{activePrice}</span>
-                    {product.badge && <span className="pill red">{product.badge}</span>}
-                  </div>
-                )}
-                <h4>Select Plan</h4>
+                <h3>Autres plans disponibles</h3>
                 <div className="plan-list">
-                  {product.plans.map((p) => (
+                  {product.plans.map((p, index) => (
                     <button
                       type="button"
-                      className={`plan-item ${selectedPlan?.name === p.name ? "active" : ""}`}
-                      key={p.name}
-                      onClick={() => setSelectedPlan(p)}
+                      className={`plan-item ${
+                        selectedPlan?.name === p.name &&
+                        selectedPlan?.price === p.price &&
+                        selectedPlan?.note === p.note
+                          ? "active"
+                          : ""
+                      }`}
+                      key={`${p.name}-${p.price}-${p.note}-${index}`}
+                      onClick={() => handleOpenPlan(p)}
                     >
                       <div>
                         <div className="plan-title">
@@ -398,6 +451,17 @@ export default function ProductPage() {
                     </button>
                   ))}
                 </div>
+              </div>
+            </div>
+
+            <div className="detail-right">
+              <div className="detail-card">
+                {activePrice && (
+                  <div className="detail-price">
+                    <span className="big">{activePrice}</span>
+                    {product.badge && <span className="pill red">{product.badge}</span>}
+                  </div>
+                )}
                 <div className="cta-stack">
                   <button className="btn-full modal-primary" onClick={handleBuyNow}>Acheter maintenant</button>
                   <button className="btn-full ghost-btn" onClick={handleAddToCart}>

@@ -89,9 +89,10 @@ export default function CataloguePage() {
     setupRealtime();
 
     return () => {
-      if (channel) {
-        import("@/lib/supabase-browser").then(mod => {
-          mod.supabaseBrowser?.removeChannel(channel);
+      const currentChannel = channel;
+      if (currentChannel) {
+        import("@/lib/supabase-browser").then((mod) => {
+          mod.supabaseBrowser?.removeChannel(currentChannel);
         });
       }
     };
@@ -194,4 +195,3 @@ export default function CataloguePage() {
     </>
   );
 }
-

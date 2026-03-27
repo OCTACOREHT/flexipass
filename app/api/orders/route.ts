@@ -137,8 +137,8 @@ export async function POST(request: Request) {
           product_id: item.product_id,
           product_name: meta?.title || item.product_id,
           product_image: meta?.image_url || null,
-          quantity: item.quantity,
-          price: item.price,
+          quantity: item.quantity ?? 0,
+          price: item.price ?? 0,
         };
       });
 

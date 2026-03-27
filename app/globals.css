@@ -2378,7 +2378,7 @@ a:hover {
 .detail-card h3 {
   margin: 0 0 8px;
   font-size: 17px;
-  font-weight: 600;
+  font-weight: 800;
   letter-spacing: -0.01em;
 }
 
@@ -4093,6 +4093,11 @@ a:hover {
   text-align: center;
 }
 
+.market-head.market-head--split {
+  justify-content: space-between;
+  text-align: left;
+}
+
 .market-grid {
   display: grid;
   gap: 16px;
@@ -4108,6 +4113,53 @@ a:hover {
   gap: 12px;
   box-shadow: 0 14px 34px -28px rgba(45, 30, 15, 0.35);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.market-service-logo {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  border: 1px solid #efe2d6;
+  background: #fff8f2;
+  display: grid;
+  place-items: center;
+}
+
+.market-service-logo img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+
+.market-service-logo span {
+  font-weight: 700;
+  font-size: 14px;
+  color: #2a233c;
+}
+
+.market-card--service {
+  gap: 14px;
+}
+
+.market-service-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.market-service-content {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.market-service-content .brand-name {
+  margin: 0;
+}
+
+.market-service-price {
+  color: #ff5a00;
+  font-weight: 800;
 }
 
 .market-card:hover {
@@ -4169,6 +4221,22 @@ a:hover {
   place-items: center;
   font-weight: 700;
   font-size: 12px;
+}
+
+.legal-content p,
+.legal-content li {
+  text-align: justify;
+}
+
+.legal-content .legal-list {
+  list-style-type: disc;
+  list-style-position: outside;
+  padding-left: 22px;
+  margin: 8px 0 0;
+}
+
+.legal-content .legal-list li {
+  margin: 4px 0;
 }
 
 .market-pills .pill.active {

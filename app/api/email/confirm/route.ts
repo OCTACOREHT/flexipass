@@ -2,7 +2,15 @@ import { Resend } from "resend";
 import { NextResponse } from "next/server";
 import { buildEmailFooterHtml } from "@/lib/email";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const getResendClient = () => {
+  const apiKey = process.env.RESEND_API_KEY;
+
+  if (!apiKey) {
+    return null;
+  }
+
+  return new Resend(apiKey);
+};
 
 const escapeHtml = (value: string) =>
   value
@@ -39,6 +47,12 @@ export async function POST(request: Request) {
     const safeOrderId = escapeHtml(String(orderId || "").slice(0, 8));
     const safeGiftCode = escapeHtml(String(giftCode || ""));
     const safeAmount = escapeHtml(String(amount || ""));
+
+    const resend = getResendClient();
+
+    if (!resend) {
+      return NextResponse.json({ error: "RESEND_API_KEY manquante" }, { status: 500 });
+    }
 
     const { data, error } = await resend.emails.send({
       from: "FlexiPass <onboarding@resend.dev>",
