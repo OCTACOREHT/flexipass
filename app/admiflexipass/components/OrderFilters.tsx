@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Filter, CheckCircle2, Clock, List } from "lucide-react";
+import { CheckCircle2, Clock, List } from "lucide-react";
 
 interface OrderFiltersProps {
   currentFilter: "pending" | "completed" | "all";
@@ -9,7 +9,12 @@ interface OrderFiltersProps {
 }
 
 export default function OrderFilters({ currentFilter, onFilterChange }: OrderFiltersProps) {
-  const options = [
+  const options: Array<{
+    id: OrderFiltersProps["currentFilter"];
+    label: string;
+    icon: typeof Clock;
+    activeClass: string;
+  }> = [
     { id: "pending", label: "Pending", icon: Clock, activeClass: "bg-red-500 text-white shadow-red-500/20" },
     { id: "completed", label: "Completed", icon: CheckCircle2, activeClass: "bg-emerald-500 text-white shadow-emerald-500/20" },
     { id: "all", label: "All Items", icon: List, activeClass: "bg-zinc-700 text-white" }
@@ -20,7 +25,7 @@ export default function OrderFilters({ currentFilter, onFilterChange }: OrderFil
       {options.map((option) => (
         <button
           key={option.id}
-          onClick={() => onFilterChange(option.id as any)}
+          onClick={() => onFilterChange(option.id)}
           className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${
             currentFilter === option.id 
               ? `${option.activeClass} shadow-lg scale-[1.02]` 

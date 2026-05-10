@@ -175,10 +175,35 @@ a:hover {
   letter-spacing: 0.3px;
 }
 
+.brand-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+}
+
 .brand-logo img {
   height: 40px;
   width: auto;
   display: block;
+}
+
+.brand-logo-text {
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.2px;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0;
+}
+
+.brand-logo-flexi {
+  color: #f05a28;
+}
+
+.brand-logo-pass {
+  color: #000000 !important;
 }
 
 .menu {
@@ -834,6 +859,25 @@ a:hover {
   margin-bottom: 4px;
 }
 
+.compact-meta {
+  font-size: 11px;
+  color: #8a7c70;
+  display: grid;
+  gap: 1px;
+  margin-bottom: 4px;
+}
+
+.compact-meta-line {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.compact-meta-strong {
+  color: #5f4b3e;
+  font-weight: 800;
+}
+
 .compact-price {
   font-size: 14px;
   font-weight: 800;
@@ -1073,6 +1117,10 @@ a:hover {
     height: 34px;
   }
 
+  .brand-logo-text {
+    font-size: 18px;
+  }
+
   .actions {
     order: 2;
     margin-left: auto;
@@ -1201,6 +1249,10 @@ a:hover {
 
   .brand-logo img {
     height: 30px;
+  }
+
+  .brand-logo-text {
+    font-size: 16px;
   }
 
   .actions {
@@ -4151,6 +4203,24 @@ a:hover {
   display: grid;
   gap: 4px;
   min-width: 0;
+}
+
+.market-service-meta {
+  font-size: 12px;
+  color: #8a7c70;
+  display: grid;
+  gap: 1px;
+}
+
+.market-service-meta-line {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.market-service-meta-strong {
+  color: #5f4b3e;
+  font-weight: 800;
 }
 
 .market-service-content .brand-name {

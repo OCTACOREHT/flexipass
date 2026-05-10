@@ -25,16 +25,12 @@ const navItems = [
 ];
 
 export default function Sidebar() {
-  const [isCollapsed, setIsCollapsed] = useState(true); // Default to collapsed for safety
+  const [isCollapsed, setIsCollapsed] = useState(() => {
+    if (typeof window === "undefined") return true;
+    return window.innerWidth <= 1024;
+  });
   const [pendingCount, setPendingCount] = useState(0);
   const pathname = usePathname();
-
-  useEffect(() => {
-    // Expand by default on desktop
-    if (window.innerWidth > 1024) {
-      setIsCollapsed(false);
-    }
-  }, []);
 
   useEffect(() => {
     const fetchPendingCount = async () => {

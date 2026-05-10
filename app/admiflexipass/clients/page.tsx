@@ -16,8 +16,20 @@ const demoClients: Client[] = [
   { id: "c2", name: "Sarah Jean", email: "sarah@email.com", status: "actif" },
 ];
 
+const loadStoredClients = () => {
+  if (typeof window === "undefined") return demoClients;
+  const raw = window.localStorage.getItem("admin_clients");
+  if (!raw) return demoClients;
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : demoClients;
+  } catch {
+    return demoClients;
+  }
+};
+
 export default function AdminClientsPage() {
-  const [clients, setClients] = useState<Client[]>(demoClients);
+  const [clients, setClients] = useState<Client[]>(loadStoredClients);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [search, setSearch] = useState("");
@@ -25,21 +37,6 @@ export default function AdminClientsPage() {
   const [deleting, setDeleting] = useState(false);
   const { toasts, pushToast, dismissToast } = useToasts();
   const STORAGE_KEY = "admin_clients";
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      try {
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed)) {
-          setClients(parsed);
-        }
-      } catch {
-        // ignore parse errors
-      }
-    }
-  }, []);
 
   useEffect(() => {
     if (typeof window === "undefined") return;

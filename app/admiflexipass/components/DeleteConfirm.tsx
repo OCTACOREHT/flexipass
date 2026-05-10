@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { X, AlertTriangle } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 
 interface DeleteConfirmProps {
   isOpen: boolean;

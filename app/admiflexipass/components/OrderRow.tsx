@@ -2,7 +2,7 @@
 
 import React from "react";
 import { format } from "date-fns";
-import { Eye, ExternalLink } from "lucide-react";
+import { Eye } from "lucide-react";
 
 export interface Order {
   id: string;

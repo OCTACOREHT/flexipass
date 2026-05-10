@@ -95,9 +95,7 @@ export default function PaiementPage() {
 
   const [orderError, setOrderError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [orderId, setOrderId] = useState<string | null>(null);
   const [authRequired, setAuthRequired] = useState(false);
-  const [emailSent, setEmailSent] = useState(false);
   const [emailSentToast, setEmailSentToast] = useState(false);
   const [moncashConfirmed, setMoncashConfirmed] = useState(false);
 
@@ -137,7 +135,6 @@ export default function PaiementPage() {
     setOrderError(null);
     setMessage(null);
     setAuthRequired(false);
-    setEmailSent(false);
     setEmailSentToast(false);
 
     try {
@@ -237,9 +234,6 @@ export default function PaiementPage() {
 
         return;
       }
-
-      setOrderId(createdOrderId);
-      setEmailSent(Boolean(data?.email_sent));
 
       if (typeof window !== "undefined") {
         localStorage.setItem(CART_KEY, JSON.stringify([]));

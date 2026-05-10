@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { User, MoreVertical, Edit2, Trash2, Shield, UserCheck } from "lucide-react";
+import { User, Edit2, Trash2, Shield, UserCheck } from "lucide-react";
 
 export interface DashboardUser {
   id: string;

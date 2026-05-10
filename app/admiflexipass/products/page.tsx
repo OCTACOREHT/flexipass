@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Toaster from "@/components/admin/ui/Toaster";
 import { useToasts } from "@/components/admin/hooks/useToasts";
 
@@ -18,15 +18,6 @@ type Product = {
 };
 
 type Variant = { id: string; product_id: string };
-
-const normalizeImageUrl = (value: string) => {
-  const trimmed = value.trim();
-  if (!trimmed) return "";
-  if (/^https?:\/\//i.test(trimmed)) {
-    return trimmed.replace(/^http:\/\//i, "https://");
-  }
-  return `https://${trimmed}`;
-};
 
 const toProxyImage = (raw?: string | null) => {
   const value = raw?.trim();
@@ -51,7 +42,7 @@ export default function AdminProductsPage() {
 
   const { toasts, pushToast, dismissToast } = useToasts();
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     const safeJson = async (resp: Response) => {
       if (!resp.ok) {
@@ -72,11 +63,11 @@ export default function AdminProductsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [pushToast]);
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [loadData]);
 
   const uploadImageFile = async (file: File): Promise<string> => {
     const formData = new FormData();

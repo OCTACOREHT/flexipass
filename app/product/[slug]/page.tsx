@@ -1,7 +1,8 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import HeaderMain from "@/components/HeaderMain";
 import FooterMain from "@/components/FooterMain";
 import { getProductImageSrc, handleProductImageError } from "@/lib/product-brand";
@@ -52,15 +53,15 @@ const translate = (text: string) => {
     "Plan: premuim": "Plan : premium",
     "Plan: premium": "Plan : premium",
     "Plan:": "Plan :",
-    "Duration:": "Durée :",
-    "Durée:": "Durée :",
+    "Duration:": "DurÃ©e :",
+    "DurÃ©e:": "DurÃ©e :",
     "days": "jours",
     "Fast delivery": "Livraison rapide",
     "Livraison rapide": "Livraison rapide",
-    "Instant delivery": "Livraison instantanée",
+    "Instant delivery": "Livraison instantanÃ©e",
     "Digital delivery": "Livraison digitale",
-    "Secure payment": "Paiement sécurisé",
-    "Paiement sécurisé": "Paiement sécurisé",
+    "Secure payment": "Paiement sÃ©curisÃ©",
+    "Paiement sÃ©curisÃ©": "Paiement sÃ©curisÃ©",
     "Satisfaction guaranteed": "Satisfaction garantie",
     "Support 24/7": "Support 24/7",
   };
@@ -90,17 +91,17 @@ const getPlanGroupKey = (p: Pick<Product, "title" | "service_name">) => {
 const fallbackCatalog: Record<string, CatalogEntry> = {
   "chatgpt-plus": {
     title: "ChatGPT Plus",
-    subtitle: "GPT-4, DALL·E, navigation et images illimitées.",
+    subtitle: "GPT-4, DALLÂ·E, navigation et images illimitÃ©es.",
     price: "$6.00",
     badge: "-70%",
     plans: [
-      { name: "Shared Plan", note: "Idéal usage occasionnel", price: "$6.00", label: "Budget" },
-      { name: "Semi-Shared Plan", note: "3-4 users, réponses rapides", price: "$12.00", label: "Popular" },
-      { name: "Private Plan", note: "100% privé, vitesse max", price: "$12.00", label: "Premium" },
+      { name: "Shared Plan", note: "IdÃ©al usage occasionnel", price: "$6.00", label: "Budget" },
+      { name: "Semi-Shared Plan", note: "3-4 users, rÃ©ponses rapides", price: "$12.00", label: "Popular" },
+      { name: "Private Plan", note: "100% privÃ©, vitesse max", price: "$12.00", label: "Premium" },
     ],
-    description: "Accès à ChatGPT Plus avec GPT-4, DALL·E et navigation web.",
-    features: ["GPT-4 & GPT-4o", "Génération d’images DALL·E", "Code Interpreter", "Web browsing", "Custom GPTs", "Priority access"],
-    bullets: ["Livraison digitale instantanée", "Paiement sécurisé", "Support 24/7", "Satisfaction garantie"],
+    description: "AccÃ¨s Ã  ChatGPT Plus avec GPT-4, DALLÂ·E et navigation web.",
+    features: ["GPT-4 & GPT-4o", "GÃ©nÃ©ration dâ€™images DALLÂ·E", "Code Interpreter", "Web browsing", "Custom GPTs", "Priority access"],
+    bullets: ["Livraison digitale instantanÃ©e", "Paiement sÃ©curisÃ©", "Support 24/7", "Satisfaction garantie"],
     icon: "/assets/images/brands/chatgpt.svg",
   },
   "claude-pro": {
@@ -110,71 +111,71 @@ const fallbackCatalog: Record<string, CatalogEntry> = {
     badge: "-60%",
     plans: [
       { name: "Standard", note: "Usage quotidien", price: "$15.00", label: "Popular" },
-      { name: "Team", note: "Collaboration illimitée", price: "$25.00", label: "Team" },
+      { name: "Team", note: "Collaboration illimitÃ©e", price: "$25.00", label: "Team" },
     ],
-    description: "Accès à Claude 3 pour analyses, rédaction et idéation.",
-    features: ["Contexte étendu", "Raisonnement avancé", "Sécurité Anthropic", "Outils code & data"],
-    bullets: ["Livraison instantanée", "Paiement sécurisé", "Support 24/7", "Satisfait ou remboursé"],
+    description: "AccÃ¨s Ã  Claude 3 pour analyses, rÃ©daction et idÃ©ation.",
+    features: ["Contexte Ã©tendu", "Raisonnement avancÃ©", "SÃ©curitÃ© Anthropic", "Outils code & data"],
+    bullets: ["Livraison instantanÃ©e", "Paiement sÃ©curisÃ©", "Support 24/7", "Satisfait ou remboursÃ©"],
     icon: "/assets/images/brands/claude.svg",
   },
   ps: {
     title: "PlayStation Store",
-    subtitle: "Crédits et jeux PSN",
+    subtitle: "CrÃ©dits et jeux PSN",
     price: "1350 HTG",
-    plans: [{ name: "Standard", note: "Code numérique instantané", price: "1350 HTG" }],
+    plans: [{ name: "Standard", note: "Code numÃ©rique instantanÃ©", price: "1350 HTG" }],
     description: "Recharge PSN pour acheter jeux, DLC et abonnements.",
-    features: ["Code numérique", "Compatible PS4/PS5", "Livraison instantanée"],
-    bullets: ["Livraison digitale", "Support 24/7", "Satisfait ou remboursé"],
+    features: ["Code numÃ©rique", "Compatible PS4/PS5", "Livraison instantanÃ©e"],
+    bullets: ["Livraison digitale", "Support 24/7", "Satisfait ou remboursÃ©"],
     icon: "/assets/images/brands/playstation.svg",
   },
   xbox: {
     title: "Xbox Gift Card",
     subtitle: "Jeux et contenus Xbox",
     price: "1350 HTG",
-    plans: [{ name: "Standard", note: "Crédits Microsoft Store", price: "1350 HTG" }],
-    description: "Crédits pour jeux, DLC et services Xbox.",
-    features: ["Code numérique", "Xbox / PC", "Livraison instantanée"],
-    bullets: ["Livraison digitale", "Support 24/7", "Paiement sécurisé"],
+    plans: [{ name: "Standard", note: "CrÃ©dits Microsoft Store", price: "1350 HTG" }],
+    description: "CrÃ©dits pour jeux, DLC et services Xbox.",
+    features: ["Code numÃ©rique", "Xbox / PC", "Livraison instantanÃ©e"],
+    bullets: ["Livraison digitale", "Support 24/7", "Paiement sÃ©curisÃ©"],
     icon: "/assets/images/brands/xbox.svg",
   },
   steam: {
     title: "Steam Wallet",
-    subtitle: "Crédits Steam PC",
+    subtitle: "CrÃ©dits Steam PC",
     price: "675 HTG",
-    plans: [{ name: "Standard", note: "Recharge immédiate", price: "675 HTG" }],
-    description: "Ajoutez des fonds à votre portefeuille Steam pour vos jeux PC.",
-    features: ["Code numérique", "Compatible global", "Livraison instantanée"],
-    bullets: ["Livraison digitale", "Support 24/7", "Paiement sécurisé"],
+    plans: [{ name: "Standard", note: "Recharge immÃ©diate", price: "675 HTG" }],
+    description: "Ajoutez des fonds Ã  votre portefeuille Steam pour vos jeux PC.",
+    features: ["Code numÃ©rique", "Compatible global", "Livraison instantanÃ©e"],
+    bullets: ["Livraison digitale", "Support 24/7", "Paiement sÃ©curisÃ©"],
     icon: "/assets/images/brands/steam.svg",
   },
   nintendo: {
     title: "Nintendo eShop",
-    subtitle: "Crédits Switch",
+    subtitle: "CrÃ©dits Switch",
     price: "1350 HTG",
     plans: [{ name: "Standard", note: "Code eShop", price: "1350 HTG" }],
     description: "Achetez jeux et contenus sur Nintendo eShop.",
-    features: ["Code numérique", "Compatible Switch", "Livraison instantanée"],
-    bullets: ["Livraison digitale", "Support 24/7", "Paiement sécurisé"],
+    features: ["Code numÃ©rique", "Compatible Switch", "Livraison instantanÃ©e"],
+    bullets: ["Livraison digitale", "Support 24/7", "Paiement sÃ©curisÃ©"],
     icon: "/assets/images/brands/nintendo.svg",
   },
   canva: {
     title: "Canva Pro",
-    subtitle: "Création visuelle premium",
+    subtitle: "CrÃ©ation visuelle premium",
     price: "1500 HTG",
-    plans: [{ name: "1 mois", note: "Accès complet Canva Pro", price: "1500 HTG" }],
-    description: "Accédez à tous les templates, assets et exports Pro.",
+    plans: [{ name: "1 mois", note: "AccÃ¨s complet Canva Pro", price: "1500 HTG" }],
+    description: "AccÃ©dez Ã  tous les templates, assets et exports Pro.",
     features: ["Templates premium", "Assets libres de droits", "Export HD", "Collaboration"],
-    bullets: ["Livraison digitale", "Support 24/7", "Paiement sécurisé"],
+    bullets: ["Livraison digitale", "Support 24/7", "Paiement sÃ©curisÃ©"],
     icon: "/assets/images/brands/canva.jpg",
   },
   netflix: {
     title: "Netflix",
-    subtitle: "Streaming illimité",
+    subtitle: "Streaming illimitÃ©",
     price: "950 HTG",
-    plans: [{ name: "1 écran", note: "Accès streaming", price: "950 HTG" }],
-    description: "Accès Netflix selon le plan choisi.",
-    features: ["Séries & films", "Streaming HD", "Multi-device"],
-    bullets: ["Livraison rapide", "Paiement sécurisé", "Support 24/7"],
+    plans: [{ name: "1 Ã©cran", note: "AccÃ¨s streaming", price: "950 HTG" }],
+    description: "AccÃ¨s Netflix selon le plan choisi.",
+    features: ["SÃ©ries & films", "Streaming HD", "Multi-device"],
+    bullets: ["Livraison rapide", "Paiement sÃ©curisÃ©", "Support 24/7"],
     icon: "/assets/images/brands/netflix.svg",
   },
   spotify: {
@@ -183,8 +184,8 @@ const fallbackCatalog: Record<string, CatalogEntry> = {
     price: "900 HTG",
     plans: [{ name: "1 mois", note: "Spotify Premium", price: "900 HTG" }],
     description: "Abonnement Spotify Premium pour musique et podcasts.",
-    features: ["Sans pub", "Offline", "Audio haute qualité"],
-    bullets: ["Livraison digitale", "Support 24/7", "Paiement sécurisé"],
+    features: ["Sans pub", "Offline", "Audio haute qualitÃ©"],
+    bullets: ["Livraison digitale", "Support 24/7", "Paiement sÃ©curisÃ©"],
     icon: "/assets/images/brands/spotify.svg",
   },
   apple: {
@@ -192,19 +193,19 @@ const fallbackCatalog: Record<string, CatalogEntry> = {
     subtitle: "App Store & iTunes",
     price: "1500 HTG",
     plans: [{ name: "15 USD", note: "Code Apple", price: "1500 HTG" }],
-    description: "Crédits pour App Store, iTunes et abonnements Apple.",
-    features: ["Code numérique", "App Store / iTunes", "Livraison instantanée"],
-    bullets: ["Livraison digitale", "Support 24/7", "Paiement sécurisé"],
+    description: "CrÃ©dits pour App Store, iTunes et abonnements Apple.",
+    features: ["Code numÃ©rique", "App Store / iTunes", "Livraison instantanÃ©e"],
+    bullets: ["Livraison digitale", "Support 24/7", "Paiement sÃ©curisÃ©"],
     icon: "/assets/images/brands/apple.svg",
   },
   "chatgpt-unlimited": {
     title: "ChatGPT Unlimited",
-    subtitle: "1 mois · images illimitées · Codex · Figma",
+    subtitle: "1 mois Â· images illimitÃ©es Â· Codex Â· Figma",
     price: "1999 HTG",
-    plans: [{ name: "Mensuel", note: "Accès illimité", price: "1999 HTG" }],
-    description: "Accès ChatGPT avec images illimitées et plugins.",
-    features: ["GPT-4", "Images illimitées", "Plugins/Codex", "Support prioritaire"],
-    bullets: ["Livraison instantanée", "Paiement sécurisé", "Support 24/7"],
+    plans: [{ name: "Mensuel", note: "AccÃ¨s illimitÃ©", price: "1999 HTG" }],
+    description: "AccÃ¨s ChatGPT avec images illimitÃ©es et plugins.",
+    features: ["GPT-4", "Images illimitÃ©es", "Plugins/Codex", "Support prioritaire"],
+    bullets: ["Livraison instantanÃ©e", "Paiement sÃ©curisÃ©", "Support 24/7"],
     icon: "/assets/images/brands/chatgpt.svg",
   },
 };
@@ -222,7 +223,6 @@ export default function ProductPage() {
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
 
   useEffect(() => {
-    setLoading(true);
     fetch("/api/products")
       .then((r) => r.json())
       .then((data) => {
@@ -243,7 +243,7 @@ export default function ProductPage() {
           .filter((p: Product) => (groupKey ? getPlanGroupKey(p) === groupKey : false))
           .map((p: Product) => ({
             name: p.plan || "Standard",
-            note: p.description || "Accès streaming",
+            note: p.description || "AccÃ¨s streaming",
             price: `${p.price} ${p.currency}`,
             href: `/product/${encodeURIComponent(
               p.id ? p.id : normalize(p.service_name || p.title)
@@ -277,14 +277,14 @@ export default function ProductPage() {
                         price: `${dbProduct.price} ${dbProduct.currency}`,
                       },
                     ],
-              description: dbProduct.description || "Offre disponible immédiatement.",
+              description: dbProduct.description || "Offre disponible immÃ©diatement.",
               features: [
                 dbProduct.type === "giftcard" ? "Giftcard" : "Compte/Abonnement",
                 dbProduct.plan ? `Plan: ${dbProduct.plan}` : "Plan standard",
                 `Durée: ${dbProduct.duration_days ? dbProduct.duration_days + " jours" : "Flexible"}`,
                 "Livraison rapide",
               ],
-              bullets: ["Paiement sécurisé", "Support 24/7", "Satisfaction garantie"],
+              bullets: ["Paiement sÃ©curisÃ©", "Support 24/7", "Satisfaction garantie"],
               icon: getProductImageSrc(dbProduct),
             }
           : fallbackCatalog[slug] || fallbackCatalog[slug.split("-")[0]] || null;
@@ -306,7 +306,7 @@ export default function ProductPage() {
   const pushCartUpdate = () => {
     try {
       window.dispatchEvent(new Event("cart:updated"));
-    } catch (_) {}
+    } catch {}
   };
 
   const handleAddToCart = () => {
@@ -314,7 +314,7 @@ export default function ProductPage() {
     const price = getNumericPrice(selectedPlan?.price) || product.rawPrice || getNumericPrice(product.price);
     const item = {
       id: product.id || slug,
-      title: selectedPlan ? `${product.title} · ${selectedPlan.name}` : product.title,
+      title: selectedPlan ? `${product.title} Â· ${selectedPlan.name}` : product.title,
       price,
       qty: 1,
                 image: product.icon,
@@ -331,7 +331,7 @@ export default function ProductPage() {
       }
       localStorage.setItem(CART_KEY, JSON.stringify(list));
       pushCartUpdate();
-      setCartNote("Ajouté au panier.");
+      setCartNote("AjoutÃ© au panier.");
       setTimeout(() => setCartNote(null), 2000);
     } catch {
       setCartNote("Impossible d'ajouter au panier.");
@@ -370,7 +370,9 @@ export default function ProductPage() {
         {!loading && !product && (
           <div className="update-card" style={{ maxWidth: 420 }}>
             <h1>Produit introuvable</h1>
-            <a className="update-link" href="/">Retour à l'accueil</a>
+            <Link className="update-link" href="/">
+              Retour Ã  l&apos;accueil
+            </Link>
           </div>
         )}
 
@@ -398,10 +400,10 @@ export default function ProductPage() {
                     <p className="muted">{product.subtitle}</p>
                     <div className="detail-flags">
                       <span>
-                        <i className="ri-flashlight-line" /> Livraison instantanée
+                        <i className="ri-flashlight-line" /> Livraison instantanÃ©e
                       </span>
                       <span>
-                        <i className="ri-shield-check-line" /> Sécurisé
+                        <i className="ri-shield-check-line" /> SÃ©curisÃ©
                       </span>
                     </div>
                   </div>
@@ -470,10 +472,10 @@ export default function ProductPage() {
                 </div>
                 <div className="detail-bullets fancy-bullets">
                   <span>
-                    <i className="ri-flashlight-line" /> Livraison digitale instantanée
+                    <i className="ri-flashlight-line" /> Livraison digitale instantanÃ©e
                   </span>
                   <span>
-                    <i className="ri-shield-check-line" /> Paiement sécurisé
+                    <i className="ri-shield-check-line" /> Paiement sÃ©curisÃ©
                   </span>
                   <span>
                     <i className="ri-customer-service-2-line" /> Support 24/7
@@ -491,5 +493,6 @@ export default function ProductPage() {
     </>
   );
 }
+
 
 

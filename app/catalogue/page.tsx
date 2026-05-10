@@ -5,6 +5,7 @@ import type { RealtimeChannel } from "@supabase/supabase-js";
 import FooterMain from "@/components/FooterMain";
 import HeaderMain from "@/components/HeaderMain";
 import { getProductImageSrc, handleProductImageError } from "@/lib/product-brand";
+import { getPlanBoxData } from "@/lib/plan-display";
 
 type Variant = { id: string; label: string; duration_days: number; price: number; currency: string };
 type Product = {
@@ -18,6 +19,7 @@ type Product = {
   price: number;
   currency: string;
   plan?: string | null;
+  duration_days?: number | null;
   variants?: Variant[];
 };
 
@@ -147,7 +149,15 @@ export default function CataloguePage() {
             </div>
           ) : (
             <div className="compact-grid">
-              {visible.map((p) => (
+              {visible.map((p) => {
+                const selectedVariant = (p.variants && p.variants[0]) || null;
+                const displayPrice = selectedVariant ? `${selectedVariant.price} ${selectedVariant.currency}` : `${p.price} ${p.currency}`;
+                const planMeta = getPlanBoxData(
+                  selectedVariant?.label || p.plan,
+                  selectedVariant?.duration_days ?? p.duration_days
+                );
+
+                return (
                 <article key={p.id} className={`compact-card ${p.type === "account" ? "luxe" : ""}`}>
                   <div className="compact-logo">
                     <img
@@ -165,7 +175,13 @@ export default function CataloguePage() {
                   <div className="compact-info">
                     <h3 className="compact-title">{getDisplayTitle(p.title)}</h3>
                     <div className="compact-subtitle">{p.short_description || p.subtitle || p.plan || "Produit"}</div>
-                    <div className="compact-price">{p.price} {p.currency}</div>
+                    <div className="compact-meta">
+                      <span className="compact-meta-line">Plan : {planMeta.planLabel}</span>
+                      <span className="compact-meta-line">
+                        Durée : <strong className="compact-meta-strong">{planMeta.durationLabel}</strong>
+                      </span>
+                    </div>
+                    <div className="compact-price">{displayPrice}</div>
                   </div>
 
                   <div className="compact-actions">
@@ -186,7 +202,7 @@ export default function CataloguePage() {
                     </a>
                   </div>
                 </article>
-              ))}
+              )})}
             </div>
           )}
         </section>

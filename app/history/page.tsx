@@ -1,6 +1,6 @@
-"use client";
+﻿"use client";
 
-import { Fragment, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import HeaderMain from "@/components/HeaderMain";
 import FooterMain from "@/components/FooterMain";
 
@@ -25,10 +25,10 @@ type OrderItem = {
 
 const STATUS_LABELS: Record<string, string> = {
   pending_payment: "En attente",
-  paid: "Payée",
+  paid: "PayÃ©e",
   processing: "En cours",
-  completed: "Terminée",
-  cancelled: "Annulée",
+  completed: "TerminÃ©e",
+  cancelled: "AnnulÃ©e",
 };
 
 const getItemTitle = (item: OrderItem) =>
@@ -48,16 +48,16 @@ export default function HistoryPage() {
   const [selected, setSelected] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const toFriendlyError = (message?: string | null) => {
+  const toFriendlyError = useCallback((message?: string | null) => {
     if (!message) return "Impossible de charger vos commandes pour le moment.";
     const lower = message.toLowerCase();
     if (lower.includes("does not exist") || lower.includes("column") || lower.includes("product_title")) {
       return "Les détails des articles sont en cours de mise à jour. Vos commandes restent disponibles.";
     }
     return "Impossible de charger vos commandes pour le moment.";
-  };
+  }, []);
 
-  const loadOrders = async () => {
+  const loadOrders = useCallback(async () => {
     setLoading(true);
     setError(null);
     const mod = await import("@/lib/supabase-browser").catch(() => null);
@@ -122,7 +122,7 @@ export default function HistoryPage() {
     if (queryError && finalData.length === 0) {
       setError(toFriendlyError(queryError.message));
     } else {
-      // Pour éviter les erreurs TS strictes avec le array Supabase, on map manuellement le type Order
+      // Pour Ã©viter les erreurs TS strictes avec le array Supabase, on map manuellement le type Order
       setOrders(
         finalData.map((o: any): Order => ({
           id: o.id,
@@ -144,7 +144,7 @@ export default function HistoryPage() {
       );
     }
     setLoading(false);
-  };
+  }, [toFriendlyError]);
 
   useEffect(() => {
     loadOrders();
@@ -186,7 +186,7 @@ export default function HistoryPage() {
         });
       }
     };
-  }, []);
+  }, [loadOrders]);
 
   return (
     <>
@@ -196,18 +196,18 @@ export default function HistoryPage() {
           <div>
             <p className="hero-eyebrow">Compte</p>
             <h1>Historique</h1>
-            <p>Suivez vos achats et l'état de vos commandes en temps réel.</p>
+            <p>Suivez vos achats et l'Ã©tat de vos commandes en temps rÃ©el.</p>
           </div>
           <div className="account-hero-actions">
             <a className="btn-ghost" href="/catalogue">Continuer vos achats</a>
-            <a className="btn-primary" href="/settings">Paramètres</a>
+            <a className="btn-primary" href="/settings">ParamÃ¨tres</a>
           </div>
         </section>
 
         <section className="account-grid">
           <aside className="account-sidebar">
             <div className="account-card">
-              <h3>Résumé</h3>
+              <h3>RÃ©sumÃ©</h3>
               <div className="account-stat">
                 <span>Commandes</span>
                 <strong>{orders.length}</strong>
@@ -219,7 +219,7 @@ export default function HistoryPage() {
                 </strong>
               </div>
               <div className="account-divider" />
-              <a className="link" href="/settings">Paramètres du compte</a>
+              <a className="link" href="/settings">ParamÃ¨tres du compte</a>
             </div>
           </aside>
 
@@ -245,7 +245,7 @@ export default function HistoryPage() {
                 <h3>Impossible de charger</h3>
                 <p className="muted">{error}</p>
                   <button type="button" className="btn-ghost" onClick={() => loadOrders()}>
-                    Réessayer
+                    RÃ©essayer
                   </button>
               </div>
             )}
@@ -256,7 +256,7 @@ export default function HistoryPage() {
                   <i className="ri-shopping-bag-3-line" />
                 </div>
                 <h3>Aucune commande pour l'instant</h3>
-                <p className="muted">Les commandes confirmées apparaîtront ici automatiquement.</p>
+                <p className="muted">Les commandes confirmÃ©es apparaÃ®tront ici automatiquement.</p>
                 <a className="btn-primary" href="/catalogue">Explorer le catalogue</a>
               </div>
             )}
@@ -269,11 +269,11 @@ export default function HistoryPage() {
                       <div>
                         <div className="order-id">{o.id}</div>
                         <div className="order-date">
-                          {o.created_at ? new Date(o.created_at).toLocaleDateString() : "—"}
+                          {o.created_at ? new Date(o.created_at).toLocaleDateString() : "â€”"}
                         </div>
                       </div>
                       <span className={`status-pill ${getStatusClass(o.status)}`}>
-                        {o.status ? (STATUS_LABELS[o.status] ?? o.status) : "—"}
+                        {o.status ? (STATUS_LABELS[o.status] ?? o.status) : "â€”"}
                       </span>
                     </div>
                     <div className="order-meta">
@@ -284,7 +284,7 @@ export default function HistoryPage() {
                         </strong>
                       </div>
                       <button type="button" className="ghost-btn" onClick={() => setSelected(o)}>
-                        Voir détails
+                        Voir dÃ©tails
                       </button>
                     </div>
                     {Array.isArray(o.order_items) && o.order_items.length > 0 && (
@@ -294,7 +294,7 @@ export default function HistoryPage() {
                             <div>
                               <div className="order-item-title">{getItemTitle(item)}</div>
                               <div className="order-item-meta">
-                                x{item.quantity ?? 1} • {item.unit_price ?? 0} {o.currency ?? "HTG"}
+                                x{item.quantity ?? 1} â€¢ {item.unit_price ?? 0} {o.currency ?? "HTG"}
                               </div>
                             </div>
                           </div>
@@ -314,7 +314,7 @@ export default function HistoryPage() {
         <div className="modal-overlay" onClick={() => setSelected(null)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-head">
-              <h3>Détails de la commande</h3>
+              <h3>DÃ©tails de la commande</h3>
               <button className="icon-btn ghost" aria-label="Fermer" onClick={() => setSelected(null)}>
                 <i className="ri-close-line" />
               </button>
@@ -328,7 +328,7 @@ export default function HistoryPage() {
                 <div>
                   <div className="admin-detail-label">Statut</div>
                   <div className="admin-detail-value">
-                    {selected.status ? (STATUS_LABELS[selected.status] ?? selected.status) : "—"}
+                    {selected.status ? (STATUS_LABELS[selected.status] ?? selected.status) : "â€”"}
                   </div>
                 </div>
                 <div>
@@ -340,7 +340,7 @@ export default function HistoryPage() {
                 <div>
                   <div className="admin-detail-label">Date</div>
                   <div className="admin-detail-value">
-                    {selected.created_at ? new Date(selected.created_at).toLocaleString() : "—"}
+                    {selected.created_at ? new Date(selected.created_at).toLocaleString() : "â€”"}
                   </div>
                 </div>
               </div>
@@ -365,6 +365,9 @@ export default function HistoryPage() {
     </>
   );
 }
+
+
+
 
 
 

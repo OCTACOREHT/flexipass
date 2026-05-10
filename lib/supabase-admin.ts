@@ -1,12 +1,16 @@
-﻿import { createClient } from "@supabase/supabase-js";
+import { createClient } from "@supabase/supabase-js";
 
-export const supabaseAdmin = () =>
-  createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL ||
-      "https://qdzcurdestvftimwwzpj.supabase.co",
-    process.env.SUPABASE_SERVICE_ROLE_KEY ||
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkemN1cmRlc3R2ZnRpbXd3enBqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MDQ4MjM1NywiZXhwIjoyMDg2MDU4MzU3fQ.SNTp4feC37cqn_U3ZWvyxuFM_pGHYRrJ6SM6jbeSTd4",
-    {
-      auth: { autoRefreshToken: false, persistSession: false },
-    }
-  );
+export const supabaseAdmin = () => {
+  const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+
+  if (!url || !serviceRoleKey) {
+    throw new Error(
+      "Supabase admin client not configured. Missing SUPABASE_URL (or NEXT_PUBLIC_SUPABASE_URL) or SUPABASE_SERVICE_ROLE_KEY."
+    );
+  }
+
+  return createClient(url, serviceRoleKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+};

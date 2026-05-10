@@ -1,46 +1,59 @@
 import FooterMain from "@/components/FooterMain";
 import HeaderMain from "@/components/HeaderMain";
 import { getProductImageSrc } from "@/lib/product-brand";
+import { getPlanBoxData } from "@/lib/plan-display";
 import Link from "next/link";
 
 type GiftItem = {
   title: string;
   desc: string;
   price: string;
+  plan?: string;
+  duration_days?: number;
   image_url?: string;
 };
 
 const gifts: GiftItem[] = [
-  { title: "PlayStation Store", desc: "Credits et jeux PSN", price: "1350 HTG" },
-  { title: "Xbox Gift Card", desc: "Jeux et contenus Xbox", price: "1350 HTG" },
-  { title: "Steam Wallet", desc: "Credits Steam PC", price: "675 HTG" },
-  { title: "Nintendo eShop", desc: "Credits Nintendo Switch", price: "1350 HTG" },
+  { title: "PlayStation Store", desc: "Credits et jeux PSN", price: "1350 HTG", plan: "12 mois", duration_days: 360 },
+  { title: "Xbox Gift Card", desc: "Jeux et contenus Xbox", price: "1350 HTG", plan: "12 mois", duration_days: 360 },
+  { title: "Steam Wallet", desc: "Credits Steam PC", price: "675 HTG", plan: "12 mois", duration_days: 360 },
+  { title: "Nintendo eShop", desc: "Credits Nintendo Switch", price: "1350 HTG", plan: "12 mois", duration_days: 360 },
 ];
 
 export default function CartesCadeauxPage() {
-  const renderGiftCard = (item: GiftItem) => (
-    <article className="market-card market-card--service" key={item.title}>
-      <div className="market-service-row">
-        <div className="compact-logo" aria-hidden="true">
-          <img
-            src={getProductImageSrc(item)}
-            alt=""
-            width={32}
-            height={32}
-            loading="lazy"
-          />
+  const renderGiftCard = (item: GiftItem) => {
+    const planMeta = getPlanBoxData(item.plan, item.duration_days);
+
+    return (
+      <article className="market-card market-card--service" key={item.title}>
+        <div className="market-service-row">
+          <div className="compact-logo" aria-hidden="true">
+            <img
+              src={getProductImageSrc(item)}
+              alt=""
+              width={32}
+              height={32}
+              loading="lazy"
+            />
+          </div>
+          <div className="market-service-content">
+            <h3 className="brand-name">{item.title}</h3>
+            <div className="muted">{item.desc}</div>
+            <div className="market-service-meta">
+              <span className="market-service-meta-line">Plan : {planMeta.planLabel}</span>
+              <span className="market-service-meta-line">
+                Durée : <strong className="market-service-meta-strong">{planMeta.durationLabel}</strong>
+              </span>
+            </div>
+            <div className="price market-service-price">{item.price}</div>
+          </div>
         </div>
-        <div className="market-service-content">
-          <h3 className="brand-name">{item.title}</h3>
-          <div className="muted">{item.desc}</div>
-          <div className="price market-service-price">{item.price}</div>
-        </div>
-      </div>
-      <a className="btn-full ghost-btn" href="/catalogue">
-        Voir details
-      </a>
-    </article>
-  );
+        <a className="btn-full ghost-btn" href="/catalogue">
+          Voir details
+        </a>
+      </article>
+    );
+  };
 
   return (
     <>

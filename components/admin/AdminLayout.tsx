@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import AdminShell from "@/components/admin/AdminShell";
 
 const ADMIN_EMAIL = "adminflexipass@gmail.com";
@@ -12,17 +12,13 @@ type AdminLayoutProps = {
 };
 
 export default function AdminLayout({ children }: AdminLayoutProps) {
-  const [authed, setAuthed] = useState(false);
+  const [authed, setAuthed] = useState(
+    () => typeof window !== "undefined" && window.localStorage.getItem(AUTH_KEY) === "yes"
+  );
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (typeof window !== "undefined" && localStorage.getItem(AUTH_KEY) === "yes") {
-      setAuthed(true);
-    }
-  }, []);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();

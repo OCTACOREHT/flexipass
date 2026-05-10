@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-import { supabase } from "@/lib/supabase";
 import { 
   FileSpreadsheet, 
   Download, 
@@ -18,7 +17,7 @@ export default function SettingsPage() {
   const [isExporting, setIsExporting] = useState<string | null>(null);
   const [status, setStatus] = useState<{ type: 'success' | 'error', msg: string } | null>(null);
 
-  const exportTable = async (tableName: string, fileName: string) => {
+  const exportTable = async (tableName: string) => {
     setIsExporting(tableName);
     setStatus(null);
     try {
@@ -76,7 +75,7 @@ export default function SettingsPage() {
 
           <div className="space-y-3">
             <button 
-              onClick={() => exportTable('products', 'flexipass_products')}
+              onClick={() => exportTable('products')}
               disabled={!!isExporting}
               className="w-full group flex items-center justify-between p-5 bg-[#0f0f23] hover:bg-[#16162e] rounded-2xl border border-zinc-800 transition-all active:scale-[0.98] disabled:opacity-50"
             >
@@ -92,7 +91,7 @@ export default function SettingsPage() {
             </button>
 
             <button 
-              onClick={() => exportTable('users', 'flexipass_users')}
+              onClick={() => exportTable('users')}
               disabled={!!isExporting}
               className="w-full group flex items-center justify-between p-5 bg-[#0f0f23] hover:bg-[#16162e] rounded-2xl border border-zinc-800 transition-all active:scale-[0.98] disabled:opacity-50"
             >
@@ -108,7 +107,7 @@ export default function SettingsPage() {
             </button>
 
             <button 
-              onClick={() => exportTable('orders', 'flexipass_orders')}
+              onClick={() => exportTable('orders')}
               disabled={!!isExporting}
               className="w-full group flex items-center justify-between p-5 bg-[#0f0f23] hover:bg-[#16162e] rounded-2xl border border-zinc-800 transition-all active:scale-[0.98] disabled:opacity-50"
             >

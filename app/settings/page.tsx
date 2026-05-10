@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
@@ -26,8 +26,6 @@ export default function SettingsPage() {
   const [verificationCode, setVerificationCode] = useState("");
   const [awaitingVerification, setAwaitingVerification] = useState(false);
   const [oauthProvider, setOauthProvider] = useState<string | null>(null);
-  const [oauthReauthing, setOauthReauthing] = useState(false);
-  const [oauthInfo, setOauthInfo] = useState<string | null>(null);
   const [emailOriginal, setEmailOriginal] = useState("");
 
   useEffect(() => {
@@ -92,7 +90,7 @@ export default function SettingsPage() {
       if (updateError) {
         setEmailError(updateError.message);
       } else {
-        setEmailSuccess("Un email de confirmation a été envoyé.");
+        setEmailSuccess("Un email de confirmation a Ã©tÃ© envoyÃ©.");
         setNewEmail(pendingEmail);
         window.sessionStorage.removeItem("pending_email_change");
       }
@@ -135,7 +133,7 @@ export default function SettingsPage() {
         fullName: (u.user_metadata?.full_name as string | undefined) ?? null,
       });
     }
-    setSuccess("Profil mis à jour");
+    setSuccess("Profil mis Ã  jour");
     setSaving(false);
   };
 
@@ -160,7 +158,7 @@ export default function SettingsPage() {
 
       if (!res.ok) throw new Error(await res.text() || "Erreur lors de l'envoi du code.");
 
-      setEmailSuccess(`Code envoyé à ${newEmail.trim()}`);
+      setEmailSuccess(`Code envoyÃ© Ã  ${newEmail.trim()}`);
       setAwaitingVerification(true);
     } catch (err: any) {
       setEmailError(err?.message || "Erreur inattendue");
@@ -176,7 +174,7 @@ export default function SettingsPage() {
     setEmailSuccess(null);
 
     if (!verificationCode.trim()) {
-      setEmailError("Veuillez saisir le code de vérification.");
+      setEmailError("Veuillez saisir le code de vÃ©rification.");
       setEmailSaving(false);
       return;
     }
@@ -188,9 +186,9 @@ export default function SettingsPage() {
         body: JSON.stringify({ code: verificationCode.trim() }),
       });
 
-      if (!res.ok) throw new Error(await res.text() || "Code invalide ou expiré.");
+      if (!res.ok) throw new Error(await res.text() || "Code invalide ou expirÃ©.");
 
-      setEmailSuccess("Code valide, email mis à jour !");
+      setEmailSuccess("Code valide, email mis Ã  jour !");
       setEmailOriginal(newEmail.trim());
       setAwaitingVerification(false);
       setVerificationCode("");
@@ -200,63 +198,17 @@ export default function SettingsPage() {
         setUser({ ...user, email: newEmail.trim() });
       }
     } catch (err: any) {
-      setEmailError(err?.message || "Erreur de vérification");
+      setEmailError(err?.message || "Erreur de vÃ©rification");
     } finally {
       setEmailSaving(false);
     }
   };
-
-  const handleOAuthReauth = async () => {
-    setOauthReauthing(true);
-    setEmailError(null);
-    setEmailSuccess(null);
-    if (!oauthProvider || oauthProvider === "email") {
-      setEmailError("Ré-auth OAuth indisponible.");
-      setOauthReauthing(false);
-      return;
-    }
-    if (!newEmail.trim()) {
-      setEmailError("Veuillez saisir un nouvel email.");
-      setOauthReauthing(false);
-      return;
-    }
-    if (newEmail.trim().toLowerCase() === (emailOriginal || "").toLowerCase()) {
-      setEmailError("Le nouvel email doit être différent de l’actuel.");
-      setOauthReauthing(false);
-      return;
-    }
-    const providerLabel = oauthProvider.charAt(0).toUpperCase() + oauthProvider.slice(1);
-    setOauthInfo(`Connecte-toi avec ${providerLabel} pour confirmer.`);
-    if (typeof window !== "undefined") {
-      window.sessionStorage.setItem("pending_email_change", newEmail.trim());
-    }
-    const mod = await import("@/lib/supabase-browser").catch(() => null);
-    const supabase = mod?.supabaseBrowser;
-    if (!supabase) {
-      setEmailError("Configuration Supabase manquante.");
-      setOauthReauthing(false);
-      return;
-    }
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: oauthProvider as "google" | "github" | "apple",
-      options: { redirectTo: `${window.location.origin}/settings?reauth=1` },
-    });
-    if (error) {
-      setEmailError(error.message);
-      setOauthReauthing(false);
-      return;
-    }
-    setEmailSuccess("Ré-auth OAuth lancée. Termine la connexion pour valider l’email.");
-    setOauthReauthing(false);
-  };
-
   const handleCancelEmailChange = () => {
     setNewEmail(emailOriginal);
     setVerificationCode("");
     setAwaitingVerification(false);
     setEmailError(null);
     setEmailSuccess(null);
-    setOauthInfo(null);
     if (typeof window !== "undefined") {
       window.sessionStorage.removeItem("pending_email_change");
     }
@@ -269,8 +221,8 @@ export default function SettingsPage() {
         <section className="account-hero">
           <div>
             <p className="hero-eyebrow">Compte</p>
-            <h1>Paramètres</h1>
-            <p>Gérez votre profil, vos préférences et vos informations de contact.</p>
+            <h1>ParamÃ¨tres</h1>
+            <p>GÃ©rez votre profil, vos prÃ©fÃ©rences et vos informations de contact.</p>
           </div>
           <div className="account-hero-actions">
             <a className="btn-ghost" href="/catalogue">Voir le catalogue</a>
@@ -286,7 +238,7 @@ export default function SettingsPage() {
               </div>
               <div className="profile-meta">
                 <strong>{fullName || "Compte"}</strong>
-                <span>{user?.email || "Non connecté"}</span>
+                <span>{user?.email || "Non connectÃ©"}</span>
               </div>
               {oauthProvider && <span className="provider-pill">{oauthProvider}</span>}
             </div>
@@ -309,7 +261,7 @@ export default function SettingsPage() {
                   <i className="ri-user-3-line" />
                 </div>
                 <h3>Connexion requise</h3>
-                <p className="muted">Connectez-vous pour acceder a vos Paramètres.</p>
+                <p className="muted">Connectez-vous pour acceder a vos ParamÃ¨tres.</p>
                 <a className="btn-ghost" href="/login">Se connecter</a>
               </div>
             )}
@@ -320,7 +272,7 @@ export default function SettingsPage() {
                   <div className="card-head">
                     <div>
                       <h3>Informations personnelles</h3>
-                      <p className="muted">Mettez à jour vos informations de profil.</p>
+                      <p className="muted">Mettez Ã  jour vos informations de profil.</p>
                     </div>
                   </div>
                   <form className="account-form" onSubmit={handleSave}>
@@ -336,7 +288,7 @@ export default function SettingsPage() {
                     {success && <div className="update-success">{success}</div>}
                     <div className="form-actions">
                       <button type="submit" disabled={saving}>
-                        {saving ? "Mise à jour..." : "Enregistrer"}
+                        {saving ? "Mise Ã  jour..." : "Enregistrer"}
                       </button>
                     </div>
                   </form>
@@ -366,12 +318,12 @@ export default function SettingsPage() {
                     
                     {awaitingVerification && (
                       <div className="field">
-                        <label>Code de vérification</label>
+                        <label>Code de vÃ©rification</label>
                         <input
                           type="text"
                           value={verificationCode}
                           onChange={(e) => setVerificationCode(e.target.value)}
-                          placeholder="Entrez le code reçu"
+                          placeholder="Entrez le code reÃ§u"
                           required
                         />
                       </div>
@@ -390,7 +342,7 @@ export default function SettingsPage() {
                           (awaitingVerification && !verificationCode.trim())
                         }
                       >
-                        {emailSaving ? "En cours..." : (awaitingVerification ? "Confirmer le code" : "Envoyer code vérif")}
+                        {emailSaving ? "En cours..." : (awaitingVerification ? "Confirmer le code" : "Envoyer code vÃ©rif")}
                       </button>
                       {awaitingVerification && (
                         <button type="button" className="ghost-btn" onClick={handleCancelEmailChange}>
@@ -438,6 +390,7 @@ export default function SettingsPage() {
     </>
   );
 }
+
 
 
 

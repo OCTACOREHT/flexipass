@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import OrderTable from "@/app/admiflexipass/components/OrderTable";
 import OrderModal from "@/app/admiflexipass/components/OrderModal";
 import SearchInput from "@/app/admiflexipass/components/SearchInput";
 import SuccessToast from "@/app/admiflexipass/components/SuccessToast";
-import { Package, RefreshCcw, Sparkles, CheckCircle2, Clock } from "lucide-react";
+import { Package, RefreshCcw, Sparkles } from "lucide-react";
 import { Order } from "@/app/admiflexipass/components/OrderRow";
 
 export default function OrdersPage() {
@@ -23,7 +23,7 @@ export default function OrdersPage() {
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
   // ROBUST FETCH: Handles empty state and network errors without crashing
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     setIsLoading(true);
     try {
       // ÉTAPE 1 : Tenter la requête avec JOINTURE (plus riche)
@@ -119,7 +119,7 @@ export default function OrdersPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [selectedMonth, selectedYear, statusFilter, timeFilter]);
 
   useEffect(() => {
     fetchOrders();
@@ -144,24 +144,7 @@ export default function OrdersPage() {
     return () => {
       if (channel) supabase.removeChannel(channel);
     };
-  }, [timeFilter, statusFilter, selectedMonth, selectedYear]);
-
-  // STATUS CONTROL: Function to update order status
-  const updateOrderStatus = async (orderId: string, newStatus: string) => {
-    try {
-      const { error } = await supabase
-        .from("orders")
-        .update({ status: newStatus })
-        .eq("id", orderId);
-      
-      if (error) throw error;
-      setToast({ message: `Commande marquée comme ${newStatus}`, type: "success" });
-      fetchOrders();
-    } catch (err: any) {
-      setToast({ message: err.message || "Échec de la mise à jour", type: "error" });
-    }
-  };
-
+  }, [fetchOrders]);
   const filteredOrders = orders.filter(o => 
     (o.id || "").toLowerCase().includes(searchTerm.toLowerCase()) || 
     (o.user_id || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -306,3 +289,4 @@ export default function OrdersPage() {
     </div>
   );
 }
+

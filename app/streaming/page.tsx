@@ -1,55 +1,68 @@
 import FooterMain from "@/components/FooterMain";
 import HeaderMain from "@/components/HeaderMain";
 import { getProductImageSrc } from "@/lib/product-brand";
+import { getPlanBoxData } from "@/lib/plan-display";
 import Link from "next/link";
 
 type ServiceItem = {
   title: string;
   desc: string;
   price: string;
+  plan?: string;
+  duration_days?: number;
   image_url?: string;
 };
 
 const videoServices: ServiceItem[] = [
-  { title: "Netflix", desc: "Films et series", price: "A partir de 1200 HTG" },
-  { title: "Disney+", desc: "Films et univers Disney", price: "A partir de 1300 HTG", image_url: "/assets/images/brands/disneyplus.svg" },
-  { title: "Amazon Prime Video", desc: "Series et films Prime", price: "A partir de 1000 HTG" },
-  { title: "HBO Max", desc: "Blockbusters et series HBO", price: "A partir de 1400 HTG" },
+  { title: "Netflix", desc: "Films et series", price: "A partir de 1200 HTG", plan: "1 mois", duration_days: 30 },
+  { title: "Disney+", desc: "Films et univers Disney", price: "A partir de 1300 HTG", plan: "1 mois", duration_days: 30, image_url: "/assets/images/brands/disneyplus.svg" },
+  { title: "Amazon Prime Video", desc: "Series et films Prime", price: "A partir de 1000 HTG", plan: "1 mois", duration_days: 30 },
+  { title: "HBO Max", desc: "Blockbusters et series HBO", price: "A partir de 1400 HTG", plan: "1 mois", duration_days: 30 },
 ];
 
 const musicServices: ServiceItem[] = [
-  { title: "Spotify Premium", desc: "Musique sans pub", price: "A partir de 900 HTG" },
-  { title: "Apple Music", desc: "Catalogue Apple Music", price: "A partir de 1000 HTG" },
+  { title: "Spotify Premium", desc: "Musique sans pub", price: "A partir de 900 HTG", plan: "1 mois", duration_days: 30 },
+  { title: "Apple Music", desc: "Catalogue Apple Music", price: "A partir de 1000 HTG", plan: "1 mois", duration_days: 30 },
 ];
 
 const animeServices: ServiceItem[] = [
-  { title: "Crunchyroll", desc: "Streaming anime", price: "A partir de 1100 HTG" },
+  { title: "Crunchyroll", desc: "Streaming anime", price: "A partir de 1100 HTG", plan: "1 mois", duration_days: 30 },
 ];
 
 export default function StreamingPage() {
-  const renderServiceCard = (item: ServiceItem) => (
-    <article className="market-card market-card--service" key={item.title}>
-      <div className="market-service-row">
-        <div className="compact-logo" aria-hidden="true">
-          <img
-            src={getProductImageSrc(item)}
-            alt=""
-            width={32}
-            height={32}
-            loading="lazy"
-          />
+  const renderServiceCard = (item: ServiceItem) => {
+    const planMeta = getPlanBoxData(item.plan, item.duration_days);
+
+    return (
+      <article className="market-card market-card--service" key={item.title}>
+        <div className="market-service-row">
+          <div className="compact-logo" aria-hidden="true">
+            <img
+              src={getProductImageSrc(item)}
+              alt=""
+              width={32}
+              height={32}
+              loading="lazy"
+            />
+          </div>
+          <div className="market-service-content">
+            <h3 className="brand-name">{item.title}</h3>
+            <div className="muted">{item.desc}</div>
+            <div className="market-service-meta">
+              <span className="market-service-meta-line">Plan : {planMeta.planLabel}</span>
+              <span className="market-service-meta-line">
+                Durée : <strong className="market-service-meta-strong">{planMeta.durationLabel}</strong>
+              </span>
+            </div>
+            <div className="price market-service-price">{item.price}</div>
+          </div>
         </div>
-        <div className="market-service-content">
-          <h3 className="brand-name">{item.title}</h3>
-          <div className="muted">{item.desc}</div>
-          <div className="price market-service-price">{item.price}</div>
-        </div>
-      </div>
-      <a className="btn-full ghost-btn" href="/catalogue">
-        Voir details
-      </a>
-    </article>
-  );
+        <a className="btn-full ghost-btn" href="/catalogue">
+          Voir details
+        </a>
+      </article>
+    );
+  };
 
   return (
     <>

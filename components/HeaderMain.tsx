@@ -300,7 +300,7 @@ export default function HeaderMain() {
         if (event === "SIGNED_OUT") {
           try {
             localStorage.removeItem("supabase.auth.token");
-          } catch (_) {}
+          } catch {}
         }
       });
     }
@@ -442,7 +442,11 @@ export default function HeaderMain() {
       <header className={`nav ${menuOpen ? "menu-open" : ""}`}>
         <div className="nav-inner">
           <Link href="/" className="brand-logo">
-            <img src="/assets/images/brands/flexipass-logo.svg" alt="FlexiPass" />
+            <img src="/Flexipass%20.png" alt="FlexiPass" />
+            <span className="brand-logo-text">
+              <span className="brand-logo-flexi">Flexi</span>
+              <span className="brand-logo-pass">pass</span>
+            </span>
           </Link>
           <div className="nav-center">
             <nav className="menu">
@@ -870,3 +874,4 @@ export default function HeaderMain() {
     </>
   );
 }
+

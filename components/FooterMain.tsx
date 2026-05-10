@@ -1,5 +1,7 @@
 ﻿"use client";
 
+import Link from "next/link";
+
 export default function FooterMain() {
   return (
     <footer className="footer">
@@ -12,17 +14,17 @@ export default function FooterMain() {
           <div className="footer-col">
             <h4>Navigation</h4>
             <ul>
-              <li><a href="/">Accueil</a></li>
-              <li><a href="/catalogue">Catalogue</a></li>
-              <li><a href="/aide">Aide</a></li>
+              <li><Link href="/">Accueil</Link></li>
+              <li><Link href="/catalogue">Catalogue</Link></li>
+              <li><Link href="/aide">Aide</Link></li>
             </ul>
           </div>
           <div className="footer-col">
             <h4>Légal</h4>
             <ul>
-              <li><a href="/cgu">CGU</a></li>
-              <li><a href="/confidentialite">Politique de confidentialité</a></li>
-              <li><a href="/mentions-legales">Mentions légales</a></li>
+              <li><Link href="/cgu">CGU</Link></li>
+              <li><Link href="/confidentialite">Politique de confidentialité</Link></li>
+              <li><Link href="/mentions-legales">Mentions légales</Link></li>
             </ul>
           </div>
           <div className="footer-col">

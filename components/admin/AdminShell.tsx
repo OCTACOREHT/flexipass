@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 const navItems = [
   { href: "/admiflexipass", label: "Dashboard", icon: "ri-home-4-line" },
@@ -20,13 +20,9 @@ type AdminShellProps = {
 
 export default function AdminShell({ children, onLogout }: AdminShellProps) {
   const pathname = usePathname();
-  const [darkMode, setDarkMode] = useState(false);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const saved = window.localStorage.getItem("admin_theme");
-    setDarkMode(saved === "dark");
-  }, []);
+  const [darkMode, setDarkMode] = useState(
+    () => typeof window !== "undefined" && window.localStorage.getItem("admin_theme") === "dark"
+  );
 
   const toggleTheme = () => {
     setDarkMode((prev) => {

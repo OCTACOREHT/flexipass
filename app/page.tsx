@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import FooterMain from "@/components/FooterMain";
 import { getProductImageSrc, handleProductImageError } from "@/lib/product-brand";
+import { getPlanBoxData } from "@/lib/plan-display";
 
 type Variant = { id: string; label: string; duration_days: number; price: number; currency: string };
 type Product = {
@@ -16,6 +17,7 @@ type Product = {
   price: number;
   currency: string;
   plan?: string | null;
+  duration_days?: number | null;
   variants?: Variant[];
 };
 
@@ -291,7 +293,7 @@ export default function Home() {
       const raw = localStorage.getItem(CART_KEY);
       const items = raw ? JSON.parse(raw) : [];
       if (Array.isArray(items)) setCartItems(items);
-    } catch (_) {}
+    } catch {}
 
     if (typeof window !== "undefined") {
       const shouldOpen = window.location.hash === "#cart" || new URLSearchParams(window.location.search).get("cart") === "1";
@@ -303,7 +305,7 @@ export default function Home() {
     try {
       localStorage.setItem(CART_KEY, JSON.stringify(cartItems));
       window.dispatchEvent(new Event("cart:updated"));
-    } catch (_) {}
+    } catch {}
   }, [cartItems]);
 
   useEffect(() => {
@@ -314,7 +316,7 @@ export default function Home() {
         const parsed = JSON.parse(cached);
         if (Array.isArray(parsed)) setProducts(parsed);
       }
-    } catch (_) {}
+    } catch {}
 
     setLoadingProducts(true);
     const fetchProducts = () => {
@@ -325,7 +327,7 @@ export default function Home() {
           setProducts(list);
           try {
             localStorage.setItem("products_cache", JSON.stringify(list));
-          } catch (_) {}
+          } catch {}
         })
         .catch(() => setProducts((prev) => prev || []))
         .finally(() => setLoadingProducts(false));
@@ -448,7 +450,7 @@ export default function Home() {
         if (event === "SIGNED_OUT") {
           try {
             localStorage.removeItem("supabase.auth.token");
-          } catch (_) {
+          } catch {
             /* ignore */
           }
         }
@@ -612,7 +614,11 @@ export default function Home() {
       <header className={`nav ${menuOpen ? "menu-open" : ""}`}>
         <div className="nav-inner">
           <div className="brand-logo">
-            <img src="/assets/images/brands/flexipass-logo.svg" alt="FlexiPass" />
+            <img src="/Flexipass%20.png" alt="FlexiPass" />
+            <span className="brand-logo-text">
+              <span className="brand-logo-flexi">Flexi</span>
+              <span className="brand-logo-pass">pass</span>
+            </span>
           </div>
           <div className="nav-center">
             <nav className="menu">
@@ -918,6 +924,10 @@ export default function Home() {
             {visibleProducts.slice(0, 8).map((p) => {
               const selectedVariant = (p.variants && p.variants[0]) || null;
               const displayPrice = selectedVariant ? `${selectedVariant.price} ${selectedVariant.currency}` : `${p.price} ${p.currency}`;
+              const planMeta = getPlanBoxData(
+                selectedVariant?.label || p.plan,
+                selectedVariant?.duration_days ?? p.duration_days
+              );
               return (
                 <article key={p.id} className={`compact-card ${p.type === "account" ? "luxe" : ""}`}>
                   <div className="compact-logo">
@@ -936,6 +946,12 @@ export default function Home() {
                   <div className="compact-info">
                     <h3 className="compact-title">{getDisplayTitle(p.title)}</h3>
                     <div className="compact-subtitle">{p.short_description || p.subtitle || p.plan || "Produit"}</div>
+                    <div className="compact-meta">
+                      <span className="compact-meta-line">Plan : {planMeta.planLabel}</span>
+                      <span className="compact-meta-line">
+                        Durée : <strong className="compact-meta-strong">{planMeta.durationLabel}</strong>
+                      </span>
+                    </div>
                     <div className="compact-price">{displayPrice}</div>
                   </div>
 
@@ -979,6 +995,10 @@ export default function Home() {
               const premiumPrice = selectedVariant ? selectedVariant.price : p.price;
               const premiumCurrency = selectedVariant ? selectedVariant.currency : p.currency;
               const premiumSub = (p.short_description || p.subtitle || "premium").trim();
+              const planMeta = getPlanBoxData(
+                selectedVariant?.label || p.plan,
+                selectedVariant?.duration_days ?? p.duration_days
+              );
               return (
               <article key={p.id} className="compact-card luxe">
                 <div className="compact-logo">
@@ -997,6 +1017,12 @@ export default function Home() {
                 <div className="compact-info">
                   <h3 className="compact-title">{getDisplayTitle(p.title)}</h3>
                   <div className="compact-subtitle">{premiumSub}</div>
+                  <div className="compact-meta">
+                    <span className="compact-meta-line">Plan : {planMeta.planLabel}</span>
+                    <span className="compact-meta-line">
+                      Durée : <strong className="compact-meta-strong">{planMeta.durationLabel}</strong>
+                    </span>
+                  </div>
                   <div className="compact-price">{formatPrice(premiumPrice, premiumCurrency)}</div>
                 </div>
 
@@ -1311,3 +1337,4 @@ export default function Home() {
     </main>
   );
 }
+

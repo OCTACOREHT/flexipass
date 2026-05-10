@@ -43,7 +43,7 @@ export default function UserModal({ user, isOpen, onClose, onSave }: UserModalPr
     try {
       await onSave(formData);
       onClose();
-    } catch (err) {
+    } catch {
       alert("Erreur lors de l'enregistrement de l'utilisateur");
     } finally {
       setIsSaving(false);
