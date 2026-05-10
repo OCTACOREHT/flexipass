@@ -445,7 +445,7 @@ export default function HeaderMain() {
             <img src="/Flexipass%20.png" alt="FlexiPass" />
             <span className="brand-logo-text">
               <span className="brand-logo-flexi">Flexi</span>
-              <span className="brand-logo-pass">pass</span>
+              <span className="brand-logo-pass">Pass</span>
             </span>
           </Link>
           <div className="nav-center">

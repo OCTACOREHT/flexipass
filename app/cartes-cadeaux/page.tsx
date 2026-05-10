@@ -14,10 +14,10 @@ type GiftItem = {
 };
 
 const gifts: GiftItem[] = [
-  { title: "PlayStation Store", desc: "Credits et jeux PSN", price: "1350 HTG", plan: "12 mois", duration_days: 360 },
+  { title: "PlayStation Store", desc: "Crédits et jeux PSN", price: "1350 HTG", plan: "12 mois", duration_days: 360 },
   { title: "Xbox Gift Card", desc: "Jeux et contenus Xbox", price: "1350 HTG", plan: "12 mois", duration_days: 360 },
-  { title: "Steam Wallet", desc: "Credits Steam PC", price: "675 HTG", plan: "12 mois", duration_days: 360 },
-  { title: "Nintendo eShop", desc: "Credits Nintendo Switch", price: "1350 HTG", plan: "12 mois", duration_days: 360 },
+  { title: "Steam Wallet", desc: "Crédits Steam PC", price: "675 HTG", plan: "12 mois", duration_days: 360 },
+  { title: "Nintendo eShop", desc: "Crédits Nintendo Switch", price: "1350 HTG", plan: "12 mois", duration_days: 360 },
 ];
 
 export default function CartesCadeauxPage() {
@@ -49,7 +49,7 @@ export default function CartesCadeauxPage() {
           </div>
         </div>
         <a className="btn-full ghost-btn" href="/catalogue">
-          Voir details
+          Voir détails
         </a>
       </article>
     );
@@ -63,11 +63,11 @@ export default function CartesCadeauxPage() {
           <div className="market-hero-inner">
             <div>
               <p className="hero-eyebrow">FlexiPass</p>
-              <h1>Cartes Cadeaux</h1>
-              <p>Offrez la liberte de choisir : cartes digitales, livraison instantanee.</p>
+              <h1>Cartes cadeaux</h1>
+              <p>Offrez la liberté de choisir : cartes digitales, livraison instantanée.</p>
               <div className="market-hero-actions">
                 <a className="btn-primary" href="/catalogue">Voir le catalogue</a>
-                <a className="btn-ghost" href="/streaming">Voir streaming</a>
+                <a className="btn-ghost" href="/streaming">Voir le streaming</a>
               </div>
             </div>
           </div>
@@ -75,7 +75,7 @@ export default function CartesCadeauxPage() {
 
         <section className="market-section">
           <div className="section-head market-head market-head--split">
-            <h2>Selections populaires</h2>
+            <h2>Sélections populaires</h2>
             <Link className="link" href="/">Retour accueil</Link>
           </div>
           <div className="market-grid">
@@ -88,22 +88,22 @@ export default function CartesCadeauxPage() {
             <div className="market-feature">
               <div className="market-dot">Fast</div>
               <div>
-                <strong>Instantane</strong>
-                <div className="muted">Livraison immediate par email</div>
+                <strong>Instantané</strong>
+                <div className="muted">Livraison immédiate par email</div>
               </div>
             </div>
             <div className="market-feature">
               <div className="market-dot">Safe</div>
               <div>
-                <strong>Securise</strong>
-                <div className="muted">Paiement protege et fiable</div>
+                <strong>Sécurisé</strong>
+                <div className="muted">Paiement protégé et fiable</div>
               </div>
             </div>
             <div className="market-feature">
               <div className="market-dot">Gift</div>
               <div>
-                <strong>Ideal cadeau</strong>
-                <div className="muted">Montants varies, valides immediatement</div>
+                <strong>Idéal cadeau</strong>
+                <div className="muted">Montants variés, valides immédiatement</div>
               </div>
             </div>
           </div>

@@ -183,13 +183,13 @@ a:hover {
 }
 
 .brand-logo img {
-  height: 40px;
+  height: 24px;
   width: auto;
   display: block;
 }
 
 .brand-logo-text {
-  font-size: 20px;
+  font-size: 16px;
   font-weight: 800;
   line-height: 1;
   letter-spacing: 0.2px;
@@ -2556,9 +2556,80 @@ a:hover {
   font-weight: 800;
 }
 
+.payment-wrap {
+  padding-top: clamp(24px, 4vw, 40px);
+  padding-bottom: clamp(56px, 8vw, 80px);
+}
+
+.payment-wrap .payment-grid {
+  gap: 20px;
+}
+
+.payment-wrap .payment-flags {
+  flex-wrap: wrap;
+  row-gap: 6px;
+}
+
+.payment-wrap .plan-item .muted {
+  line-height: 1.35;
+}
+
 @media (max-width: 900px) {
   .detail-grid {
     grid-template-columns: 1fr;
+  }
+
+  .payment-wrap {
+    padding: 24px 14px 56px;
+  }
+
+  .payment-wrap .payment-grid {
+    gap: 14px;
+  }
+
+  .payment-wrap .detail-head {
+    align-items: flex-start;
+  }
+
+  .payment-wrap .payment-head-content {
+    min-width: 0;
+  }
+
+  .payment-wrap .payment-flags {
+    flex-direction: column;
+    gap: 6px;
+  }
+}
+
+@media (max-width: 560px) {
+  .payment-wrap .detail-card {
+    padding: 14px;
+    border-radius: 14px;
+  }
+
+  .payment-wrap .detail-head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .payment-wrap .detail-icon img {
+    width: 64px;
+    height: 64px;
+    border-radius: 14px;
+  }
+
+  .payment-wrap .detail-price {
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .payment-wrap .plan-item {
+    padding: 10px;
+  }
+
+  .payment-wrap .cta-stack .btn-full {
+    width: 100%;
   }
 }
 .user-chip {
@@ -3251,12 +3322,47 @@ a:hover {
 .footer-brand {
   display: grid;
   gap: 10px;
+  align-content: start;
+}
+
+.footer-brand-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: max-content;
+  max-width: 100%;
 }
 
 .footer-logo {
   width: 200px;
   height: auto;
   display: block;
+}
+
+.footer-logo--icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.footer-brand-name {
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  display: flex;
+  align-items: baseline;
+  white-space: nowrap;
+}
+
+.footer-brand-name--apricot {
+  color: #ffab45;
+}
+
+.footer-brand-name--white {
+  color: #ffffff;
 }
 
 .footer-grid {
@@ -3473,6 +3579,21 @@ a:hover {
 @media (max-width: 720px) {
   .footer {
     padding: 32px 16px 22px;
+  }
+
+  .footer-brand-header {
+    gap: 8px;
+    width: max-content;
+  }
+
+  .footer-logo--icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+  }
+
+  .footer-brand-name {
+    font-size: 16px;
   }
 
   .footer-bottom {

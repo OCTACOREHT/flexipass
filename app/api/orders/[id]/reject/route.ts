@@ -23,7 +23,7 @@ async function sendOrderRejectedEmailFallback(order: any) {
     auth: { user, pass },
   });
 
-  const subject = `Commande #${order.id} refusee`;
+  const subject = `Commande #${order.id} refusée`;
   const createdAt = order.created_at ? new Date(order.created_at) : new Date();
   const dateLabel = new Intl.DateTimeFormat("fr-FR", {
     dateStyle: "full",
@@ -32,11 +32,11 @@ async function sendOrderRejectedEmailFallback(order: any) {
 
   const html = `
     <div style="font-family:Arial,sans-serif;color:#111;max-width:640px;margin:0 auto;border:1px solid #eee;border-radius:16px;padding:24px;">
-      <h2 style="margin:0 0 8px;">Commande refusee</h2>
+      <h2 style="margin:0 0 8px;">Commande refusée</h2>
       <p style="margin:0 0 16px;color:#555;">Commande #${order.id} • ${dateLabel}</p>
       <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:16px;">
         <p style="margin:0;font-size:14px;color:#9a3412;">
-          Votre paiement n'a pas pu etre valide. Merci de re-verifier la preuve et de relancer votre commande ou de contacter le support.
+          Votre paiement n'a pas pu être validé. Merci de revérifier la preuve et de relancer votre commande ou de contacter le support.
         </p>
       </div>
       <p style="margin:16px 0 0;color:#666;font-size:12px;">Besoin d'aide ? Contactez notre support.</p>
@@ -89,14 +89,14 @@ export async function POST(request: Request) {
       typeof sendOrderRejectedEmail === "function"
         ? await sendOrderRejectedEmail({ order })
         : await sendOrderRejectedEmailFallback(order);
+
     if (emailResult) {
       const logPayload: Record<string, any> = {
         order_id: order.id,
         user_id: order.user_id,
         to_email: order.customer_email,
-        subject: `Commande #${order.id} refusee`,
+        subject: `Commande #${order.id} refusée`,
         status: emailResult.success ? "success" : "failed",
-        email_type: "order_rejected",
         erreur: emailResult.success ? null : emailResult.error,
         sent_at: new Date().toISOString(),
         created_at: new Date().toISOString(),

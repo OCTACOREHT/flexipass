@@ -1,4 +1,4 @@
-﻿import { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { sendOrderConfirmationEmail } from "@/lib/email";
 
@@ -160,7 +160,6 @@ export async function POST(request: Request) {
         status: emailResult.success ? "success" : "failed",
         sujet: emailSubject,
         statut: emailResult.success ? "success" : "failed",
-        email_type: "order_confirmation",
         erreur: emailResult.success ? null : emailResult.error,
         sent_at: new Date().toISOString(),
         created_at: new Date().toISOString(),

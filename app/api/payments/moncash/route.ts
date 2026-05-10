@@ -19,7 +19,7 @@ export async function POST(request: Request) {
 
     if (!paymentToken) {
       return NextResponse.json(
-        { error: "MonCash n'a pas retourne de payment_token", details: payment },
+        { error: "MonCash n'a pas retourné de payment_token", details: payment },
         { status: 502 }
       );
     }

@@ -1,6 +1,7 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
+import SessionTimeout from "@/components/SessionTimeout";
 
 const appFont = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -9,11 +10,8 @@ const appFont = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "FlexiPass | Cartes Cadeaux Numeriques",
+  title: "FlexiPass | Cartes Cadeaux Numériques",
   description: "Offrez le choix avec nos cartes numériques instantanées.",
-  icons: {
-    icon: "/favicon.svg",
-  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -25,10 +23,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css"
         />
       </head>
-      <body className={appFont.variable}>{children}</body>
+      <body className={appFont.variable}>
+        <SessionTimeout />
+        {children}
+      </body>
     </html>
   );
 }
-
-
-

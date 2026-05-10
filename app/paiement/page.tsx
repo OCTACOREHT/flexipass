@@ -199,9 +199,9 @@ export default function PaiementPage() {
 
       const data = await res.json();
       const createdOrderId = (data?.order?.id || data?.order_id) as string;
-      if (method === "transfer" && data?.email_sent) {
+      if (method === "transfer") {
         setEmailSentToast(true);
-        setTimeout(() => setEmailSentToast(false), 1200);
+        setTimeout(() => setEmailSentToast(false), 5000);
       }
 
       if (method === "moncash") {
@@ -223,7 +223,7 @@ export default function PaiementPage() {
         const paymentUrl = moncashData?.redirect_url || moncashData?.payment_url;
 
         if (!paymentUrl) {
-          throw new Error("MonCash n'a pas renvoye d'URL de paiement");
+          throw new Error("MonCash n'a pas renvoyé d'URL de paiement");
         }
 
         if (typeof window !== "undefined") {
@@ -251,21 +251,21 @@ export default function PaiementPage() {
   return (
     <>
       <HeaderMain />
-      <main className="detail-wrap">
-        <section className="detail-grid">
-          <div className="detail-left">
+      <main className="detail-wrap payment-wrap">
+        <section className="detail-grid payment-grid">
+          <div className="detail-left payment-left">
             <div className="detail-card">
               <div className="detail-head">
                 <div className="detail-icon">
                   <img src="/assets/images/payments/MC-removebg-preview.png" alt="Paiement" />
                   <span className="detail-badge">Paiement</span>
                 </div>
-                <div>
+                <div className="payment-head-content">
                   <h1>Mode de paiement</h1>
-                  <p className="muted">Choisissez votre methode pour finaliser la commande.</p>
-                  <div className="detail-flags">
+                  <p className="muted">Choisissez votre méthode pour finaliser la commande.</p>
+                  <div className="detail-flags payment-flags">
                     <span>
-                      <i className="ri-flashlight-line" /> Moncash automatique
+                      <i className="ri-flashlight-line" /> MonCash automatique
                     </span>
                     <span>
                       <i className="ri-bank-line" /> Virement Sogebank / Unibank
@@ -276,7 +276,7 @@ export default function PaiementPage() {
             </div>
 
             <div className="detail-card">
-              <h3>Recapitulatif</h3>
+              <h3>Récapitulatif</h3>
               {items.length === 0 ? (
                 <div className="pay-empty">
                   <p>Votre panier est vide.</p>
@@ -305,7 +305,7 @@ export default function PaiementPage() {
                         </div>
                         <div className="pay-summary-info">
                           <strong>{item.title}</strong>
-                          <span>Qte : {item.qty}</span>
+                          <span>Qté : {item.qty}</span>
                         </div>
                         <div className="pay-summary-price">{formatHtg(item.price * item.qty)}</div>
                       </div>
@@ -323,24 +323,24 @@ export default function PaiementPage() {
               <h3>Informations</h3>
               <div className="detail-bullets fancy-bullets">
                 <span>
-                  <i className="ri-shield-check-line" /> Moncash est confirme automatiquement.
+                  <i className="ri-shield-check-line" /> MonCash est confirmé automatiquement.
                 </span>
                 <span>
                   <i className="ri-file-upload-line" /> Pour virement, ajoutez la preuve de transfert.
                 </span>
                 <span>
-                  <i className="ri-time-line" /> Verification virement sous environ 24 h.
+                  <i className="ri-time-line" /> Vérification du virement sous environ 24 h.
                 </span>
               </div>
             </div>
           </div>
 
-          <div className="detail-right">
+          <div className="detail-right payment-right">
             <div className="detail-card">
               {items.length > 0 && (
                 <div className="detail-price">
                   <span className="big">{formatHtg(total)}</span>
-                  <span className="pill red">A payer</span>
+                  <span className="pill red">À payer</span>
                 </div>
               )}
 
@@ -352,8 +352,8 @@ export default function PaiementPage() {
                   onClick={() => setMethod("moncash")}
                 >
                   <div>
-                    <div className="plan-title">Moncash automatique</div>
-                    <div className="muted">Confirmation immediate</div>
+                    <div className="plan-title">MonCash automatique</div>
+                    <div className="muted">Confirmation immédiate</div>
                   </div>
                 </button>
 
@@ -373,11 +373,11 @@ export default function PaiementPage() {
                 <div className="pay-block">
                   <div className="bank-info">
                     <div className="bank-row">
-                      <span className="bank-label">Numero Moncash :</span>
+                      <span className="bank-label">Numéro MonCash :</span>
                       <strong className="bank-value">+509 37 00 00 00</strong>
                     </div>
                     <div className="bank-row">
-                      <span className="bank-label">Reference :</span>
+                      <span className="bank-label">Référence :</span>
                       <strong className="bank-value">{moncashRef}</strong>
                     </div>
                   </div>
@@ -413,7 +413,7 @@ export default function PaiementPage() {
                       <strong className="bank-value">{selectedBank.accountName}</strong>
                     </div>
                     <div className="bank-row">
-                      <span className="bank-label">No compte :</span>
+                      <span className="bank-label">N° compte :</span>
                       <strong className="bank-value">{selectedBank.accountNumber}</strong>
                     </div>
                     <div className="bank-row">
@@ -421,7 +421,7 @@ export default function PaiementPage() {
                       <strong className="bank-value">{selectedBank.branch}</strong>
                     </div>
                     <div className="bank-row">
-                      <span className="bank-label">Code reference :</span>
+                      <span className="bank-label">Code de référence :</span>
                       <strong className="bank-value">{transferCode}</strong>
                     </div>
                   </div>
@@ -438,10 +438,10 @@ export default function PaiementPage() {
                         setProofName(file?.name ?? "");
                       }}
                     />
-                    {proofName ? <small>Fichier: {proofName}</small> : <small>Aucun fichier selectionne.</small>}
+                    {proofName ? <small>Fichier : {proofName}</small> : <small>Aucun fichier sélectionné.</small>}
                   </div>
 
-                  <div className="pay-note">Verification manuelle en environ 24 h.</div>
+                  <div className="pay-note">Vérification manuelle sous environ 24 h.</div>
                 </div>
               )}
 
@@ -453,7 +453,7 @@ export default function PaiementPage() {
                   onClick={handleSubmitPayment}
                   style={!canSubmit ? { opacity: 0.6, cursor: "not-allowed" } : undefined}
                 >
-                  {submitting ? "Création en cours..." : (method === "moncash" ? "Payer avec Moncash" : "Soumettre le virement")}
+                  {submitting ? "Création en cours..." : (method === "moncash" ? "Payer avec MonCash" : "Soumettre le virement")}
                 </button>
                 <Link className="btn-full ghost-btn" href="/#cart">
                   Retour au panier
@@ -475,10 +475,10 @@ export default function PaiementPage() {
             <div className="modal-icon" style={{ fontSize: 48, color: "#10b981", marginBottom: 16 }}>
               <i className="ri-checkbox-circle-fill" />
             </div>
-            <h2>Commande Confirmée !</h2>
+            <h2>Commande confirmée !</h2>
             <p className="muted" style={{ margin: "12px 0 24px" }}>
               Votre paiement MonCash a été confirmé.<br/>
-              Statut : processing.
+              Statut : en traitement.
             </p>
             <div className="cta-stack">
               <Link href="/history" className="btn-primary" style={{ display: "block" }}>
@@ -501,7 +501,7 @@ export default function PaiementPage() {
             </div>
             <h2>Connexion requise</h2>
             <p className="muted" style={{ margin: "12px 0 24px" }}>
-              Vous devez etre connecte pour passer une commande.
+              Vous devez être connecté pour passer une commande.
             </p>
             <div className="cta-stack">
               <Link href="/?login=1" className="btn-primary" style={{ display: "block" }}>
@@ -529,9 +529,9 @@ export default function PaiementPage() {
             <div className="modal-icon" style={{ fontSize: 48, color: "#10b981", marginBottom: 16 }}>
               <i className="ri-checkbox-circle-fill" />
             </div>
-            <h2>Email envoyé</h2>
+            <h2>Votre commande a été effectuée</h2>
             <p className="muted" style={{ margin: "12px 0 0" }}>
-              Un email de confirmation vient d'être envoyé.
+
             </p>
           </div>
         </div>

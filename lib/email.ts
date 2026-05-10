@@ -67,14 +67,14 @@ const toStatusCopy = (status: string) => {
 
   if (normalized === "paid" || normalized === "completed") {
     return {
-      badgeLabel: "Paiement confirme",
-      statusText: "Paiement confirme",
+      badgeLabel: "Paiement confirmé",
+      statusText: "Paiement confirmé",
       badgeBackground: "#FFE7CC",
       badgeColor: "#AF5B00",
       noteEyebrow: "Confirmation",
-      noteTitle: "Commande validee",
+      noteTitle: "Commande validée",
       noteBody:
-        "Votre paiement a deja ete valide. Notre equipe finalise maintenant la livraison de votre commande.",
+        "Votre paiement a déjà été validé. Notre équipe finalise maintenant la livraison de votre commande.",
     };
   }
 
@@ -87,19 +87,19 @@ const toStatusCopy = (status: string) => {
       noteEyebrow: "Suivi de commande",
       noteTitle: "Commande en cours",
       noteBody:
-        "Votre paiement est en cours de verification. Vous recevrez une notification des que la validation sera terminee.",
+        "Votre paiement est en cours de vérification. Vous recevrez une notification dès que la validation sera terminée.",
     };
   }
 
   return {
-    badgeLabel: "Verification en cours",
-    statusText: "Paiement en attente de verification",
+    badgeLabel: "Vérification en cours",
+    statusText: "Paiement en attente de vérification",
     badgeBackground: "#FFF4DE",
     badgeColor: "#C26A13",
     noteEyebrow: "Suivi de commande",
-    noteTitle: "Verification du paiement en cours",
+    noteTitle: "Vérification du paiement en cours",
     noteBody:
-      "Votre commande reste reservee pendant la verification de votre paiement. Une confirmation vous sera envoyee par email des validation effectuee par notre equipe.",
+      "Votre commande reste réservée pendant la vérification de votre paiement. Une confirmation vous sera envoyée par email dès validation effectuée par notre équipe.",
   };
 };
 
@@ -181,7 +181,7 @@ export const buildEmailFooterHtml = ({
             ${buildSocialCell(socials[3])}
           </tr>
         </table>
-        <p style="margin:0;font-size:12px;color:#A08978;">© 2026 FlexiPass - Tous droits reserves</p>
+        <p style="margin:0;font-size:12px;color:#A08978;">© 2026 FlexiPass - Tous droits réservés</p>
       </td>
     </tr>
   `;
@@ -320,8 +320,8 @@ export async function sendOrderConfirmationEmail({
                 ${logoMarkup}
               </div>
               <p style="margin:0 0 8px;color:#9A5A1B;font-size:12px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;">Confirmation de commande</p>
-              <h1 style="margin:0 0 8px;color:#2F2A33;font-size:28px;font-weight:800;letter-spacing:-0.6px;">Votre recu FlexiPass est pret</h1>
-              <p style="margin:0;color:#6F5745;font-size:15px;line-height:1.6;">Merci pour votre confiance. Retrouvez ci-dessous le detail complet de votre commande.</p>
+              <h1 style="margin:0 0 8px;color:#2F2A33;font-size:28px;font-weight:800;letter-spacing:-0.6px;">Votre reçu FlexiPass est prêt</h1>
+              <p style="margin:0;color:#6F5745;font-size:15px;line-height:1.6;">Merci pour votre confiance. Retrouvez ci-dessous le détail complet de votre commande.</p>
             </td>
           </tr>
 
@@ -330,7 +330,7 @@ export async function sendOrderConfirmationEmail({
 
               <p style="margin:0 0 8px;color:#2F2A33;font-size:18px;font-weight:700;">Bonjour,</p>
               <p style="margin:0 0 26px;color:#6A5B50;font-size:15px;line-height:1.7;">
-                Votre commande a bien ete enregistree. Voici un recapitulatif elegant de votre achat avec les couleurs FlexiPass.
+                Votre commande a bien été enregistrée. Voici un récapitulatif élégant de votre achat aux couleurs de FlexiPass.
               </p>
 
               <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background:#FFF9F2;border-radius:20px;border:1px solid #F3E0CD;margin-bottom:30px;">
@@ -521,7 +521,7 @@ export async function sendOrderRejectedEmail({ order }: OrderRejectedArgs): Prom
     auth: { user, pass },
   });
 
-  const subject = `Commande #${order.id} refusee`;
+  const subject = `Commande #${order.id} refusée`;
   const createdAt = order.created_at ? new Date(order.created_at) : new Date();
   const dateLabel = new Intl.DateTimeFormat("fr-FR", {
     dateStyle: "full",
@@ -530,11 +530,11 @@ export async function sendOrderRejectedEmail({ order }: OrderRejectedArgs): Prom
 
   const html = `
     <div style="font-family:Arial,sans-serif;color:#111;max-width:640px;margin:0 auto;border:1px solid #eee;border-radius:16px;padding:24px;">
-      <h2 style="margin:0 0 8px;">Commande refusee</h2>
+      <h2 style="margin:0 0 8px;">Commande refusée</h2>
       <p style="margin:0 0 16px;color:#555;">Commande #${order.id} • ${dateLabel}</p>
       <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:16px;">
         <p style="margin:0;font-size:14px;color:#9a3412;">
-          Votre paiement n'a pas pu etre valide. Merci de re-verifier la preuve et de relancer votre commande ou de contacter le support.
+          Votre paiement n'a pas pu être validé. Merci de revérifier la preuve et de relancer votre commande ou de contacter le support.
         </p>
       </div>
       <p style="margin:16px 0 0;color:#666;font-size:12px;">Besoin d'aide ? Contactez notre support.</p>

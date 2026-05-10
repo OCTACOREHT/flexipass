@@ -40,6 +40,6 @@ export async function POST(request: Request) {
     );
   } catch (error: any) {
     console.error("MonCash verify error:", error);
-    return NextResponse.json({ error: "Erreur lors de la verification MonCash" }, { status: 500 });
+    return NextResponse.json({ error: "Erreur lors de la vérification MonCash" }, { status: 500 });
   }
 }

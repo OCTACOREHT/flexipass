@@ -33,23 +33,36 @@ const categories: Category[] = [
   { key: "divertissement", label: "Divertissement", icon: "ri-music-2-line" },
 ];
 
-const brandLogos = [
-  { name: "Canva", icon: "/assets/images/brands/canva.jpg" },
-  { name: "ChatGPT", icon: "/assets/images/brands/chatgpt.svg" },
-  { name: "Copilot", icon: "/assets/images/brands/microsoft.svg" },
-  { name: "Prime Video", icon: "/assets/images/brands/prime-video.png" },
-  { name: "Netflix", icon: "/assets/images/brands/netflix.svg" },
-  { name: "Coursera", icon: "/assets/images/brands/coursera.svg" },
-  { name: "Claude", icon: "/assets/images/brands/claude.svg" },
-  { name: "Spotify", icon: "/assets/images/brands/spotify.svg" },
-  { name: "Apple", icon: "/assets/images/brands/apple.svg" },
-  { name: "Xbox", icon: "/assets/images/brands/xbox.svg" },
-  { name: "YouTube", icon: "/assets/images/brands/youtube.svg" },
-  { name: "Perplexity", icon: "/assets/images/brands/perplexity.svg" },
-  { name: "Slack", icon: "/assets/images/brands/slack.png" },
+const infoItems = [
+  { name: "Accès instantané 24/7", icon: "ri-24-hours-line" },
+  { name: "Livraison 100% numérique", icon: "ri-mail-send-line" },
+  { name: "Activation garantie", icon: "ri-flashlight-line" },
+  { name: "Assistance premium 7j/7", icon: "ri-customer-service-2-line" },
+  { name: "Transactions sécurisées", icon: "ri-shield-check-line" },
+  { name: "FlexiPass", icon: "ri-verified-badge-line" },
 ];
 
-const getDisplayTitle = (title: string) => title.replace(/\s*haiti\s*/gi, "").trim();
+const cleanText = (value?: string | null) => {
+  if (!value) return "";
+
+  return value
+    .replace(/Ã©/g, "é")
+    .replace(/Ã¨/g, "è")
+    .replace(/Ãª/g, "ê")
+    .replace(/Ã«/g, "ë")
+    .replace(/Ã /g, "à")
+    .replace(/Ã¹/g, "ù")
+    .replace(/Ã»/g, "û")
+    .replace(/Ã§/g, "ç")
+    .replace(/Ã®/g, "î")
+    .replace(/Ã¯/g, "ï")
+    .replace(/Â/g, "")
+    .replace(/â€™/g, "’")
+    .replace(/\bpremuim\b/gi, "premium")
+    .replace(/\betflix\b/gi, "Netflix");
+};
+
+const getDisplayTitle = (title: string) => cleanText(title).replace(/\s*haiti\s*/gi, "").trim();
 const normalizeSlug = (value: string) =>
   value
     .trim()
@@ -617,7 +630,7 @@ export default function Home() {
             <img src="/Flexipass%20.png" alt="FlexiPass" />
             <span className="brand-logo-text">
               <span className="brand-logo-flexi">Flexi</span>
-              <span className="brand-logo-pass">pass</span>
+              <span className="brand-logo-pass">Pass</span>
             </span>
           </div>
           <div className="nav-center">
@@ -841,56 +854,63 @@ export default function Home() {
         </div>
       </section>
 
-      <div className="brands-bar">
-        <div className="brands-track">
-          {[...brandLogos, ...brandLogos].map((b, idx) => (
-            <div className="brand-pill" key={`${b.name}-${idx}`} title={b.name}>
-              {b.icon ? (
-                <img
-                  src={b.icon}
-                  alt={b.name}
-                  loading="lazy"
-                  decoding="async"
-                  onError={(e) => {
-                    e.currentTarget.style.display = "none";
-                    const fb = e.currentTarget.parentElement?.querySelector(".brand-fallback") as HTMLElement | null;
-                    if (fb) fb.style.display = "grid";
-                  }}
-                />
-              ) : null}
-              <div className="brand-fallback">{b.name[0]}</div>
-              <span>{b.name}</span>
-            </div>
-          ))}
-        </div>
-        <div className="brands-track reverse">
-          {[...brandLogos, ...brandLogos].map((b, idx) => (
-            <div className="brand-pill" key={`rev-${b.name}-${idx}`} title={b.name}>
-              {b.icon ? (
-                <img
-                  src={b.icon}
-                  alt={b.name}
-                  loading="lazy"
-                  decoding="async"
-                  onError={(e) => {
-                    e.currentTarget.style.display = "none";
-                    const fb = e.currentTarget.parentElement?.querySelector(".brand-fallback") as HTMLElement | null;
-                    if (fb) fb.style.display = "grid";
-                  }}
-                />
-              ) : null}
-              <div className="brand-fallback">{b.name[0]}</div>
-              <span>{b.name}</span>
-            </div>
-          ))}
-        </div>
+      <style dangerouslySetInnerHTML={{ __html: `
+        .features-bar-custom {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          gap: 40px;
+          padding: 20px 24px;
+          background-color: #0a0a0a;
+          border-top: 1px solid #1f1f1f;
+          border-bottom: 1px solid #1f1f1f;
+          width: 100%;
+          overflow-x: auto;
+          white-space: nowrap;
+          -ms-overflow-style: none;  /* IE and Edge */
+          scrollbar-width: none;  /* Firefox */
+        }
+        .features-bar-custom::-webkit-scrollbar {
+          display: none;
+        }
+        .feature-item-custom {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          color: #e5e5e5;
+          font-size: 14px;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          flex-shrink: 0; /* Empêche les éléments de rétrécir */
+        }
+        @media (max-width: 1024px) {
+          .features-bar-custom {
+            justify-content: flex-start;
+            gap: 24px;
+          }
+          .feature-item-custom {
+            font-size: 12px;
+          }
+          .feature-item-custom i {
+            font-size: 1.3rem !important;
+          }
+        }
+      `}} />
+      <div className="features-bar-custom">
+        {infoItems.map((item, idx) => (
+          <div key={`feat-${idx}`} className="feature-item-custom">
+            <i className={item.icon} style={{ fontSize: "1.4rem", color: "#10B981" }} />
+            <span>{item.name}</span>
+          </div>
+        ))}
       </div>
 
       <section className="section" id="giftcards">
         <div className="section-head section-head--mobile-center">
           <h2>Explorer</h2>
           <a href="/catalogue" className="link">
-            Voir tout →
+            Voir tout
           </a>
         </div>
 
@@ -945,11 +965,11 @@ export default function Home() {
 
                   <div className="compact-info">
                     <h3 className="compact-title">{getDisplayTitle(p.title)}</h3>
-                    <div className="compact-subtitle">{p.short_description || p.subtitle || p.plan || "Produit"}</div>
+                    <div className="compact-subtitle">{cleanText(p.short_description || p.subtitle || p.plan || "Produit")}</div>
                     <div className="compact-meta">
-                      <span className="compact-meta-line">Plan : {planMeta.planLabel}</span>
+                      <span className="compact-meta-line">Plan : {cleanText(planMeta.planLabel)}</span>
                       <span className="compact-meta-line">
-                        Durée : <strong className="compact-meta-strong">{planMeta.durationLabel}</strong>
+                        Durée : <strong className="compact-meta-strong">{cleanText(planMeta.durationLabel)}</strong>
                       </span>
                     </div>
                     <div className="compact-price">{displayPrice}</div>
@@ -967,7 +987,7 @@ export default function Home() {
                     <a 
                       className="btn-icon" 
                       href={`/product/${encodeURIComponent(getProductSlug(p))}`}
-                      title="Détails"
+                      title="Voir les détails"
                     >
                       <i className="ri-arrow-right-line" />
                     </a>
@@ -1016,11 +1036,11 @@ export default function Home() {
                 
                 <div className="compact-info">
                   <h3 className="compact-title">{getDisplayTitle(p.title)}</h3>
-                  <div className="compact-subtitle">{premiumSub}</div>
+                  <div className="compact-subtitle">{cleanText(premiumSub)}</div>
                   <div className="compact-meta">
-                    <span className="compact-meta-line">Plan : {planMeta.planLabel}</span>
+                    <span className="compact-meta-line">Plan : {cleanText(planMeta.planLabel)}</span>
                     <span className="compact-meta-line">
-                      Durée : <strong className="compact-meta-strong">{planMeta.durationLabel}</strong>
+                      Durée : <strong className="compact-meta-strong">{cleanText(planMeta.durationLabel)}</strong>
                     </span>
                   </div>
                   <div className="compact-price">{formatPrice(premiumPrice, premiumCurrency)}</div>
@@ -1037,7 +1057,7 @@ export default function Home() {
                   <a 
                     className="btn-icon" 
                     href={`/product/${encodeURIComponent(getProductSlug(p))}`}
-                    title="Détails"
+                    title="Voir les détails"
                   >
                     <i className="ri-arrow-right-line" />
                   </a>

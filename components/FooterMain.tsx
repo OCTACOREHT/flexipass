@@ -8,7 +8,13 @@ export default function FooterMain() {
       <div className="footer-inner">
         <div className="footer-grid">
           <div className="footer-brand footer-col">
-            <img className="footer-logo" src="/assets/images/brands/flexipass-logo.svg" alt="FlexiPass" loading="lazy" />
+            <div className="footer-brand-header">
+              <img className="footer-logo footer-logo--icon" src="/flexipass-icon.png" alt="FlexiPass" loading="lazy" />
+              <span className="footer-brand-name" aria-label="FlexiPass">
+                <span className="footer-brand-name--apricot">Flexi</span>
+                <span className="footer-brand-name--white">Pass</span>
+              </span>
+            </div>
             <p>Cartes cadeaux et abonnements numériques pour tous vos services préférés.</p>
           </div>
           <div className="footer-col">

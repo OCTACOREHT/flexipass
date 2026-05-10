@@ -1,4 +1,4 @@
-﻿import { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { sendAccountDeliveryEmail } from "@/lib/email";
 
@@ -49,7 +49,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: accError?.message || "Compte introuvable" }, { status: 404 });
       }
       if (acc.is_used) {
-        return NextResponse.json({ error: "Ce compte est deja utilise" }, { status: 400 });
+        return NextResponse.json({ error: "Ce compte est déjà utilisé" }, { status: 400 });
       }
       accountRecord = acc;
       accountEmail = acc.email;
@@ -105,9 +105,9 @@ export async function POST(request: Request) {
         order_id: order.id,
         user_id: order.user_id,
         to_email: order.customer_email,
-        subject: `Acces ${service}`,
+        subject: `Accès ${service}`,
         status: emailResult.success ? "success" : "failed",
-        email_type: "account_delivery",
+
         erreur: emailResult.success ? null : emailResult.error,
         sent_at: new Date().toISOString(),
         created_at: new Date().toISOString(),

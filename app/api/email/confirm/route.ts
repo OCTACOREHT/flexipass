@@ -57,7 +57,7 @@ export async function POST(request: Request) {
     const { data, error } = await resend.emails.send({
       from: "FlexiPass <onboarding@resend.dev>",
       to: [email],
-      subject: "Felicitations ! Votre commande FlexiPass est prete",
+      subject: "Félicitations ! Votre commande FlexiPass est prête",
       html: `
         <div style="margin:0;padding:32px 16px;background:#fff7f0;font-family:Arial,sans-serif;color:#2f2a33;">
           <div style="max-width:640px;margin:0 auto;">
@@ -65,15 +65,15 @@ export async function POST(request: Request) {
               <div style="display:inline-block;background:rgba(255,255,255,0.8);border:1px solid rgba(255,255,255,0.95);border-radius:20px;padding:12px 18px;margin-bottom:18px;">
                 ${logoUrl ? `<img src="${logoUrl}" alt="FlexiPass" style="height:48px;display:block;" />` : `<strong style="font-size:22px;color:#c26a13;">FlexiPass</strong>`}
               </div>
-              <p style="margin:0 0 8px;color:#9a5a1b;font-size:12px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;">Commande validee</p>
-              <h1 style="margin:0 0 8px;font-size:28px;line-height:1.2;color:#2f2a33;">Votre acces est pret</h1>
-              <p style="margin:0;color:#6f5745;font-size:15px;line-height:1.6;">Votre paiement a ete confirme et votre commande est maintenant disponible.</p>
+              <p style="margin:0 0 8px;color:#9a5a1b;font-size:12px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;">Commande validée</p>
+              <h1 style="margin:0 0 8px;font-size:28px;line-height:1.2;color:#2f2a33;">Votre accès est prêt</h1>
+              <p style="margin:0;color:#6f5745;font-size:15px;line-height:1.6;">Votre paiement a été confirmé et votre commande est maintenant disponible.</p>
             </div>
 
             <div style="background:#ffffff;border-left:1px solid #f2dcc7;border-right:1px solid #f2dcc7;padding:30px 28px;">
               <p style="margin:0 0 12px;font-size:18px;font-weight:700;color:#2f2a33;">Bonjour ${safeName},</p>
               <p style="margin:0 0 24px;color:#6a5b50;font-size:15px;line-height:1.7;">
-                Excellente nouvelle : votre commande <strong>#${safeOrderId}</strong> a ete approuvee. Vous pouvez utiliser votre code ci-dessous des maintenant.
+                Excellente nouvelle : votre commande <strong>#${safeOrderId}</strong> a été approuvée. Vous pouvez utiliser votre code ci-dessous dès maintenant.
               </p>
 
               <div style="background:#fff8ef;border:1px solid #f6dec0;border-radius:20px;padding:22px 18px;text-align:center;margin-bottom:24px;">
@@ -86,7 +86,7 @@ export async function POST(request: Request) {
               <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background:#fff9f2;border:1px solid #f3e0cd;border-radius:20px;margin-bottom:24px;">
                 <tr>
                   <td style="padding:16px 20px;border-bottom:1px solid #f3e0cd;">
-                    <p style="margin:0 0 4px;font-size:11px;color:#b18665;text-transform:uppercase;letter-spacing:0.12em;font-weight:700;">Numero de commande</p>
+                    <p style="margin:0 0 4px;font-size:11px;color:#b18665;text-transform:uppercase;letter-spacing:0.12em;font-weight:700;">Numéro de commande</p>
                     <p style="margin:0;font-size:16px;font-weight:800;color:#2f2a33;">#${safeOrderId}</p>
                   </td>
                 </tr>
@@ -111,10 +111,10 @@ export async function POST(request: Request) {
               <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin-bottom:24px;background:linear-gradient(180deg,#FFF9F2,#FFF5EC);border-radius:18px;border:1px solid #F0DDC8;">
                 <tr>
                   <td style="padding:18px 20px;">
-                    <span style="display:inline-block;margin-bottom:10px;background:#FFFFFF;border:1px solid #F1DEC8;border-radius:999px;padding:6px 12px;color:#B46A1D;font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;">Livraison securisee</span>
-                    <p style="margin:0 0 8px;font-size:18px;line-height:1.35;color:#8E4E15;font-weight:800;">Conservez ce code en toute securite</p>
+                    <span style="display:inline-block;margin-bottom:10px;background:#FFFFFF;border:1px solid #F1DEC8;border-radius:999px;padding:6px 12px;color:#B46A1D;font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;">Livraison sécurisée</span>
+                    <p style="margin:0 0 8px;font-size:18px;line-height:1.35;color:#8E4E15;font-weight:800;">Conservez ce code en toute sécurité</p>
                     <p style="margin:0;font-size:14px;line-height:1.75;color:#6E5646;">
-                      Votre code cadeau est desormais actif. Nous vous recommandons de le conserver dans un emplacement securise et de consulter votre historique pour retrouver toutes vos commandes.
+                      Votre code cadeau est désormais actif. Nous vous recommandons de le conserver dans un emplacement sécurisé et de consulter votre historique pour retrouver toutes vos commandes.
                     </p>
                   </td>
                 </tr>

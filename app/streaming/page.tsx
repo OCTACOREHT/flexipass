@@ -14,19 +14,19 @@ type ServiceItem = {
 };
 
 const videoServices: ServiceItem[] = [
-  { title: "Netflix", desc: "Films et series", price: "A partir de 1200 HTG", plan: "1 mois", duration_days: 30 },
-  { title: "Disney+", desc: "Films et univers Disney", price: "A partir de 1300 HTG", plan: "1 mois", duration_days: 30, image_url: "/assets/images/brands/disneyplus.svg" },
-  { title: "Amazon Prime Video", desc: "Series et films Prime", price: "A partir de 1000 HTG", plan: "1 mois", duration_days: 30 },
-  { title: "HBO Max", desc: "Blockbusters et series HBO", price: "A partir de 1400 HTG", plan: "1 mois", duration_days: 30 },
+  { title: "Netflix", desc: "Films et séries", price: "À partir de 1200 HTG", plan: "1 mois", duration_days: 30 },
+  { title: "Disney+", desc: "Films et univers Disney", price: "À partir de 1300 HTG", plan: "1 mois", duration_days: 30, image_url: "/assets/images/brands/disneyplus.svg" },
+  { title: "Amazon Prime Video", desc: "Séries et films Prime", price: "À partir de 1000 HTG", plan: "1 mois", duration_days: 30 },
+  { title: "HBO Max", desc: "Blockbusters et séries HBO", price: "À partir de 1400 HTG", plan: "1 mois", duration_days: 30 },
 ];
 
 const musicServices: ServiceItem[] = [
-  { title: "Spotify Premium", desc: "Musique sans pub", price: "A partir de 900 HTG", plan: "1 mois", duration_days: 30 },
-  { title: "Apple Music", desc: "Catalogue Apple Music", price: "A partir de 1000 HTG", plan: "1 mois", duration_days: 30 },
+  { title: "Spotify Premium", desc: "Musique sans pub", price: "À partir de 900 HTG", plan: "1 mois", duration_days: 30 },
+  { title: "Apple Music", desc: "Catalogue Apple Music", price: "À partir de 1000 HTG", plan: "1 mois", duration_days: 30 },
 ];
 
 const animeServices: ServiceItem[] = [
-  { title: "Crunchyroll", desc: "Streaming anime", price: "A partir de 1100 HTG", plan: "1 mois", duration_days: 30 },
+  { title: "Crunchyroll", desc: "Streaming anime", price: "À partir de 1100 HTG", plan: "1 mois", duration_days: 30 },
 ];
 
 export default function StreamingPage() {
@@ -58,7 +58,7 @@ export default function StreamingPage() {
           </div>
         </div>
         <a className="btn-full ghost-btn" href="/catalogue">
-          Voir details
+          Voir détails
         </a>
       </article>
     );
@@ -73,10 +73,10 @@ export default function StreamingPage() {
             <div>
               <p className="hero-eyebrow">FlexiPass</p>
               <h1>Streaming</h1>
-              <p>Films, series et musique : activez vos acces en un instant.</p>
+              <p>Films, séries et musique : activez vos accès en un instant.</p>
               <div className="market-hero-actions">
                 <a className="btn-primary" href="/catalogue">Voir les offres</a>
-                <a className="btn-ghost" href="/cartes-cadeaux">Voir Cartes Cadeaux</a>
+                <a className="btn-ghost" href="/cartes-cadeaux">Voir les cartes cadeaux</a>
               </div>
             </div>
           </div>
@@ -92,14 +92,14 @@ export default function StreamingPage() {
           </div>
 
           <div className="section-head market-head" style={{ marginTop: 24 }}>
-            <h2>🎧 Streaming musique</h2>
+            <h2>Streaming musique</h2>
           </div>
           <div className="market-grid">
             {musicServices.map((item) => renderServiceCard(item))}
           </div>
 
           <div className="section-head market-head" style={{ marginTop: 24 }}>
-            <h2>🍥 Streaming anime</h2>
+            <h2>Streaming anime</h2>
           </div>
           <div className="market-grid">
             {animeServices.map((item) => renderServiceCard(item))}

@@ -33,7 +33,27 @@ const categories: Category[] = [
   { key: "divertissement", label: "Divertissement", icon: "ri-music-2-line" },
 ];
 
-const getDisplayTitle = (title: string) => title.replace(/\s*haiti\s*/gi, "").trim();
+const cleanText = (value?: string | null) => {
+  if (!value) return "";
+
+  return value
+    .replace(/Ã©/g, "é")
+    .replace(/Ã¨/g, "è")
+    .replace(/Ãª/g, "ê")
+    .replace(/Ã«/g, "ë")
+    .replace(/Ã /g, "à")
+    .replace(/Ã¹/g, "ù")
+    .replace(/Ã»/g, "û")
+    .replace(/Ã§/g, "ç")
+    .replace(/Ã®/g, "î")
+    .replace(/Ã¯/g, "ï")
+    .replace(/Â/g, "")
+    .replace(/â€™/g, "’")
+    .replace(/\bpremuim\b/gi, "premium")
+    .replace(/\betflix\b/gi, "Netflix");
+};
+
+const getDisplayTitle = (title: string) => cleanText(title).replace(/\s*haiti\s*/gi, "").trim();
 const normalizeSlug = (value: string) =>
   value
     .trim()
@@ -68,7 +88,6 @@ export default function CataloguePage() {
 
     loadProducts();
 
-    // REAL-TIME SYNC
     let channel: RealtimeChannel | null = null;
     const setupRealtime = async () => {
       const mod = await import("@/lib/supabase-browser").catch(() => null);
@@ -100,9 +119,10 @@ export default function CataloguePage() {
     };
   }, []);
 
-  const visible = useMemo(() => {
-    return active === "all" ? products : products.filter((p) => getCategoryKey(p) === active);
-  }, [products, active]);
+  const visible = useMemo(
+    () => (active === "all" ? products : products.filter((p) => getCategoryKey(p) === active)),
+    [products, active]
+  );
 
   const categoryCounts = useMemo(() => {
     const counts: Record<string, number> = { all: products.length };
@@ -151,58 +171,63 @@ export default function CataloguePage() {
             <div className="compact-grid">
               {visible.map((p) => {
                 const selectedVariant = (p.variants && p.variants[0]) || null;
-                const displayPrice = selectedVariant ? `${selectedVariant.price} ${selectedVariant.currency}` : `${p.price} ${p.currency}`;
+                const displayPrice = selectedVariant
+                  ? `${selectedVariant.price} ${selectedVariant.currency}`
+                  : `${p.price} ${p.currency}`;
                 const planMeta = getPlanBoxData(
-                  selectedVariant?.label || p.plan,
+                  cleanText(selectedVariant?.label || p.plan),
                   selectedVariant?.duration_days ?? p.duration_days
                 );
 
                 return (
-                <article key={p.id} className={`compact-card ${p.type === "account" ? "luxe" : ""}`}>
-                  <div className="compact-logo">
-                    <img
-                      src={getProductImageSrc(p)}
-                      alt={p.title}
-                      width={32}
-                      height={32}
-                      loading="lazy"
-                      onError={(e) => {
-                        handleProductImageError(e.currentTarget, p);
-                      }}
-                    />
-                  </div>
-
-                  <div className="compact-info">
-                    <h3 className="compact-title">{getDisplayTitle(p.title)}</h3>
-                    <div className="compact-subtitle">{p.short_description || p.subtitle || p.plan || "Produit"}</div>
-                    <div className="compact-meta">
-                      <span className="compact-meta-line">Plan : {planMeta.planLabel}</span>
-                      <span className="compact-meta-line">
-                        Durée : <strong className="compact-meta-strong">{planMeta.durationLabel}</strong>
-                      </span>
+                  <article key={p.id} className={`compact-card ${p.type === "account" ? "luxe" : ""}`}>
+                    <div className="compact-logo">
+                      <img
+                        src={getProductImageSrc(p)}
+                        alt={cleanText(p.title)}
+                        width={32}
+                        height={32}
+                        loading="lazy"
+                        onError={(e) => {
+                          handleProductImageError(e.currentTarget, p);
+                        }}
+                      />
                     </div>
-                    <div className="compact-price">{displayPrice}</div>
-                  </div>
 
-                  <div className="compact-actions">
-                    <button 
-                      type="button" 
-                      className="btn-icon primary" 
-                      onClick={() => {/* logic handled by handleAddToCart in a real implementation, but catalogue page seems to missing it or use Details only */}}
-                      title="Détails"
-                    >
-                      <i className="ri-arrow-right-line" />
-                    </button>
-                    <a 
-                      className="btn-icon" 
-                      href={`/product/${encodeURIComponent(getProductSlug(p))}`}
-                      title="Voir le produit"
-                    >
-                      <i className="ri-eye-line" />
-                    </a>
-                  </div>
-                </article>
-              )})}
+                    <div className="compact-info">
+                      <h3 className="compact-title">{getDisplayTitle(p.title)}</h3>
+                      <div className="compact-subtitle">
+                        {cleanText(p.short_description || p.subtitle || p.plan || "Produit")}
+                      </div>
+                      <div className="compact-meta">
+                        <span className="compact-meta-line">Plan : {cleanText(planMeta.planLabel)}</span>
+                        <span className="compact-meta-line">
+                          Durée : <strong className="compact-meta-strong">{cleanText(planMeta.durationLabel)}</strong>
+                        </span>
+                      </div>
+                      <div className="compact-price">{displayPrice}</div>
+                    </div>
+
+                    <div className="compact-actions">
+                      <button
+                        type="button"
+                        className="btn-icon primary"
+                        onClick={() => {}}
+                        title="Détails"
+                      >
+                        <i className="ri-arrow-right-line" />
+                      </button>
+                      <a
+                        className="btn-icon"
+                        href={`/product/${encodeURIComponent(getProductSlug(p))}`}
+                        title="Voir le produit"
+                      >
+                        <i className="ri-eye-line" />
+                      </a>
+                    </div>
+                  </article>
+                );
+              })}
             </div>
           )}
         </section>
