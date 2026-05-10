@@ -1,13 +1,8 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
-import { createClient } from "@supabase/supabase-js";
 import Link from "next/link";
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+import { supabaseBrowser } from "@/lib/supabase-browser";
 
 export default function UpdatePassword() {
   const [password, setPassword] = useState("");
@@ -25,7 +20,12 @@ export default function UpdatePassword() {
       return;
     }
     setLoading(true);
-    const { error } = await supabase.auth.updateUser({ password });
+    if (!supabaseBrowser) {
+      setError("Configuration Supabase manquante.");
+      setLoading(false);
+      return;
+    }
+    const { error } = await supabaseBrowser.auth.updateUser({ password });
     setLoading(false);
     if (error) {
       setError(error.message);
