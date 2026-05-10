@@ -138,6 +138,7 @@ export default function Home() {
   const [cartOpen, setCartOpen] = useState(false);
   const [cartItems, setCartItems] = useState<{ id: string; title: string; price: number; qty: number; image?: string }[]>([]);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [searchBarVisible, setSearchBarVisible] = useState(true);
   const [authError, setAuthError] = useState<string | null>(null);
   const [authMessage, setAuthMessage] = useState<string | null>(null);
   const [authLoading, setAuthLoading] = useState(false);
@@ -300,6 +301,25 @@ export default function Home() {
         window.history.replaceState({}, "", next);
       }
     }, []);
+
+  useEffect(() => {
+    let lastY = window.pageYOffset || document.documentElement.scrollTop;
+    const handleScroll = () => {
+      const currentY = window.pageYOffset || document.documentElement.scrollTop;
+      const diff = currentY - lastY;
+      
+      if (Math.abs(diff) < 5) return;
+ 
+      if (currentY > 150 && diff > 10) {
+        setSearchBarVisible(false);
+      } else if (diff < -15 || currentY < 50) {
+        setSearchBarVisible(true);
+      }
+      lastY = currentY;
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   useEffect(() => {
     try {
@@ -738,7 +758,7 @@ export default function Home() {
             </button>
           </div>
         </div>
-        <div className="mobile-search-wrap">
+        <div className={`mobile-search-wrap ${searchBarVisible ? "" : "mobile-search-hidden"}`}>
           <div className="nav-search">
             <input
               type="search"

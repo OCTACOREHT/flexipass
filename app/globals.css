@@ -4474,3 +4474,26 @@ a:hover {
   from { opacity: 0; transform: translateY(10px) scale(0.98); }
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
+
+
+/* Mobile search bar visibility on scroll */
+@media (max-width: 1024px) {
+  .mobile-search-wrap {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+    max-height: 200px; /* Increased to be safe */
+    opacity: 1;
+    display: block !important;
+  }
+  
+  .mobile-search-wrap.mobile-search-hidden {
+    max-height: 0 !important;
+    opacity: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    pointer-events: none !important;
+    transform: translateY(-20px);
+  }
+}

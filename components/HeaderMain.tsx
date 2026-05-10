@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { getProductImageSrc, handleProductImageError } from "@/lib/product-brand";
 
 type Product = {
@@ -85,6 +85,7 @@ export default function HeaderMain() {
   const [products, setProducts] = useState<Product[]>([]);
   const [cartCount, setCartCount] = useState(0);
   const [loginOpen, setLoginOpen] = useState(false);
+  const [searchBarVisible, setSearchBarVisible] = useState(true);
   const [authError, setAuthError] = useState<string | null>(null);
   const [authMessage, setAuthMessage] = useState<string | null>(null);
   const [authLoading, setAuthLoading] = useState(false);
@@ -137,6 +138,30 @@ export default function HeaderMain() {
       window.removeEventListener("resize", closeOnResize);
     };
   }, [menuOpen]);
+
+  useEffect(() => {
+    let lastY = window.pageYOffset || document.documentElement.scrollTop;
+    
+    const handleScroll = () => {
+      const currentY = window.pageYOffset || document.documentElement.scrollTop;
+      
+      // Ignore very small scrolls
+      if (Math.abs(currentY - lastY) < 5) return;
+
+      if (currentY > lastY && currentY > 80) {
+        // Scrolling down
+        setSearchBarVisible(false);
+      } else {
+        // Scrolling up or at the top
+        setSearchBarVisible(true);
+      }
+      
+      lastY = currentY;
+    };
+    
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   useEffect(() => {
     if (user) {
@@ -566,7 +591,7 @@ export default function HeaderMain() {
             </button>
           </div>
         </div>
-        <div className="mobile-search-wrap">
+        <div className={`mobile-search-wrap ${searchBarVisible ? "" : "mobile-search-hidden"}`}>
           <div className="nav-search">
             <input
               type="search"
