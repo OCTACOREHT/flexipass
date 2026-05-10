@@ -12,6 +12,8 @@ export default function SessionTimeout() {
   const [showToast, setShowToast] = useState(false);
 
   useEffect(() => {
+    if (!supabaseBrowser) return;
+
     // Vérifier l'état initial de la session
     supabaseBrowser.auth.getSession().then(({ data: { session } }) => {
       isLoggedInRef.current = !!session;
@@ -44,7 +46,7 @@ export default function SessionTimeout() {
           setShowToast(true);
           
           // Déconnecter l'utilisateur en arrière-plan
-          supabaseBrowser.auth.signOut().catch(console.error);
+          supabaseBrowser?.auth.signOut().catch(console.error);
           
           // Attendre 3.5 secondes pour lire le message avant de recharger la page
           setTimeout(() => {
@@ -68,7 +70,7 @@ export default function SessionTimeout() {
     return () => {
       clearInterval(interval);
       events.forEach((event) => window.removeEventListener(event, updateActivity));
-      authListener.subscription.unsubscribe();
+      authListener?.subscription.unsubscribe();
     };
   }, []);
 
