@@ -687,6 +687,7 @@ export default function HeaderMain() {
           </div>
         </div>
       </header>
+      <div className="nav-spacer" />
 
       {loginOpen && (
         <div className="modal-overlay" onClick={() => setLoginOpen(false)}>

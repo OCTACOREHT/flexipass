@@ -108,12 +108,26 @@ a:hover {
 }
 
 .nav {
-  position: sticky;
+  position: fixed;
   top: 0;
-  z-index: 20;
+  left: 0;
+  right: 0;
+  width: 100%;
+  z-index: 1000;
   backdrop-filter: blur(14px);
   background: rgba(255, 255, 255, 0.75);
   border-bottom: 1px solid #f5e5d9;
+  transition: all 0.3s ease;
+}
+
+.nav-spacer {
+  height: 120px; /* Base height for mobile with search bar */
+}
+
+@media (min-width: 1025px) {
+  .nav-spacer {
+    height: 70px; /* Desktop height */
+  }
 }
 
 .nav-inner {

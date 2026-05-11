@@ -849,6 +849,7 @@ export default function Home() {
           </div>
         </div>
       </header>
+      <div className="nav-spacer" />
 
       <section className="hero">
         <div className="hero-inner">
