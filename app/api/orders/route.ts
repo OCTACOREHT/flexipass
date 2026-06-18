@@ -121,11 +121,13 @@ export async function POST(request: Request) {
 
     if (shouldEmail) {
       const productIds = normalizedItems.map((i) => i.product_id);
-      supabase
-        .from("products")
-        .select("id,title,image_url,service_name")
-        .in("id", productIds)
-        .then(({ data: products }) => {
+      void (async () => {
+        try {
+          const { data: products } = await supabase
+            .from("products")
+            .select("id,title,image_url,service_name")
+            .in("id", productIds);
+
           const productMap = new Map(
             (products || []).map((p: any) => [
               p.id,
@@ -144,10 +146,9 @@ export async function POST(request: Request) {
             };
           });
 
-          return sendOrderConfirmationEmail({ order, items: emailItems, totalPrice });
-        })
-        .then((emailResult) => {
+          const emailResult = await sendOrderConfirmationEmail({ order, items: emailItems, totalPrice });
           if (!emailResult) return;
+
           const logPayload: Record<string, any> = {
             order_id: order.id,
             user_id: user.id,
@@ -162,11 +163,12 @@ export async function POST(request: Request) {
             modele: "order_confirmation",
             template: "order_confirmation",
           };
-          supabase.from("email_log").insert([logPayload]).then(({ error: logError }) => {
-            if (logError) console.error("Email log insert error:", logError);
-          });
-        })
-        .catch((err) => console.error("Background email error:", err));
+          const { error: logError } = await supabase.from("email_log").insert([logPayload]);
+          if (logError) console.error("Email log insert error:", logError);
+        } catch (err) {
+          console.error("Background email error:", err);
+        }
+      })();
     }
 
     return response;
