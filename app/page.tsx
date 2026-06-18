@@ -80,6 +80,22 @@ const getCategoryKey = (p: Product) => {
   return "all";
 };
 
+const PRIVACY_ACCEPTED_KEY = "flexipass_privacy_accepted";
+
+const persistPrivacyAccepted = () => {
+  try {
+    window.localStorage.setItem(PRIVACY_ACCEPTED_KEY, "true");
+  } catch {}
+};
+
+const readPersistedPrivacyAccepted = () => {
+  try {
+    return window.localStorage.getItem(PRIVACY_ACCEPTED_KEY) === "true";
+  } catch {
+    return false;
+  }
+};
+
 // Hook client : récupère la session Supabase et fournit un nom si connecté
 function useSessionUser() {
   const [user, setUser] = useState<null | { name: string; avatarUrl?: string | null }>(null);
@@ -157,12 +173,15 @@ export default function Home() {
   const [loadingProducts, setLoadingProducts] = useState(true);
   const canAttemptLogin = authMode !== "login" || privacyAccepted;
 
+  useEffect(() => {
+    setPrivacyAccepted(readPersistedPrivacyAccepted());
+  }, []);
+
   const switchAuthMode = (mode: "login" | "signup" | "reset") => {
     setAuthMode(mode);
     setAuthError(null);
     setAuthMessage(null);
     setAuthLoading(false);
-    setPrivacyAccepted(false);
     if (mode === "login") {
       setPassword("");
       setConfirm("");
@@ -225,7 +244,10 @@ export default function Home() {
         }
 
         const accepted = Boolean(result?.accepted);
-        setPrivacyAccepted(accepted);
+        if (accepted) {
+          setPrivacyAccepted(true);
+          persistPrivacyAccepted();
+        }
         setPolicyAcceptedAt(result?.acceptance?.accepted_at || null);
         setPolicyModalOpen(!accepted);
       } catch {
@@ -586,6 +608,7 @@ export default function Home() {
       }
 
       setPrivacyAccepted(true);
+      persistPrivacyAccepted();
       setPolicyAcceptedAt(result?.acceptance?.accepted_at || new Date().toISOString());
       setPolicyModalOpen(false);
       setAuthMessage("Politique de confidentialité acceptée.");
@@ -1143,7 +1166,13 @@ export default function Home() {
                       <input
                         type="checkbox"
                         checked={privacyAccepted}
-                        onChange={(e) => setPrivacyAccepted(e.target.checked)}
+                        onChange={(e) => {
+                          const accepted = e.target.checked;
+                          setPrivacyAccepted(accepted);
+                          if (accepted) {
+                            persistPrivacyAccepted();
+                          }
+                        }}
                         style={{ marginTop: "3px" }}
                       />
                       <span>
@@ -1378,4 +1407,3 @@ export default function Home() {
     </main>
   );
 }
-

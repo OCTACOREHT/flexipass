@@ -67,17 +67,6 @@ export default function FooterMain() {
       </div>
       <div className="footer-bottom">
         <span>© 2026 FlexiPass - Tous droits réservés.</span>
-        <div className="payments">
-          <div className="pay-logo pay-logo--moncash">
-            <img src="/assets/images/payments/MC-removebg-preview.png" alt="MonCash" loading="lazy" decoding="async" />
-          </div>
-          <div className="pay-logo pay-logo--sogebank">
-            <img src="/assets/images/payments/SB-removebg-preview.png" alt="Sogebank" loading="lazy" decoding="async" />
-          </div>
-          <div className="pay-logo pay-logo--unibank">
-            <img src="/assets/images/payments/ub-removebg-preview.png" alt="Unibank" loading="lazy" decoding="async" />
-          </div>
-        </div>
       </div>
     </footer>
   );

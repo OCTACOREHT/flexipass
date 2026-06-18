@@ -113,68 +113,63 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: orderItemsInsertError }, { status: 500 });
     }
 
+    // Respond immediately — email is sent asynchronously to avoid SMTP timeouts
+    const response = NextResponse.json({ order, email_sent: false }, { status: 201 });
+
     const emailSubject = `Confirmation de commande #${order.id}`;
     const shouldEmail = (order.payment_method || "").toLowerCase() !== "moncash_test";
-    let emailResult: { success: boolean; error?: string } | null = null;
 
     if (shouldEmail) {
       const productIds = normalizedItems.map((i) => i.product_id);
-      const { data: products } = await supabase
+      supabase
         .from("products")
         .select("id,title,image_url,service_name")
-        .in("id", productIds);
+        .in("id", productIds)
+        .then(({ data: products }) => {
+          const productMap = new Map(
+            (products || []).map((p: any) => [
+              p.id,
+              { title: p.title || p.service_name || p.id, image_url: p.image_url || null },
+            ])
+          );
 
-      const productMap = new Map(
-        (products || []).map((p: any) => [
-          p.id,
-          { title: p.title || p.service_name || p.id, image_url: p.image_url || null },
-        ])
-      );
+          const emailItems = normalizedItems.map((item) => {
+            const meta = productMap.get(item.product_id);
+            return {
+              product_id: item.product_id,
+              product_name: meta?.title || item.product_id,
+              product_image: meta?.image_url || null,
+              quantity: item.quantity ?? 0,
+              price: item.price ?? 0,
+            };
+          });
 
-      const emailItems = normalizedItems.map((item) => {
-        const meta = productMap.get(item.product_id);
-        return {
-          product_id: item.product_id,
-          product_name: meta?.title || item.product_id,
-          product_image: meta?.image_url || null,
-          quantity: item.quantity ?? 0,
-          price: item.price ?? 0,
-        };
-      });
-
-      emailResult = await sendOrderConfirmationEmail({
-        order,
-        items: emailItems,
-        totalPrice,
-      });
+          return sendOrderConfirmationEmail({ order, items: emailItems, totalPrice });
+        })
+        .then((emailResult) => {
+          if (!emailResult) return;
+          const logPayload: Record<string, any> = {
+            order_id: order.id,
+            user_id: user.id,
+            to_email: user.email,
+            subject: emailSubject,
+            status: emailResult.success ? "success" : "failed",
+            sujet: emailSubject,
+            statut: emailResult.success ? "success" : "failed",
+            erreur: emailResult.success ? null : emailResult.error,
+            sent_at: new Date().toISOString(),
+            created_at: new Date().toISOString(),
+            modele: "order_confirmation",
+            template: "order_confirmation",
+          };
+          supabase.from("email_log").insert([logPayload]).then(({ error: logError }) => {
+            if (logError) console.error("Email log insert error:", logError);
+          });
+        })
+        .catch((err) => console.error("Background email error:", err));
     }
 
-    const emailSent = emailResult?.success === true;
-    let emailLogError: string | null = null;
-    if (emailResult) {
-      const logPayload: Record<string, any> = {
-        order_id: order.id,
-        user_id: user.id,
-        to_email: user.email,
-        subject: emailSubject,
-        status: emailResult.success ? "success" : "failed",
-        sujet: emailSubject,
-        statut: emailResult.success ? "success" : "failed",
-        erreur: emailResult.success ? null : emailResult.error,
-        sent_at: new Date().toISOString(),
-        created_at: new Date().toISOString(),
-        modele: "order_confirmation",
-        template: "order_confirmation",
-      };
-
-      const { error: logError } = await supabase.from("email_log").insert([logPayload]);
-      if (logError) {
-        emailLogError = logError.message;
-        console.error("Email log insert error:", logError);
-      }
-    }
-
-    return NextResponse.json({ order, email_sent: emailSent, email_log_error: emailLogError }, { status: 201 });
+    return response;
   } catch (error: any) {
     console.error("Erreur creation commande:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });

@@ -28,6 +28,21 @@ const normalizeSlug = (value: string) =>
     .replace(/%20/g, "-");
 const getProductSlug = (p: Product) => (p.id ? p.id : normalizeSlug(p.service_name || p.title));
 const CART_KEY = "flexipass_cart";
+const PRIVACY_ACCEPTED_KEY = "flexipass_privacy_accepted";
+
+const persistPrivacyAccepted = () => {
+  try {
+    window.localStorage.setItem(PRIVACY_ACCEPTED_KEY, "true");
+  } catch {}
+};
+
+const readPersistedPrivacyAccepted = () => {
+  try {
+    return window.localStorage.getItem(PRIVACY_ACCEPTED_KEY) === "true";
+  } catch {
+    return false;
+  }
+};
 
 // Repris du header de la page principale
 function useSessionUser() {
@@ -102,6 +117,10 @@ export default function HeaderMain() {
   const [policyAcceptedAt, setPolicyAcceptedAt] = useState<string | null>(null);
   const [authMode, setAuthMode] = useState<"login" | "signup" | "reset">("login");
   const canAttemptLogin = authMode !== "login" || privacyAccepted;
+
+  useEffect(() => {
+    setPrivacyAccepted(readPersistedPrivacyAccepted());
+  }, []);
 
   useEffect(() => {
     if (!settingsOpen) return;
@@ -248,7 +267,10 @@ export default function HeaderMain() {
         }
 
         const accepted = Boolean(result?.accepted);
-        setPrivacyAccepted(accepted);
+        if (accepted) {
+          setPrivacyAccepted(true);
+          persistPrivacyAccepted();
+        }
         setPolicyAcceptedAt(result?.acceptance?.accepted_at || null);
         setPolicyModalOpen(!accepted);
       } catch {
@@ -273,9 +295,6 @@ export default function HeaderMain() {
     setAuthLoading(false);
     setPassword("");
     setConfirm("");
-    if (mode !== "login") {
-      setPrivacyAccepted(false);
-    }
   };
 
   const handleLoginGoogle = async () => {
@@ -424,6 +443,7 @@ export default function HeaderMain() {
       }
 
       setPrivacyAccepted(true);
+      persistPrivacyAccepted();
       setPolicyAcceptedAt(result?.acceptance?.accepted_at || new Date().toISOString());
       setPolicyModalOpen(false);
       setAuthMessage("Politique de confidentialité acceptée.");
@@ -738,7 +758,13 @@ export default function HeaderMain() {
                       <input
                         type="checkbox"
                         checked={privacyAccepted}
-                        onChange={(e) => setPrivacyAccepted(e.target.checked)}
+                        onChange={(e) => {
+                          const accepted = e.target.checked;
+                          setPrivacyAccepted(accepted);
+                          if (accepted) {
+                            persistPrivacyAccepted();
+                          }
+                        }}
                         style={{ marginTop: "3px" }}
                       />
                       <span>
