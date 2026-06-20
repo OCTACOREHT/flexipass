@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 export default function AdminRedirect() {
   const router = useRouter();
   useEffect(() => {
-    router.replace("/admiflexipass");
+    router.replace("/admin-login");
   }, [router]);
   return null;
 }

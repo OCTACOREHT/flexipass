@@ -1,16 +1,6 @@
-import { Resend } from "resend";
+import nodemailer from "nodemailer";
 import { NextResponse } from "next/server";
 import { buildEmailFooterHtml } from "@/lib/email";
-
-const getResendClient = () => {
-  const apiKey = process.env.RESEND_API_KEY;
-
-  if (!apiKey) {
-    return null;
-  }
-
-  return new Resend(apiKey);
-};
 
 const escapeHtml = (value: string) =>
   value
@@ -48,17 +38,33 @@ export async function POST(request: Request) {
     const safeGiftCode = escapeHtml(String(giftCode || ""));
     const safeAmount = escapeHtml(String(amount || ""));
 
-    const resend = getResendClient();
+    const host = process.env.EMAIL_HOST || "";
+    const user = process.env.EMAIL_USER || "";
+    const pass = process.env.EMAIL_PASSWORD || "";
+    const port = Number(process.env.EMAIL_PORT || 587);
+    const from = process.env.EMAIL_FROM || user || "noreply@flexipass.com";
 
-    if (!resend) {
-      return NextResponse.json({ error: "RESEND_API_KEY manquante" }, { status: 500 });
+    if (!host || !user || !pass) {
+      return NextResponse.json(
+        { error: "Configuration email SMTP manquante (EMAIL_HOST, EMAIL_USER, EMAIL_PASSWORD)" },
+        { status: 500 }
+      );
     }
 
-    const { data, error } = await resend.emails.send({
-      from: "FlexiPass <onboarding@resend.dev>",
-      to: [email],
-      subject: "Félicitations ! Votre commande FlexiPass est prête",
-      html: `
+    const transporter = nodemailer.createTransport({
+      host,
+      port,
+      secure: port === 465,
+      auth: { user, pass },
+    });
+
+    try {
+      await transporter.verify();
+    } catch (verifyErr) {
+      console.warn("SMTP verify warning (confirm route):", verifyErr);
+    }
+
+    const html = `
         <div style="margin:0;padding:32px 16px;background:#fff7f0;font-family:Arial,sans-serif;color:#2f2a33;">
           <div style="max-width:640px;margin:0 auto;">
             <div style="background:linear-gradient(135deg,#fff2db 0%,#ffd8a7 52%,#ffa15c 100%);border:1px solid #f2d1ac;border-bottom:none;border-radius:28px 28px 0 0;padding:34px 28px 28px;text-align:center;">
@@ -136,15 +142,33 @@ export async function POST(request: Request) {
             </table>
           </div>
         </div>
-      `,
-    });
+      `;
 
-    if (error) {
-      console.error("Resend Error:", error);
-      return NextResponse.json({ error }, { status: 500 });
+    try {
+      const text = `Félicitations ! Votre commande FlexiPass est prête\n\nBonjour ${safeName},\n\nVotre paiement a été confirmé et votre commande #${safeOrderId} est disponible. Utilisez le code ${safeGiftCode} pour accéder à votre produit.\n\nMontant : ${safeAmount} HTG\n\nConsultez votre historique : ${historyUrl}\n\nMerci de choisir FlexiPass.`;
+      const info = await transporter.sendMail({
+        from,
+        sender: user,
+        replyTo: from,
+        to: email,
+        subject: "Félicitations ! Votre commande FlexiPass est prête",
+        text,
+        html,
+        envelope: { from: user, to: email },
+        headers: {
+          "X-Priority": "3 (Normal)",
+          "X-Mailer": "Nodemailer",
+        },
+      });
+      console.info("Email sent (confirm route)", { from, to: email, messageId: (info as any)?.messageId, response: (info as any)?.response });
+      return NextResponse.json({ success: true });
+    } catch (err: unknown) {
+      console.error("SMTP send error (confirm route)", { from, to: email, error: err });
+      return NextResponse.json(
+        { error: err instanceof Error ? err.message : "Unknown SMTP error" },
+        { status: 500 }
+      );
     }
-
-    return NextResponse.json({ success: true, data });
   } catch (error: unknown) {
     console.error("Email API Error:", error);
     return NextResponse.json(

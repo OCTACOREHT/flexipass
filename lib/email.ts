@@ -52,6 +52,140 @@ const formatPrice = (value: number) =>
 
 const normalizeBaseUrl = (value: string) => value.replace(/\/+$/, "");
 
+const getSmtpConfig = () => {
+  const host = process.env.EMAIL_HOST?.trim() || "";
+  const user = process.env.EMAIL_USER?.trim() || "";
+  const pass = process.env.EMAIL_PASSWORD?.trim() || "";
+  const port = Number(process.env.EMAIL_PORT || 587);
+  const from = process.env.EMAIL_FROM?.trim() || user || "";
+  return { host, user, pass, port, from };
+};
+
+export const createEmailTransporter = () => {
+  const { host, user, pass, port } = getSmtpConfig();
+  if (!host || !user || !pass) {
+    throw new Error("EMAIL_HOST, EMAIL_USER et EMAIL_PASSWORD sont requis pour l'envoi d'emails.");
+  }
+
+  return nodemailer.createTransport({
+    host,
+    port,
+    secure: port === 465,
+    auth: { user, pass },
+  });
+};
+
+const buildSendOptions = (
+  to: string,
+  subject: string,
+  text: string,
+  html: string,
+  attachments?: any[]
+) => {
+  const { from, user } = getSmtpConfig();
+  return {
+    from,
+    sender: user,
+    replyTo: from,
+    to,
+    subject,
+    text,
+    html,
+    attachments,
+    envelope: { from: user, to },
+    headers: {
+      "X-Priority": "3 (Normal)",
+      "X-Mailer": "Nodemailer",
+    },
+  };
+};
+
+const buildItemsText = (items: OrderItemEmail[]) =>
+  items
+    .map((item) => {
+      const lineTotal = Number(item.price || 0) * Number(item.quantity || 0);
+      return `- ${item.product_name || "Produit"} (${item.product_id || "N/A"}) × ${item.quantity} • ${formatPrice(
+        item.price
+      )} HTG • ${formatPrice(lineTotal)} HTG`;
+    })
+    .join("\n");
+
+const buildOrderConfirmationText = ({
+  order,
+  items,
+  totalPrice,
+  paymentLabel,
+  dateLabel,
+  statusCopy,
+  orderId,
+  siteHome,
+}: {
+  order: EmailOrder;
+  items: OrderItemEmail[];
+  totalPrice: number;
+  paymentLabel: string;
+  dateLabel: string;
+  statusCopy: ReturnType<typeof toStatusCopy>;
+  orderId: string;
+  siteHome: string;
+}) => `Confirmation de commande #${orderId}
+Date : ${dateLabel}
+Statut : ${statusCopy.statusText}
+Paiement : ${paymentLabel}
+Email : ${order.customer_email || "client@flexipass.ht"}
+
+Articles commandés :
+${buildItemsText(items)}
+
+Total : ${formatPrice(totalPrice)} HTG
+
+Merci d'avoir choisi FlexiPass.
+Consultez votre historique : ${siteHome}/history
+`;
+
+const buildAccountDeliveryText = ({
+  order,
+  service,
+  accountEmail,
+  accountPassword,
+  profile,
+  dateLabel,
+}: {
+  order: EmailOrder;
+  service: string;
+  accountEmail: string;
+  accountPassword: string;
+  profile?: string | null;
+  dateLabel: string;
+}) => `Livraison de votre compte
+
+Commande #${order.id || "N/A"}
+Date : ${dateLabel}
+
+Service : ${service}
+Email : ${accountEmail}
+Mot de passe : ${accountPassword}
+${profile ? `Profil : ${profile}
+` : ""}
+
+Merci d'utiliser FlexiPass. Si vous rencontrez un problème, contactez notre support.
+`;
+
+const buildOrderRejectedText = ({
+  order,
+  dateLabel,
+}: {
+  order: EmailOrder;
+  dateLabel: string;
+}) => `Commande refusée
+
+Commande #${order.id || "N/A"}
+Date : ${dateLabel}
+
+Votre paiement n'a pas pu être validé. Merci de vérifier la preuve et de relancer votre commande ou de contacter le support.
+
+FlexiPass`;
+
 const toEmailAssetUrl = (raw: string | undefined, baseUrl: string) => {
   const value = raw?.trim();
   if (!value) return "";
@@ -235,11 +369,6 @@ export async function sendOrderConfirmationEmail({
   items,
   totalPrice,
 }: SendOrderEmailArgs): Promise<EmailResult | null> {
-  const host = process.env.EMAIL_HOST || "";
-  const user = process.env.EMAIL_USER || "";
-  const pass = process.env.EMAIL_PASSWORD || "";
-  const port = Number(process.env.EMAIL_PORT || 587);
-  const from = process.env.EMAIL_FROM || "pitonrodjy@gmail.com";
   const logoEnv = process.env.EMAIL_LOGO_URL || "";
   const siteUrl =
     process.env.NEXT_PUBLIC_SITE_URL ||
@@ -272,16 +401,8 @@ export async function sendOrderConfirmationEmail({
   const logoCid = "flexipass-logo";
   const hasLocalLogo = existsSync(logoPath);
 
-  if (!host || !user || !pass) {
-    return { success: false, error: "EMAIL_* variables manquantes" };
-  }
-
-  const transporter = nodemailer.createTransport({
-    host,
-    port,
-    secure: port === 465,
-    auth: { user, pass },
-  });
+  const { from } = getSmtpConfig();
+  const transporter = createEmailTransporter();
 
   const subject = `Confirmation de commande #${order.id}`;
   const createdAt = order.created_at ? new Date(order.created_at) : new Date();
@@ -430,17 +551,32 @@ export async function sendOrderConfirmationEmail({
   `;
 
   try {
-    await transporter.sendMail({
-      from,
-      to: order.customer_email,
-      subject,
-      html,
-      attachments: hasLocalLogo
-        ? [{ filename: path.basename(logoPath), path: logoPath, cid: logoCid }]
-        : undefined,
+    try {
+      await transporter.verify();
+    } catch (v) {
+      console.warn("SMTP verify warning (order confirmation):", v);
+    }
+
+    const text = buildOrderConfirmationText({
+      order,
+      items,
+      totalPrice,
+      paymentLabel,
+      dateLabel,
+      statusCopy,
+      orderId,
+      siteHome,
     });
+
+    const info = await transporter.sendMail(
+      buildSendOptions(order.customer_email || "", subject, text, html, hasLocalLogo
+        ? [{ filename: path.basename(logoPath), path: logoPath, cid: logoCid }]
+        : undefined)
+    );
+    console.info("Email sent (order confirmation)", { from, to: order.customer_email, messageId: (info as any)?.messageId, response: (info as any)?.response });
     return { success: true };
   } catch (error: unknown) {
+    console.error("SMTP send error (order confirmation)", { from, to: order.customer_email, error });
     return { success: false, error: getErrorMessage(error) };
   }
 }
@@ -452,22 +588,8 @@ export async function sendAccountDeliveryEmail({
   accountPassword,
   profile,
 }: AccountDeliveryArgs): Promise<EmailResult | null> {
-  const host = process.env.EMAIL_HOST || "";
-  const user = process.env.EMAIL_USER || "";
-  const pass = process.env.EMAIL_PASSWORD || "";
-  const port = Number(process.env.EMAIL_PORT || 587);
-  const from = process.env.EMAIL_FROM || "pitonrodjy@gmail.com";
-
-  if (!host || !user || !pass) {
-    return { success: false, error: "EMAIL_* variables manquantes" };
-  }
-
-  const transporter = nodemailer.createTransport({
-    host,
-    port,
-    secure: port === 465,
-    auth: { user, pass },
-  });
+  const { from } = getSmtpConfig();
+  const transporter = createEmailTransporter();
 
   const subject = `Vos accès ${service} sont prêts`;
   const createdAt = order.created_at ? new Date(order.created_at) : new Date();
@@ -491,35 +613,33 @@ export async function sendAccountDeliveryEmail({
   `;
 
   try {
-    await transporter.sendMail({
-      from,
-      to: order.customer_email,
-      subject,
-      html,
+    try {
+      await transporter.verify();
+    } catch (v) {
+      console.warn("SMTP verify warning (account delivery):", v);
+    }
+
+    const text = buildAccountDeliveryText({
+      order,
+      service,
+      accountEmail,
+      accountPassword,
+      profile,
+      dateLabel,
     });
+
+    const info = await transporter.sendMail(buildSendOptions(order.customer_email || "", subject, text, html));
+    console.info("Email sent (account delivery)", { from, to: order.customer_email, messageId: (info as any)?.messageId, response: (info as any)?.response });
     return { success: true };
   } catch (error: unknown) {
+    console.error("SMTP send error (account delivery)", { from, to: order.customer_email, error });
     return { success: false, error: getErrorMessage(error) };
   }
 }
 
 export async function sendOrderRejectedEmail({ order }: OrderRejectedArgs): Promise<EmailResult | null> {
-  const host = process.env.EMAIL_HOST || "";
-  const user = process.env.EMAIL_USER || "";
-  const pass = process.env.EMAIL_PASSWORD || "";
-  const port = Number(process.env.EMAIL_PORT || 587);
-  const from = process.env.EMAIL_FROM || "pitonrodjy@gmail.com";
-
-  if (!host || !user || !pass) {
-    return { success: false, error: "EMAIL_* variables manquantes" };
-  }
-
-  const transporter = nodemailer.createTransport({
-    host,
-    port,
-    secure: port === 465,
-    auth: { user, pass },
-  });
+  const { from } = getSmtpConfig();
+  const transporter = createEmailTransporter();
 
   const subject = `Commande #${order.id} refusée`;
   const createdAt = order.created_at ? new Date(order.created_at) : new Date();
@@ -542,14 +662,18 @@ export async function sendOrderRejectedEmail({ order }: OrderRejectedArgs): Prom
   `;
 
   try {
-    await transporter.sendMail({
-      from,
-      to: order.customer_email,
-      subject,
-      html,
-    });
+    try {
+      await transporter.verify();
+    } catch (v) {
+      console.warn("SMTP verify warning (order rejected):", v);
+    }
+
+    const text = buildOrderRejectedText({ order, dateLabel });
+    const info = await transporter.sendMail(buildSendOptions(order.customer_email || "", subject, text, html));
+    console.info("Email sent (order rejected)", { from, to: order.customer_email, messageId: (info as any)?.messageId, response: (info as any)?.response });
     return { success: true };
   } catch (error: unknown) {
+    console.error("SMTP send error (order rejected)", { from, to: order.customer_email, error });
     return { success: false, error: getErrorMessage(error) };
   }
 }

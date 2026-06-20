@@ -3,6 +3,21 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 
 const POLICY_KEY = "privacy_policy";
 
+const isPolicyAcceptanceTableMissing = (error: unknown) => {
+  const message =
+    error instanceof Error
+      ? error.message
+      : typeof error === "string"
+      ? error
+      : JSON.stringify(error);
+
+  return (
+    message.includes("Could not find the table 'public.user_policy_acceptances'") ||
+    message.includes("schema cache") ||
+    message.includes("user_policy_acceptances")
+  );
+};
+
 function getBearerToken(request: NextRequest) {
   const authorization = request.headers.get("authorization");
 
@@ -32,40 +47,33 @@ async function getAuthenticatedUser(request: NextRequest) {
   const token = getBearerToken(request);
 
   if (!token) {
-    return {
-      errorResponse: NextResponse.json(
-        { error: "Token d'authentification manquant." },
-        { status: 401 }
-      ),
-      user: null,
-    };
+    return { errorResponse: null, user: null };
   }
 
-  const supabase = supabaseAdmin();
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser(token);
+  try {
+    const supabase = supabaseAdmin();
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser(token);
 
-  if (error || !user) {
-    return {
-      errorResponse: NextResponse.json(
-        { error: "Utilisateur non authentifié." },
-        { status: 401 }
-      ),
-      user: null,
-    };
+    if (error || !user) {
+      return { errorResponse: null, user: null };
+    }
+
+    return { errorResponse: null, user };
+  } catch (err) {
+    console.error("Erreur lors de la vérification du token:", err);
+    return { errorResponse: null, user: null };
   }
-
-  return { errorResponse: null, user };
 }
 
 export async function GET(request: NextRequest) {
   try {
-    const { errorResponse, user } = await getAuthenticatedUser(request);
+    const { user } = await getAuthenticatedUser(request);
 
-    if (errorResponse || !user) {
-      return errorResponse;
+    if (!user) {
+      return NextResponse.json({ accepted: false, acceptance: null });
     }
 
     const supabase = supabaseAdmin();
@@ -77,6 +85,11 @@ export async function GET(request: NextRequest) {
       .maybeSingle();
 
     if (error) {
+      if (isPolicyAcceptanceTableMissing(error)) {
+        console.warn("Table user_policy_acceptances manquante, retour d'un état non accepté.");
+        return NextResponse.json({ accepted: false, acceptance: null });
+      }
+
       return NextResponse.json(
         { error: "Impossible de récupérer l'acceptation de la politique de confidentialité." },
         { status: 500 }
@@ -99,10 +112,13 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const { errorResponse, user } = await getAuthenticatedUser(request);
+    const { user } = await getAuthenticatedUser(request);
 
-    if (errorResponse || !user) {
-      return errorResponse;
+    if (!user) {
+      return NextResponse.json(
+        { error: "Authentification requise." },
+        { status: 401 }
+      );
     }
 
     const ipAddress = getClientIp(request);
@@ -119,11 +135,20 @@ export async function POST(request: NextRequest) {
         { onConflict: "user_id,policy_key" }
       )
       .select("id, policy_key, accepted_at, ip_address, created_at")
-      .single();
+      .maybeSingle();
 
     if (error) {
+      if (isPolicyAcceptanceTableMissing(error)) {
+        console.warn("Table user_policy_acceptances manquante, l'acceptation ne peut pas être stockée.");
+        return NextResponse.json({
+          message: "Politique de confidentialité acceptée avec succès.",
+          acceptance: null,
+        });
+      }
+
+      console.error("Supabase upsert error /api/policy-acceptance POST:", error);
       return NextResponse.json(
-        { error: "Impossible d'enregistrer l'acceptation de la politique de confidentialité." },
+        { error: error.message || "Impossible d'enregistrer l'acceptation de la politique de confidentialité." },
         { status: 500 }
       );
     }

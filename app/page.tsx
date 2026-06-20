@@ -247,9 +247,18 @@ export default function Home() {
         if (accepted) {
           setPrivacyAccepted(true);
           persistPrivacyAccepted();
+          setPolicyAcceptedAt(result?.acceptance?.accepted_at || null);
+          setPolicyModalOpen(false);
+        } else if (privacyAccepted) {
+          try {
+            await submitPolicyAcceptance(token);
+          } catch {
+            setPolicyModalOpen(true);
+          }
+        } else {
+          setPolicyAcceptedAt(null);
+          setPolicyModalOpen(true);
         }
-        setPolicyAcceptedAt(result?.acceptance?.accepted_at || null);
-        setPolicyModalOpen(!accepted);
       } catch {
         setPolicyError("Impossible de vérifier l’acceptation de la politique.");
       } finally {
@@ -258,7 +267,7 @@ export default function Home() {
     };
 
     checkPolicyStatus();
-  }, [user]);
+  }, [user, privacyAccepted]);
 
   useEffect(() => {
     if (!settingsOpen) return;
@@ -568,6 +577,28 @@ export default function Home() {
     setAuthMessage("Si un compte existe, un email de réinitialisation a été envoyé.");
   };
 
+  const submitPolicyAcceptance = async (token: string) => {
+    const response = await fetch("/api/policy-acceptance", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result?.error || "Impossible d’enregistrer votre acceptation.");
+    }
+
+    const acceptedAt = result?.acceptance?.accepted_at || new Date().toISOString();
+    setPrivacyAccepted(true);
+    persistPrivacyAccepted();
+    setPolicyAcceptedAt(acceptedAt);
+    setPolicyModalOpen(false);
+    return acceptedAt;
+  };
+
   const handleAcceptPolicy = async () => {
     setPolicyError(null);
     setPolicySubmitting(true);
@@ -592,28 +623,10 @@ export default function Home() {
     }
 
     try {
-      const response = await fetch("/api/policy-acceptance", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      const result = await response.json();
-
-      if (!response.ok) {
-        setPolicyError(result?.error || "Impossible d’enregistrer votre acceptation.");
-        setPolicySubmitting(false);
-        return;
-      }
-
-      setPrivacyAccepted(true);
-      persistPrivacyAccepted();
-      setPolicyAcceptedAt(result?.acceptance?.accepted_at || new Date().toISOString());
-      setPolicyModalOpen(false);
+      await submitPolicyAcceptance(token);
       setAuthMessage("Politique de confidentialité acceptée.");
-    } catch {
-      setPolicyError("Impossible d’enregistrer votre acceptation.");
+    } catch (error) {
+      setPolicyError(error instanceof Error ? error.message : "Impossible d’enregistrer votre acceptation.");
     } finally {
       setPolicySubmitting(false);
     }

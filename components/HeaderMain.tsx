@@ -224,6 +224,28 @@ export default function HeaderMain() {
     };
   }, []);
 
+  const submitPolicyAcceptance = async (token: string) => {
+    const response = await fetch("/api/policy-acceptance", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result?.error || "Impossible d’enregistrer votre acceptation.");
+    }
+
+    const acceptedAt = result?.acceptance?.accepted_at || new Date().toISOString();
+    setPrivacyAccepted(true);
+    persistPrivacyAccepted();
+    setPolicyAcceptedAt(acceptedAt);
+    setPolicyModalOpen(false);
+    return acceptedAt;
+  };
+
   useEffect(() => {
     const checkPolicyStatus = async () => {
       if (!user) {
@@ -270,9 +292,18 @@ export default function HeaderMain() {
         if (accepted) {
           setPrivacyAccepted(true);
           persistPrivacyAccepted();
+          setPolicyAcceptedAt(result?.acceptance?.accepted_at || null);
+          setPolicyModalOpen(false);
+        } else if (privacyAccepted) {
+          try {
+            await submitPolicyAcceptance(token);
+          } catch {
+            setPolicyModalOpen(true);
+          }
+        } else {
+          setPolicyAcceptedAt(null);
+          setPolicyModalOpen(true);
         }
-        setPolicyAcceptedAt(result?.acceptance?.accepted_at || null);
-        setPolicyModalOpen(!accepted);
       } catch {
         setPolicyError("Impossible de vérifier l’acceptation de la politique.");
       } finally {
@@ -281,7 +312,7 @@ export default function HeaderMain() {
     };
 
     checkPolicyStatus();
-  }, [user]);
+  }, [user, privacyAccepted]);
 
   const searched = useMemo(() => {
     if (!query.trim()) return [];

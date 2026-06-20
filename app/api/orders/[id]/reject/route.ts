@@ -43,12 +43,22 @@ async function sendOrderRejectedEmailFallback(order: any) {
     </div>
   `;
 
+  const text = `Commande refusée\n\nCommande #${order.id || "N/A"}\nDate : ${dateLabel}\n\nVotre paiement n'a pas pu être validé. Merci de revérifier la preuve et de relancer votre commande ou de contacter le support.\n\nFlexiPass`;
+
   try {
     await transporter.sendMail({
       from,
+      sender: user,
+      replyTo: from,
       to: order.customer_email,
       subject,
+      text,
       html,
+      envelope: { from: user, to: order.customer_email },
+      headers: {
+        "X-Priority": "3 (Normal)",
+        "X-Mailer": "Nodemailer",
+      },
     });
     return { success: true };
   } catch (error: any) {

@@ -61,9 +61,13 @@ export default function Sidebar() {
     };
   }, []);
 
-  const handleLogout = () => {
-    localStorage.removeItem("admin_authed");
-    window.location.href = "/admiflexipass";
+  const handleLogout = async () => {
+    try {
+      await fetch("/admiflexipass/logout", { method: "POST" });
+    } catch (error) {
+      console.warn("Logout failed", error);
+    }
+    window.location.href = "/admin-login";
   };
 
   return (
