@@ -11,20 +11,22 @@ import {
   Settings, 
   ChevronLeft, 
   ChevronRight,
-  LogOut
+  LogOut,
+  Shield
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import Badge from "@/app/admiflexipass/components/Badge";
 
 const navItems = [
-  { name: "Tableau de Bord", href: "/admiflexipass", icon: LayoutDashboard },
-  { name: "Commandes", href: "/admiflexipass/orders", icon: Package, showBadge: true },
-  { name: "Catalogue Produits", href: "/admiflexipass/stock", icon: TrendingUp },
-  { name: "Liste Membres", href: "/admiflexipass/users", icon: Users },
-  { name: "Paramètres", href: "/admiflexipass/settings", icon: Settings },
+  { name: "Tableau de Bord", href: "/admiflexipass", icon: LayoutDashboard, permissionKey: "dashboard" },
+  { name: "Commandes", href: "/admiflexipass/orders", icon: Package, showBadge: true, permissionKey: "orders" },
+  { name: "Catalogue Produits", href: "/admiflexipass/stock", icon: TrendingUp, permissionKey: "stock" },
+  { name: "Liste Membres", href: "/admiflexipass/users", icon: Users, permissionKey: "users" },
+  { name: "Paramètres", href: "/admiflexipass/settings", icon: Settings, permissionKey: "settings" },
+  { name: "Gestion Admins", href: "/admiflexipass/admins", icon: Shield, permissionKey: "admins" },
 ];
 
-export default function Sidebar() {
+export default function Sidebar({ admin }: { admin?: any }) {
   const [isCollapsed, setIsCollapsed] = useState(() => {
     if (typeof window === "undefined") return true;
     return window.innerWidth <= 1024;
@@ -32,8 +34,10 @@ export default function Sidebar() {
   const [pendingCount, setPendingCount] = useState(0);
   const pathname = usePathname();
 
+  // 1. Fetch pending orders count and subscribe to updates
   useEffect(() => {
     const fetchPendingCount = async () => {
+      if (!supabase) return;
       const { count, error } = await supabase
         .from("orders")
         .select("*", { count: "exact", head: true })
@@ -46,20 +50,42 @@ export default function Sidebar() {
 
     fetchPendingCount();
 
-    // Real-time subscription for orders
-    const channel = supabase
-      .channel("orders_status_changes")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "orders" },
-        () => fetchPendingCount()
-      )
-      .subscribe();
+    if (supabase) {
+      const channel = supabase
+        .channel("orders_status_changes")
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "orders" },
+          () => fetchPendingCount()
+        )
+        .subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
   }, []);
+
+  // 2. Client-side security redirection based on permissions
+  useEffect(() => {
+    if (admin) {
+      const currentItem = navItems.find((item) => pathname === item.href);
+      if (currentItem && currentItem.permissionKey && admin.role !== "superadmin") {
+        const hasAccess = admin.permissions?.[currentItem.permissionKey] !== false;
+        if (!hasAccess) {
+          // Find the first tab they have access to
+          const firstAllowed = navItems.find(
+            (item) => admin.permissions?.[item.permissionKey] !== false
+          );
+          if (firstAllowed) {
+            window.location.href = firstAllowed.href;
+          } else {
+            window.location.href = "/admin-login";
+          }
+        }
+      }
+    }
+  }, [pathname, admin]);
 
   const handleLogout = async () => {
     try {
@@ -69,6 +95,19 @@ export default function Sidebar() {
     }
     window.location.href = "/admin-login";
   };
+
+  // 3. Filter menu items based on permissions
+  const visibleItems = navItems.filter((item) => {
+    if (!admin) return false;
+    // SuperAdmin has full access to all sections
+    if (admin.role === "superadmin") return true;
+    
+    // Check permission key
+    if (item.permissionKey) {
+      return admin.permissions?.[item.permissionKey] !== false;
+    }
+    return true;
+  });
 
   return (
     <aside 
@@ -91,7 +130,7 @@ export default function Sidebar() {
       </div>
 
       <nav className="flex-1 mt-6 px-4 space-y-2">
-        {navItems.map((item) => {
+        {visibleItems.map((item) => {
           const isActive = pathname === item.href;
           return (
             <Link 
@@ -116,6 +155,14 @@ export default function Sidebar() {
           );
         })}
       </nav>
+
+      {/* Admin Name/Role Indicator */}
+      {admin && !isCollapsed && (
+        <div className="px-6 py-3 border-t border-zinc-800 flex flex-col gap-0.5">
+          <p className="text-[11px] font-bold text-white truncate">{admin.name}</p>
+          <p className="text-[9px] font-semibold text-red-500/80 uppercase tracking-widest">{admin.role}</p>
+        </div>
+      )}
 
       <div className="p-4 border-t border-zinc-800">
         <button 

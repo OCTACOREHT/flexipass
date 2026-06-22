@@ -13,7 +13,7 @@ import {
 
 export default function AdminLoginPage() {
   const router = useRouter();
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -30,7 +30,7 @@ export default function AdminLoginPage() {
       const response = await fetch("/api/admin-login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ email, password }),
       });
 
       const result = await response.json();
@@ -41,7 +41,7 @@ export default function AdminLoginPage() {
       }
 
       router.push("/admiflexipass");
-    } catch (err) {
+    } catch {
       setError("Impossible de se connecter, réessayez.");
       setShouldShake(true);
     } finally {
@@ -138,10 +138,10 @@ export default function AdminLoginPage() {
 
         {/* Login Form */}
         <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Username Input */}
+          {/* Email Input */}
           <div className="space-y-1.5">
             <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-400">
-              Nom d’utilisateur
+              Adresse e-mail
             </label>
             <div className="relative group">
               <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-500 group-focus-within:text-red-500 transition-colors">
@@ -149,15 +149,16 @@ export default function AdminLoginPage() {
               </div>
               <input
                 className="w-full rounded-xl border border-white/5 bg-[#0a0b12] pl-10 pr-4 py-3 text-sm text-zinc-200 placeholder-zinc-600 outline-none transition duration-200 focus:border-red-500/35 focus:ring-4 focus:ring-red-500/5"
-                type="text"
-                value={username}
-                onChange={(event) => setUsername(event.target.value)}
-                placeholder="Identifiant"
+                type="email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                placeholder="admin@flexipass.ht"
                 required
-                autoComplete="username"
+                autoComplete="email"
               />
             </div>
           </div>
+
 
           {/* Password Input */}
           <div className="space-y-1.5">

@@ -37,7 +37,7 @@ export default async function AdminLayout({
         .find((c) => c.startsWith(`${ADMIN_COOKIE_NAME}=`));
       token = match ? decodeURIComponent(match.split("=")[1]) : undefined;
     }
-  } catch (e) {
+  } catch {
     const hdrs = await headers();
     let cookieHeader = "";
     if (hdrs) {
@@ -61,16 +61,18 @@ export default async function AdminLayout({
     token = match ? decodeURIComponent(match.split("=")[1]) : undefined;
   }
 
-  if (!verifyAdminAuthToken(token)) {
+  const adminUser = verifyAdminAuthToken(token);
+  if (!adminUser || typeof adminUser === "boolean") {
     redirect("/admin-login");
   }
 
   return (
     <div className="min-h-screen bg-[#0f0f23] text-zinc-200 antialiased flex">
-      <Sidebar />
+      <Sidebar admin={adminUser} />
       <main className="flex-1 transition-all duration-300 ml-20 md:ml-64 p-4 md:p-8 overflow-y-auto min-h-screen">
         <div className="max-w-7xl mx-auto space-y-8">{children}</div>
       </main>
     </div>
   );
 }
+

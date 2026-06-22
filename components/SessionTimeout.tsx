@@ -7,7 +7,7 @@ import { supabaseBrowser } from "@/lib/supabase-browser";
 const TIMEOUT_MS = 15 * 60 * 1000; 
 
 export default function SessionTimeout() {
-  const lastActivityRef = useRef<number>(Date.now());
+  const lastActivityRef = useRef<number>(0);
   const isLoggedInRef = useRef(false);
   const [showToast, setShowToast] = useState(false);
 

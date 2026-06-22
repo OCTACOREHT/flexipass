@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState, useRef } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { getProductImageSrc, handleProductImageError } from "@/lib/product-brand";
 
 type Product = {

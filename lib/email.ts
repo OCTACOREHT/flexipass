@@ -57,7 +57,10 @@ const getSmtpConfig = () => {
   const user = process.env.EMAIL_USER?.trim() || "";
   const pass = process.env.EMAIL_PASSWORD?.trim() || "";
   const port = Number(process.env.EMAIL_PORT || 587);
-  const from = process.env.EMAIL_FROM?.trim() || user || "";
+  let from = process.env.EMAIL_FROM?.trim() || user || "";
+  if (from && !from.includes("<")) {
+    from = `FlexiPass <${from}>`;
+  }
   return { host, user, pass, port, from };
 };
 
@@ -82,21 +85,14 @@ const buildSendOptions = (
   html: string,
   attachments?: any[]
 ) => {
-  const { from, user } = getSmtpConfig();
+  const { from } = getSmtpConfig();
   return {
     from,
-    sender: user,
-    replyTo: from,
     to,
     subject,
     text,
     html,
     attachments,
-    envelope: { from: user, to },
-    headers: {
-      "X-Priority": "3 (Normal)",
-      "X-Mailer": "Nodemailer",
-    },
   };
 };
 
@@ -677,3 +673,481 @@ export async function sendOrderRejectedEmail({ order }: OrderRejectedArgs): Prom
     return { success: false, error: getErrorMessage(error) };
   }
 }
+
+type AdminInvitationArgs = {
+  email: string;
+  name: string;
+  activationLink: string;
+};
+
+export async function sendAdminInvitationEmail({
+  email,
+  name,
+  activationLink,
+}: AdminInvitationArgs): Promise<EmailResult | null> {
+  const logoEnv = process.env.EMAIL_LOGO_URL || "";
+  const siteUrl =
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    process.env.SITE_URL ||
+    process.env.APP_URL ||
+    "";
+  const baseUrl = siteUrl ? normalizeBaseUrl(siteUrl) : "";
+  const siteHome = baseUrl || "https://flexipass.com";
+  const instagramUrl = process.env.NEXT_PUBLIC_INSTAGRAM_URL || process.env.INSTAGRAM_URL || siteHome;
+  const facebookUrl = process.env.NEXT_PUBLIC_FACEBOOK_URL || process.env.FACEBOOK_URL || siteHome;
+  const linkedinUrl = process.env.NEXT_PUBLIC_LINKEDIN_URL || process.env.LINKEDIN_URL || siteHome;
+  const tiktokUrl = process.env.NEXT_PUBLIC_TIKTOK_URL || process.env.TIKTOK_URL || siteHome;
+  
+  const primaryLogoPath = path.join(process.cwd(), "public", "Flexipass-email.png");
+  const fallbackLogoPath = path.join(
+    process.cwd(),
+    "public",
+    "assets",
+    "images",
+    "brands",
+    "logo-flexipass.png"
+  );
+  const logoPath = existsSync(primaryLogoPath) ? primaryLogoPath : fallbackLogoPath;
+  const logoUrl =
+    logoEnv ||
+    (baseUrl
+      ? existsSync(primaryLogoPath)
+        ? `${baseUrl}/Flexipass-email.png`
+        : `${baseUrl}/assets/images/brands/logo-flexipass.png`
+      : "");
+  const logoCid = "flexipass-logo";
+  const hasLocalLogo = existsSync(logoPath);
+
+  const { from } = getSmtpConfig();
+  const transporter = createEmailTransporter();
+
+  const subject = `Invitation à rejoindre l'administration FlexiPass`;
+  
+  const logoMarkup = hasLocalLogo
+    ? `<img src="cid:${logoCid}" alt="FlexiPass" style="height:48px;display:inline-block;" />`
+    : logoUrl
+      ? `<img src="${logoUrl}" alt="FlexiPass" style="height:48px;display:inline-block;" />`
+      : `<div style="display:inline-block;background:#FFF4DE;color:#C26A13;border-radius:16px;padding:12px 16px;font-size:18px;font-weight:800;">FlexiPass</div>`;
+
+  const html = `
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Invitation Administration</title>
+</head>
+<body style="margin:0;padding:0;background-color:#FFF7F0;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
+
+  <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background:#FFF7F0;padding:36px 16px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="max-width:640px;">
+
+          <tr>
+            <td style="background:linear-gradient(135deg,#FFF2DB 0%,#FFD8A7 52%,#FFA15C 100%);border:1px solid #F2D1AC;border-bottom:none;border-radius:28px 28px 0 0;padding:34px 36px 28px;text-align:center;">
+              <div style="display:inline-block;background:rgba(255,255,255,0.78);border:1px solid rgba(255,255,255,0.95);border-radius:20px;padding:12px 18px;box-shadow:0 14px 26px -22px rgba(89,49,14,0.38);margin-bottom:18px;">
+                ${logoMarkup}
+              </div>
+              <p style="margin:0 0 8px;color:#9A5A1B;font-size:12px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;">Console Administration</p>
+              <h1 style="margin:0 0 8px;color:#2F2A33;font-size:28px;font-weight:800;letter-spacing:-0.6px;">Création de votre compte Admin</h1>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="background:#FFFFFF;padding:34px 36px;border-left:1px solid #F2DCC7;border-right:1px solid #F2DCC7;">
+
+              <p style="margin:0 0 8px;color:#2F2A33;font-size:18px;font-weight:700;">Bonjour ${escapeHtml(name)},</p>
+              <p style="margin:0 0 20px;color:#6A5B50;font-size:15px;line-height:1.7;">
+                Vous avez été invité par un administrateur à rejoindre la console de gestion de **FlexiPass**.
+              </p>
+              <p style="margin:0 0 26px;color:#6A5B50;font-size:15px;line-height:1.7;">
+                Pour activer votre compte et configurer votre mot de passe d'accès sécurisé, veuillez cliquer sur le bouton d'activation ci-dessous. Ce lien est unique et confidentiel.
+              </p>
+
+              <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin-bottom:30px;">
+                <tr>
+                  <td align="center">
+                    <a href="${activationLink}" style="display:inline-block;background:linear-gradient(135deg,#FF8533,#FF5500);color:#FFFFFF;font-size:15px;font-weight:800;text-decoration:none;padding:16px 36px;border-radius:16px;box-shadow:0 10px 20px -10px rgba(255,85,0,0.5);text-transform:uppercase;letter-spacing:0.05em;">Activer mon compte</a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin:0 0 20px;color:#8E4E15;font-size:12px;line-height:1.6;background:#FFF9F2;border:1px solid #F0DDC8;padding:12px;border-radius:12px;">
+                <strong>Note de sécurité :</strong> Ne partagez jamais cet e-mail. Le lien d'activation vous permettra de définir votre mot de passe personnel.
+              </p>
+
+            </td>
+          </tr>
+
+          ${buildEmailFooterHtml({
+            siteHome,
+            instagramUrl,
+            facebookUrl,
+            linkedinUrl,
+            tiktokUrl,
+          })}
+
+        </table>
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>
+  `;
+
+  try {
+    try {
+      await transporter.verify();
+    } catch (v) {
+      console.warn("SMTP verify warning (admin invitation):", v);
+    }
+
+    const text = `Bonjour ${name},\n\nVous avez été invité à rejoindre la console de gestion de FlexiPass.\n\nPour activer votre compte et définir votre mot de passe, veuillez vous rendre sur le lien suivant :\n${activationLink}\n\nMerci,\nL'équipe FlexiPass`;
+
+    const info = await transporter.sendMail(
+      buildSendOptions(email, subject, text, html, hasLocalLogo
+        ? [{ filename: path.basename(logoPath), path: logoPath, cid: logoCid }]
+        : undefined)
+    );
+    console.info("Email sent (admin invitation)", { from, to: email, messageId: (info as any)?.messageId, response: (info as any)?.response });
+    return { success: true };
+  } catch (error: unknown) {
+    const errMsg = error instanceof Error ? error.message : String(error);
+    console.error("SMTP send error (admin invitation)", { from, to: email, error });
+    return { success: false, error: errMsg };
+  }
+}
+
+type AdminPromotionArgs = {
+  email: string;
+  name: string;
+  roleName: string;
+  tempPassword?: string;
+};
+
+export async function sendAdminPromotionEmail({
+  email,
+  name,
+  roleName,
+  tempPassword,
+}: AdminPromotionArgs): Promise<EmailResult | null> {
+  const logoEnv = process.env.EMAIL_LOGO_URL || "";
+  const siteUrl =
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    process.env.SITE_URL ||
+    process.env.APP_URL ||
+    "";
+  const baseUrl = siteUrl ? normalizeBaseUrl(siteUrl) : "";
+  const siteHome = baseUrl || "https://flexipass.com";
+  const instagramUrl = process.env.NEXT_PUBLIC_INSTAGRAM_URL || process.env.INSTAGRAM_URL || siteHome;
+  const facebookUrl = process.env.NEXT_PUBLIC_FACEBOOK_URL || process.env.FACEBOOK_URL || siteHome;
+  const linkedinUrl = process.env.NEXT_PUBLIC_LINKEDIN_URL || process.env.LINKEDIN_URL || siteHome;
+  const tiktokUrl = process.env.NEXT_PUBLIC_TIKTOK_URL || process.env.TIKTOK_URL || siteHome;
+  
+  const primaryLogoPath = path.join(process.cwd(), "public", "Flexipass-email.png");
+  const fallbackLogoPath = path.join(
+    process.cwd(),
+    "public",
+    "assets",
+    "images",
+    "brands",
+    "logo-flexipass.png"
+  );
+  const logoPath = existsSync(primaryLogoPath) ? primaryLogoPath : fallbackLogoPath;
+  const logoUrl =
+    logoEnv ||
+    (baseUrl
+      ? existsSync(primaryLogoPath)
+        ? `${baseUrl}/Flexipass-email.png`
+        : `${baseUrl}/assets/images/brands/logo-flexipass.png`
+      : "");
+  const logoCid = "flexipass-logo";
+  const hasLocalLogo = existsSync(logoPath);
+
+  const { from } = getSmtpConfig();
+  const transporter = createEmailTransporter();
+
+  const subject = `Accès Administrateur activé sur FlexiPass`;
+  
+  const logoMarkup = hasLocalLogo
+    ? `<img src="cid:${logoCid}" alt="FlexiPass" style="height:48px;display:inline-block;" />`
+    : logoUrl
+      ? `<img src="${logoUrl}" alt="FlexiPass" style="height:48px;display:inline-block;" />`
+      : `<div style="display:inline-block;background:#FFF4DE;color:#C26A13;border-radius:16px;padding:12px 16px;font-size:18px;font-weight:800;">FlexiPass</div>`;
+
+  const loginUrl = `${siteHome}/admin-login`;
+
+  const passwordSection = tempPassword
+    ? `
+      <p style="margin:0 0 12px;color:#6A5B50;font-size:15px;line-height:1.7;">
+        Dans le cadre de cette promotion, votre mot de passe a été réinitialisé. Voici vos identifiants temporaires de connexion :
+      </p>
+      <div style="background:#F7F8FA;border:1px dashed #E2E8F0;border-radius:12px;padding:16px;margin-bottom:20px;text-align:center;">
+        <p style="margin:0 0 6px;color:#718096;font-size:12px;font-weight:600;text-transform:uppercase;">Identifiant / Email</p>
+        <p style="margin:0 0 12px;color:#2D3748;font-size:15px;font-weight:700;word-break:break-all;">${escapeHtml(email)}</p>
+        <p style="margin:0 0 6px;color:#718096;font-size:12px;font-weight:600;text-transform:uppercase;">Mot de passe temporaire</p>
+        <p style="margin:0;color:#DD6B20;font-size:16px;font-weight:700;font-family:monospace;letter-spacing:1px;">${escapeHtml(tempPassword)}</p>
+      </div>
+      <p style="margin:0 0 20px;color:#E53E3E;font-size:13px;font-weight:600;line-height:1.5;">
+        * Veuillez modifier ce mot de passe dès votre première connexion pour des raisons de sécurité.
+      </p>
+    `
+    : `
+      <p style="margin:0 0 26px;color:#6A5B50;font-size:15px;line-height:1.7;">
+        Vous n'avez pas besoin de créer de nouveau mot de passe. Vous pouvez vous connecter immédiatement à la console d'administration en utilisant vos identifiants habituels.
+      </p>
+    `;
+
+  const html = `
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Accès Administrateur FlexiPass</title>
+</head>
+<body style="margin:0;padding:0;background-color:#FFF7F0;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
+
+  <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background:#FFF7F0;padding:36px 16px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="max-width:640px;">
+
+          <tr>
+            <td style="background:linear-gradient(135deg,#FFF2DB 0%,#FFD8A7 52%,#FFA15C 100%);border:1px solid #F2D1AC;border-bottom:none;border-radius:28px 28px 0 0;padding:34px 36px 28px;text-align:center;">
+              <div style="display:inline-block;background:rgba(255,255,255,0.78);border:1px solid rgba(255,255,255,0.95);border-radius:20px;padding:12px 18px;box-shadow:0 14px 26px -22px rgba(89,49,14,0.38);margin-bottom:18px;">
+                ${logoMarkup}
+              </div>
+              <p style="margin:0 0 8px;color:#9A5A1B;font-size:12px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;">Console Administration</p>
+              <h1 style="margin:0 0 8px;color:#2F2A33;font-size:28px;font-weight:800;letter-spacing:-0.6px;">Accès Administrateur Activé</h1>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="background:#FFFFFF;padding:34px 36px;border-left:1px solid #F2DCC7;border-right:1px solid #F2DCC7;">
+
+              <p style="margin:0 0 8px;color:#2F2A33;font-size:18px;font-weight:700;">Bonjour ${escapeHtml(name)},</p>
+              <p style="margin:0 0 20px;color:#6A5B50;font-size:15px;line-height:1.7;">
+                Votre compte existant a été promu avec le rôle **${escapeHtml(roleName)}** sur la console de gestion **FlexiPass**.
+              </p>
+              ${passwordSection}
+
+              <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin-bottom:30px;">
+                <tr>
+                  <td align="center">
+                    <a href="${loginUrl}" style="display:inline-block;background:linear-gradient(135deg,#FF8533,#FF5500);color:#FFFFFF;font-size:15px;font-weight:800;text-decoration:none;padding:16px 36px;border-radius:16px;box-shadow:0 10px 20px -10px rgba(255,85,0,0.5);text-transform:uppercase;letter-spacing:0.05em;">Accéder à la console</a>
+                  </td>
+                </tr>
+              </table>
+
+            </td>
+          </tr>
+
+          ${buildEmailFooterHtml({
+            siteHome,
+            instagramUrl,
+            facebookUrl,
+            linkedinUrl,
+            tiktokUrl,
+          })}
+
+        </table>
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>
+  `;
+
+  try {
+    try {
+      await transporter.verify();
+    } catch (v) {
+      console.warn("SMTP verify warning (admin promotion):", v);
+    }
+
+    const text = tempPassword
+      ? `Bonjour ${name},\n\nVotre compte a été promu au rôle d'administrateur (${roleName}) sur FlexiPass.\n\nDans le cadre de cette promotion, votre mot de passe a été réinitialisé. Voici vos identifiants temporaires :\nEmail: ${email}\nMot de passe temporaire: ${tempPassword}\n\nVous pouvez vous connecter immédiatement ici :\n${loginUrl}\n\nL'équipe FlexiPass`
+      : `Bonjour ${name},\n\nVotre compte a été promu au rôle d'administrateur (${roleName}) sur FlexiPass.\n\nVous pouvez vous connecter immédiatement à la console d'administration avec vos identifiants habituels :\n${loginUrl}\n\nL'équipe FlexiPass`;
+
+    const info = await transporter.sendMail(
+      buildSendOptions(email, subject, text, html, hasLocalLogo
+        ? [{ filename: path.basename(logoPath), path: logoPath, cid: logoCid }]
+        : undefined)
+    );
+    console.info("Email sent (admin promotion)", { from, to: email, messageId: (info as any)?.messageId, response: (info as any)?.response });
+    return { success: true };
+  } catch (error: unknown) {
+    const errMsg = error instanceof Error ? error.message : String(error);
+    console.error("SMTP send error (admin promotion)", { from, to: email, error });
+    return { success: false, error: errMsg };
+  }
+}
+
+type AdminWelcomeArgs = {
+  email: string;
+  name: string;
+  tempPassword?: string;
+};
+
+export async function sendAdminWelcomeEmail({
+  email,
+  name,
+  tempPassword,
+}: AdminWelcomeArgs): Promise<EmailResult | null> {
+  const logoEnv = process.env.EMAIL_LOGO_URL || "";
+  const siteUrl =
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    process.env.SITE_URL ||
+    process.env.APP_URL ||
+    "";
+  const baseUrl = siteUrl ? normalizeBaseUrl(siteUrl) : "";
+  const siteHome = baseUrl || "https://flexipass.com";
+  const instagramUrl = process.env.NEXT_PUBLIC_INSTAGRAM_URL || process.env.INSTAGRAM_URL || siteHome;
+  const facebookUrl = process.env.NEXT_PUBLIC_FACEBOOK_URL || process.env.FACEBOOK_URL || siteHome;
+  const linkedinUrl = process.env.NEXT_PUBLIC_LINKEDIN_URL || process.env.LINKEDIN_URL || siteHome;
+  const tiktokUrl = process.env.NEXT_PUBLIC_TIKTOK_URL || process.env.TIKTOK_URL || siteHome;
+  
+  const primaryLogoPath = path.join(process.cwd(), "public", "Flexipass-email.png");
+  const fallbackLogoPath = path.join(
+    process.cwd(),
+    "public",
+    "assets",
+    "images",
+    "brands",
+    "logo-flexipass.png"
+  );
+  const logoPath = existsSync(primaryLogoPath) ? primaryLogoPath : fallbackLogoPath;
+  const logoUrl =
+    logoEnv ||
+    (baseUrl
+      ? existsSync(primaryLogoPath)
+        ? `${baseUrl}/Flexipass-email.png`
+        : `${baseUrl}/assets/images/brands/logo-flexipass.png`
+      : "");
+  const logoCid = "flexipass-logo";
+  const hasLocalLogo = existsSync(logoPath);
+
+  const { from } = getSmtpConfig();
+  const transporter = createEmailTransporter();
+
+  const subject = `Votre compte administrateur FlexiPass a été créé`;
+  
+  const logoMarkup = hasLocalLogo
+    ? `<img src="cid:${logoCid}" alt="FlexiPass" style="height:48px;display:inline-block;" />`
+    : logoUrl
+      ? `<img src="${logoUrl}" alt="FlexiPass" style="height:48px;display:inline-block;" />`
+      : `<div style="display:inline-block;background:#FFF4DE;color:#C26A13;border-radius:16px;padding:12px 16px;font-size:18px;font-weight:800;">FlexiPass</div>`;
+
+  const loginUrl = `${siteHome}/admin-login`;
+
+  const passwordSection = tempPassword
+    ? `
+      <p style="margin:0 0 12px;color:#6A5B50;font-size:15px;line-height:1.7;">
+        Voici vos identifiants temporaires de connexion :
+      </p>
+      <div style="background:#F7F8FA;border:1px dashed #E2E8F0;border-radius:12px;padding:16px;margin-bottom:20px;text-align:center;">
+        <p style="margin:0 0 6px;color:#718096;font-size:12px;font-weight:600;text-transform:uppercase;">Identifiant / Email</p>
+        <p style="margin:0 0 12px;color:#2D3748;font-size:15px;font-weight:700;word-break:break-all;">${escapeHtml(email)}</p>
+        <p style="margin:0 0 6px;color:#718096;font-size:12px;font-weight:600;text-transform:uppercase;">Mot de passe temporaire</p>
+        <p style="margin:0;color:#DD6B20;font-size:16px;font-weight:700;font-family:monospace;letter-spacing:1px;">${escapeHtml(tempPassword)}</p>
+      </div>
+      <p style="margin:0 0 20px;color:#E53E3E;font-size:13px;font-weight:600;line-height:1.5;">
+        * Pour des raisons de sécurité, nous vous conseillons vivement de modifier ce mot de passe dès votre première connexion.
+      </p>
+    `
+    : `
+      <p style="margin:0 0 20px;color:#6A5B50;font-size:15px;line-height:1.7;">
+        Votre compte administrateur a été créé. Veuillez contacter votre administrateur principal pour obtenir vos identifiants de connexion sécurisés.
+      </p>
+    `;
+
+  const html = `
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Compte Administrateur FlexiPass</title>
+</head>
+<body style="margin:0;padding:0;background-color:#FFF7F0;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
+
+  <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background:#FFF7F0;padding:36px 16px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="max-width:640px;">
+
+          <tr>
+            <td style="background:linear-gradient(135deg,#FFF2DB 0%,#FFD8A7 52%,#FFA15C 100%);border:1px solid #F2D1AC;border-bottom:none;border-radius:28px 28px 0 0;padding:34px 36px 28px;text-align:center;">
+              <div style="display:inline-block;background:rgba(255,255,255,0.78);border:1px solid rgba(255,255,255,0.95);border-radius:20px;padding:12px 18px;box-shadow:0 14px 26px -22px rgba(89,49,14,0.38);margin-bottom:18px;">
+                ${logoMarkup}
+              </div>
+              <p style="margin:0 0 8px;color:#9A5A1B;font-size:12px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;">Console Administration</p>
+              <h1 style="margin:0 0 8px;color:#2F2A33;font-size:28px;font-weight:800;letter-spacing:-0.6px;">Bienvenue sur FlexiPass</h1>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="background:#FFFFFF;padding:34px 36px;border-left:1px solid #F2DCC7;border-right:1px solid #F2DCC7;">
+
+              <p style="margin:0 0 8px;color:#2F2A33;font-size:18px;font-weight:700;">Bonjour ${escapeHtml(name)},</p>
+              <p style="margin:0 0 20px;color:#6A5B50;font-size:15px;line-height:1.7;">
+                Un compte administrateur a été configuré pour vous sur la console de gestion **FlexiPass**.
+              </p>
+
+              ${passwordSection}
+
+              <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin-bottom:30px;">
+                <tr>
+                  <td align="center">
+                    <a href="${loginUrl}" style="display:inline-block;background:linear-gradient(135deg,#FF8533,#FF5500);color:#FFFFFF;font-size:15px;font-weight:800;text-decoration:none;padding:16px 36px;border-radius:16px;box-shadow:0 10px 20px -10px rgba(255,85,0,0.5);text-transform:uppercase;letter-spacing:0.05em;">Se Connecter</a>
+                  </td>
+                </tr>
+              </table>
+
+            </td>
+          </tr>
+
+          ${buildEmailFooterHtml({
+            siteHome,
+            instagramUrl,
+            facebookUrl,
+            linkedinUrl,
+            tiktokUrl,
+          })}
+
+        </table>
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>
+  `;
+
+  try {
+    try {
+      await transporter.verify();
+    } catch (v) {
+      console.warn("SMTP verify warning (admin welcome):", v);
+    }
+
+    const text = `Bonjour ${name},\n\nVotre compte administrateur FlexiPass a été créé.\n\nEmail: ${email}\nMot de passe temporaire: ${tempPassword || "Contactez l'administrateur"}\n\nConnectez-vous ici: ${loginUrl}\n\nL'équipe FlexiPass`;
+
+    const info = await transporter.sendMail(
+      buildSendOptions(email, subject, text, html, hasLocalLogo
+        ? [{ filename: path.basename(logoPath), path: logoPath, cid: logoCid }]
+        : undefined)
+    );
+    console.info("Email sent (admin welcome)", { from, to: email, messageId: (info as any)?.messageId, response: (info as any)?.response });
+    return { success: true };
+  } catch (error: unknown) {
+    const errMsg = error instanceof Error ? error.message : String(error);
+    console.error("SMTP send error (admin welcome)", { from, to: email, error });
+    return { success: false, error: errMsg };
+  }
+}
+

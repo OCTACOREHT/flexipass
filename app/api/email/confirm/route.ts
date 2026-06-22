@@ -42,7 +42,10 @@ export async function POST(request: Request) {
     const user = process.env.EMAIL_USER || "";
     const pass = process.env.EMAIL_PASSWORD || "";
     const port = Number(process.env.EMAIL_PORT || 587);
-    const from = process.env.EMAIL_FROM || user || "noreply@flexipass.com";
+    let from = process.env.EMAIL_FROM || user || "noreply@flexipass.com";
+    if (from && !from.includes("<")) {
+      from = `FlexiPass <${from}>`;
+    }
 
     if (!host || !user || !pass) {
       return NextResponse.json(
@@ -145,20 +148,13 @@ export async function POST(request: Request) {
       `;
 
     try {
-      const text = `Félicitations ! Votre commande FlexiPass est prête\n\nBonjour ${safeName},\n\nVotre paiement a été confirmé et votre commande #${safeOrderId} est disponible. Utilisez le code ${safeGiftCode} pour accéder à votre produit.\n\nMontant : ${safeAmount} HTG\n\nConsultez votre historique : ${historyUrl}\n\nMerci de choisir FlexiPass.`;
+      const text = `Votre commande FlexiPass est prête\n\nBonjour ${safeName},\n\nVotre paiement a été confirmé et votre commande #${safeOrderId} est disponible. Utilisez le code ${safeGiftCode} pour accéder à votre produit.\n\nMontant : ${safeAmount} HTG\n\nConsultez votre historique : ${historyUrl}\n\nMerci de choisir FlexiPass.`;
       const info = await transporter.sendMail({
         from,
-        sender: user,
-        replyTo: from,
         to: email,
-        subject: "Félicitations ! Votre commande FlexiPass est prête",
+        subject: "Votre commande FlexiPass est prête",
         text,
         html,
-        envelope: { from: user, to: email },
-        headers: {
-          "X-Priority": "3 (Normal)",
-          "X-Mailer": "Nodemailer",
-        },
       });
       console.info("Email sent (confirm route)", { from, to: email, messageId: (info as any)?.messageId, response: (info as any)?.response });
       return NextResponse.json({ success: true });

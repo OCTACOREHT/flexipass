@@ -10,7 +10,10 @@ async function sendOrderRejectedEmailFallback(order: any) {
   const user = process.env.EMAIL_USER || "";
   const pass = process.env.EMAIL_PASSWORD || "";
   const port = Number(process.env.EMAIL_PORT || 587);
-  const from = process.env.EMAIL_FROM || "pitonrodjy@gmail.com";
+  let from = process.env.EMAIL_FROM || "pitonrodjy@gmail.com";
+  if (from && !from.includes("<")) {
+    from = `FlexiPass <${from}>`;
+  }
 
   if (!host || !user || !pass) {
     return { success: false, error: "EMAIL_* variables manquantes" };
@@ -48,17 +51,10 @@ async function sendOrderRejectedEmailFallback(order: any) {
   try {
     await transporter.sendMail({
       from,
-      sender: user,
-      replyTo: from,
       to: order.customer_email,
       subject,
       text,
       html,
-      envelope: { from: user, to: order.customer_email },
-      headers: {
-        "X-Priority": "3 (Normal)",
-        "X-Mailer": "Nodemailer",
-      },
     });
     return { success: true };
   } catch (error: any) {
