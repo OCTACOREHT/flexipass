@@ -27,12 +27,19 @@ const navItems = [
 ];
 
 export default function Sidebar({ admin }: { admin?: any }) {
-  const [isCollapsed, setIsCollapsed] = useState(() => {
-    if (typeof window === "undefined") return true;
-    return window.innerWidth <= 1024;
-  });
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
   const pathname = usePathname();
+
+  useEffect(() => {
+    const syncCollapsedState = () => {
+      setIsCollapsed(window.innerWidth <= 1024);
+    };
+
+    syncCollapsedState();
+    window.addEventListener("resize", syncCollapsedState);
+    return () => window.removeEventListener("resize", syncCollapsedState);
+  }, []);
 
   // 1. Fetch pending orders count and subscribe to updates
   useEffect(() => {

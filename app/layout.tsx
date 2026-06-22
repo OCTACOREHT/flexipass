@@ -1,13 +1,6 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import SessionTimeout from "@/components/SessionTimeout";
-
-const appFont = Plus_Jakarta_Sans({
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
-  variable: "--font-sans",
-});
 
 export const metadata: Metadata = {
   title: "FlexiPass | Cartes Cadeaux Numériques",
@@ -23,7 +16,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css"
         />
       </head>
-      <body className={appFont.variable}>
+      <body
+        style={{
+          "--font-sans": "Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+        } as React.CSSProperties}
+      >
         <SessionTimeout />
         {children}
       </body>
