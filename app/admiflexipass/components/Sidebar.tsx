@@ -22,7 +22,7 @@ const navItems = [
   { name: "Commandes", href: "/admiflexipass/orders", icon: Package, showBadge: true, permissionKey: "orders" },
   { name: "Catalogue Produits", href: "/admiflexipass/stock", icon: TrendingUp, permissionKey: "stock" },
   { name: "Liste Membres", href: "/admiflexipass/users", icon: Users, permissionKey: "users" },
-  { name: "Paramètres", href: "/admiflexipass/settings", icon: Settings, permissionKey: "settings" },
+  { name: "Parametres", href: "/admiflexipass/settings", icon: Settings, permissionKey: "settings" },
   { name: "Gestion Admins", href: "/admiflexipass/admins", icon: Shield, permissionKey: "admins" },
 ];
 
@@ -30,16 +30,6 @@ export default function Sidebar({ admin }: { admin?: any }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
   const pathname = usePathname();
-
-  useEffect(() => {
-    const syncCollapsedState = () => {
-      setIsCollapsed(window.innerWidth <= 1024);
-    };
-
-    syncCollapsedState();
-    window.addEventListener("resize", syncCollapsedState);
-    return () => window.removeEventListener("resize", syncCollapsedState);
-  }, []);
 
   // 1. Fetch pending orders count and subscribe to updates
   useEffect(() => {
@@ -177,7 +167,7 @@ export default function Sidebar({ admin }: { admin?: any }) {
           className="w-full flex items-center p-3 rounded-lg hover:bg-zinc-800 hover:text-zinc-200 transition-all text-zinc-500 group"
         >
           <LogOut size={22} className="group-hover:text-zinc-200" />
-          {!isCollapsed && <span className="ml-4 font-medium">Déconnexion</span>}
+          {!isCollapsed && <span className="ml-4 font-medium">Deconnexion</span>}
         </button>
       </div>
     </aside>

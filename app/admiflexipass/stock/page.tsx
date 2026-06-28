@@ -7,7 +7,7 @@ import ProductModal from "@/app/admiflexipass/components/ProductModal";
 import DeleteConfirm from "@/app/admiflexipass/components/DeleteConfirm";
 import SuccessToast from "@/app/admiflexipass/components/SuccessToast";
 import SearchInput from "@/app/admiflexipass/components/SearchInput";
-import { PackagePlus, RefreshCcw, Sparkles } from "lucide-react";
+import { PackagePlus, RefreshCcw } from "lucide-react";
 
 export default function StockPage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -98,7 +98,7 @@ export default function StockPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 bg-[#12121a]/50 p-8 rounded-[2rem] border border-zinc-900 backdrop-blur-md">
         <div>
           <h1 className="text-5xl font-black italic uppercase tracking-tighter text-zinc-100 flex items-center gap-4">
-            Gestion du <span className="text-red-500">Stock</span> <Sparkles className="text-red-500 animate-pulse" size={40} />
+            Gestion du <span className="text-red-500">Stock</span>
           </h1>
           <p className="text-zinc-500 font-black uppercase tracking-[0.4em] text-[10px] mt-2 flex items-center gap-2">
             <span className="w-2 h-2 bg-emerald-500 rounded-full animate-ping"></span>

@@ -7,18 +7,18 @@ import UserModal from "@/app/admiflexipass/components/UserModal";
 import DeleteConfirm from "@/app/admiflexipass/components/DeleteConfirm";
 import SuccessToast from "@/app/admiflexipass/components/SuccessToast";
 import SearchInput from "@/app/admiflexipass/components/SearchInput";
-import { UserPlus, RefreshCcw, Sparkles } from "lucide-react";
+import { UserPlus, RefreshCcw } from "lucide-react";
 
 export default function UsersPage() {
   const [users, setUsers] = useState<DashboardUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  
+
   // Modals state
   const [selectedUser, setSelectedUser] = useState<DashboardUser | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-  
+
   // Toast state
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
@@ -58,8 +58,8 @@ export default function UsersPage() {
   }, []);
 
   const filteredUsers = useMemo(() => {
-    return users.filter(u => 
-      u.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    return users.filter((u) =>
+      u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       u.email.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [users, searchTerm]);
@@ -96,7 +96,7 @@ export default function UsersPage() {
         .from("users")
         .delete()
         .eq("id", selectedUser.id);
-      
+
       if (error) throw error;
       setToast({ message: "Utilisateur supprimé avec succès", type: "success" });
       setIsDeleteOpen(false);
@@ -112,22 +112,25 @@ export default function UsersPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
           <h1 className="text-4xl font-black italic uppercase tracking-tighter text-zinc-100 flex items-center gap-3">
-            Répertoire des <span className="text-red-500">Membres</span> <Sparkles className="text-red-500" size={32} />
+            Répertoire des <span className="text-red-500">Membres</span>
           </h1>
           <p className="text-zinc-500 font-medium uppercase tracking-widest text-xs mt-1">
             Contrôle d'Accès & Gestion des Utilisateurs
           </p>
         </div>
-        
+
         <div className="flex items-center gap-3">
-          <button 
+          <button
             onClick={fetchUsers}
             className="p-4 bg-[#1e1e2e] border border-zinc-800 rounded-2xl text-zinc-400 hover:text-white transition-all shadow-lg shadow-black/20"
           >
             <RefreshCcw size={20} className={isLoading ? "animate-spin" : ""} />
           </button>
-          <button 
-            onClick={() => { setSelectedUser(null); setIsModalOpen(true); }}
+          <button
+            onClick={() => {
+              setSelectedUser(null);
+              setIsModalOpen(true);
+            }}
             className="px-6 py-4 bg-red-600 hover:bg-red-500 text-white font-black italic uppercase tracking-wider rounded-2xl shadow-xl shadow-red-500/20 flex items-center gap-2 transition-all active:scale-95"
           >
             <UserPlus size={20} />
@@ -138,29 +141,35 @@ export default function UsersPage() {
 
       <div className="flex flex-col md:flex-row gap-4">
         <div className="flex-1">
-          <SearchInput 
-            value={searchTerm} 
-            onChange={setSearchTerm} 
-            placeholder="Rechercher par nom ou email..." 
+          <SearchInput
+            value={searchTerm}
+            onChange={setSearchTerm}
+            placeholder="Rechercher par nom ou email..."
           />
         </div>
       </div>
 
-      <UserTable 
-        users={filteredUsers} 
-        isLoading={isLoading} 
-        onEdit={(user) => { setSelectedUser(user); setIsModalOpen(true); }}
-        onDelete={(user) => { setSelectedUser(user); setIsDeleteOpen(true); }}
+      <UserTable
+        users={filteredUsers}
+        isLoading={isLoading}
+        onEdit={(user) => {
+          setSelectedUser(user);
+          setIsModalOpen(true);
+        }}
+        onDelete={(user) => {
+          setSelectedUser(user);
+          setIsDeleteOpen(true);
+        }}
       />
 
-      <UserModal 
-        isOpen={isModalOpen} 
-        user={selectedUser} 
-        onClose={() => setIsModalOpen(false)} 
+      <UserModal
+        isOpen={isModalOpen}
+        user={selectedUser}
+        onClose={() => setIsModalOpen(false)}
         onSave={handleSaveUser}
       />
 
-      <DeleteConfirm 
+      <DeleteConfirm
         isOpen={isDeleteOpen}
         title="Supprimer le Compte"
         message={`Êtes-vous sûr de vouloir supprimer ${selectedUser?.name} ? Cette action est irréversible.`}
@@ -169,10 +178,10 @@ export default function UsersPage() {
       />
 
       {toast && (
-        <SuccessToast 
-          message={toast.message} 
-          type={toast.type} 
-          onClose={() => setToast(null)} 
+        <SuccessToast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
         />
       )}
     </div>

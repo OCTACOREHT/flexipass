@@ -342,7 +342,7 @@ export default function AdminsPage() {
         </div>
         <button
           onClick={openInviteModal}
-          className="flex items-center justify-center gap-2 rounded-xl bg-red-500 hover:bg-red-600 px-5 py-3 text-xs font-bold uppercase tracking-wider text-white shadow-lg shadow-red-500/10 active:translate-y-0.5 transition-all duration-200"
+          className="flex items-center justify-center gap-2 rounded-xl bg-red-500 hover:bg-red-600 px-5 py-3 text-xs font-bold uppercase tracking-wider text-white shadow-lg shadow-red-500/10 active:translate-y-0.5 transition-all duration-200 md:-translate-x-2"
         >
           <UserPlus className="w-4 h-4" />
           <span>Inviter un Admin</span>
@@ -396,7 +396,7 @@ export default function AdminsPage() {
                   <th className="py-4 px-6">Rôle</th>
                   <th className="py-4 px-6">Statut</th>
                   <th className="py-4 px-6">Permissions d'Accès</th>
-                  <th className="py-4 px-6 text-right">Actions</th>
+                  <th className="py-4 px-6 text-center whitespace-nowrap">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
@@ -447,7 +447,7 @@ export default function AdminsPage() {
                         ))}
                       </div>
                     </td>
-                    <td className="py-4 px-6 text-right">
+                    <td className="py-4 pl-6 pr-3 text-right">
                       <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={() => openPasswordModal(admin)}
@@ -464,7 +464,6 @@ export default function AdminsPage() {
                         >
                           <Edit2 className="w-3.5 h-3.5" />
                         </button>
-                        
                         <button
                           onClick={() => handleToggleStatus(admin)}
                           title={admin.status === "active" ? "Suspendre le compte" : "Activer le compte"}

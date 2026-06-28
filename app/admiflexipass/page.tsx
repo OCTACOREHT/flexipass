@@ -12,7 +12,6 @@ import {
   Users, 
   Layers, 
   ArrowRight,
-  Sparkles,
   Zap,
   RefreshCcw
 } from "lucide-react";
@@ -134,7 +133,7 @@ export default function AdminDashboard() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
           <h1 className="text-4xl font-black italic uppercase tracking-tighter text-zinc-100 flex items-center gap-3">
-            Vue d'ensemble <span className="text-red-500">Admin</span> <Sparkles className="text-red-500" size={32} />
+            Vue d'ensemble <span className="text-red-500">Admin</span>
           </h1>
           <p className="text-zinc-500 font-medium uppercase tracking-widest text-xs mt-1">
             Hub d'Intelligence d'Affaires FlexiPass

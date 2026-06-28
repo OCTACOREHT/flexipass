@@ -67,10 +67,10 @@ export default async function AdminLayout({
   }
 
   return (
-    <div className="min-h-screen bg-[#0f0f23] text-zinc-200 antialiased flex">
+    <div className="min-h-screen bg-[#0f0f23] text-zinc-200 antialiased flex overflow-x-hidden">
       <Sidebar admin={adminUser} />
-      <main className="flex-1 transition-all duration-300 ml-20 md:ml-64 p-4 md:p-8 overflow-y-auto min-h-screen">
-        <div className="max-w-7xl mx-auto space-y-8">{children}</div>
+      <main className="flex-1 min-w-0 transition-all duration-300 pl-20 md:pl-64 p-4 md:p-8 overflow-y-auto overflow-x-hidden min-h-screen">
+        <div className="max-w-7xl mx-auto w-full space-y-8">{children}</div>
       </main>
     </div>
   );

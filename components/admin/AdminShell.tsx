@@ -38,7 +38,6 @@ export default function AdminShell({ children, onLogout }: AdminShellProps) {
     <main className={`admin-shell${darkMode ? " admin-dark" : ""}`}>
       <aside className="admin-sidebar">
         <div className="sidebar-head">
-          <div className="logo-dot">F</div>
           <div>
             <strong>FlexiPass</strong>
             <span className="sidebar-sub">Administration</span>
