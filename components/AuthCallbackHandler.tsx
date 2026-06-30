@@ -24,6 +24,8 @@ export default function AuthCallbackHandler() {
       const supabaseBrowser = mod?.supabaseBrowser;
       if (!supabaseBrowser) return;
 
+      if (!code) return;
+
       const { error } = await supabaseBrowser.auth.exchangeCodeForSession(code);
       params.delete("code");
       params.delete("state");
