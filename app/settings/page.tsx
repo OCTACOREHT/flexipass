@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import HeaderMain from "@/components/HeaderMain";
-import FooterMain from "@/components/FooterMain";
+import { getAuthCallbackUrl } from "@/lib/site-url";
 
 type UserInfo = {
   id: string;
@@ -27,6 +27,9 @@ export default function SettingsPage() {
   const [awaitingVerification, setAwaitingVerification] = useState(false);
   const [oauthProvider, setOauthProvider] = useState<string | null>(null);
   const [emailOriginal, setEmailOriginal] = useState("");
+  const [showEmailChangeForm, setShowEmailChangeForm] = useState(false);
+  const [emailReauthOpen, setEmailReauthOpen] = useState(false);
+  const isGoogleAccount = oauthProvider === "google";
 
   useEffect(() => {
     let mounted = true;
@@ -58,6 +61,8 @@ export default function SettingsPage() {
       setNewEmail(nextEmail);
       setEmailOriginal(nextEmail);
       setOauthProvider(nextUser?.provider ?? null);
+      setShowEmailChangeForm(false);
+      setEmailReauthOpen(false);
       setLoading(false);
     };
     load();
@@ -70,31 +75,42 @@ export default function SettingsPage() {
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
     const shouldResume = params.get("reauth") === "1";
+    const shouldResumeEmailChange = params.get("email_reauth") === "1";
     const pendingEmail = window.sessionStorage.getItem("pending_email_change") || "";
-    if (!shouldResume || !pendingEmail) return;
+    if (!shouldResume && !shouldResumeEmailChange) return;
 
     const resume = async () => {
-      setEmailSaving(true);
-      setEmailError(null);
-      setEmailSuccess(null);
-      const mod = await import("@/lib/supabase-browser").catch(() => null);
-      const supabase = mod?.supabaseBrowser;
-      if (!supabase) {
-        setEmailError("Configuration Supabase manquante.");
-        setEmailSaving(false);
-        return;
+      if (shouldResumeEmailChange) {
+        setEmailReauthOpen(false);
+        setShowEmailChangeForm(true);
+        params.delete("email_reauth");
       }
-      const { error: updateError } = await supabase.auth.updateUser({
-        email: pendingEmail,
-      });
-      if (updateError) {
-        setEmailError(updateError.message);
-      } else {
-        setEmailSuccess("Un email de confirmation a été envoyé.");
-        setNewEmail(pendingEmail);
-        window.sessionStorage.removeItem("pending_email_change");
+      if (!pendingEmail) {
+        params.delete("reauth");
       }
-      params.delete("reauth");
+      if (shouldResume && pendingEmail) {
+        setEmailSaving(true);
+        setEmailError(null);
+        setEmailSuccess(null);
+        const mod = await import("@/lib/supabase-browser").catch(() => null);
+        const supabase = mod?.supabaseBrowser;
+        if (!supabase) {
+          setEmailError("Configuration Supabase manquante.");
+          setEmailSaving(false);
+          return;
+        }
+        const { error: updateError } = await supabase.auth.updateUser({
+          email: pendingEmail,
+        });
+        if (updateError) {
+          setEmailError(updateError.message);
+        } else {
+          setEmailSuccess("Un email de confirmation a été envoyé.");
+          setNewEmail(pendingEmail);
+          window.sessionStorage.removeItem("pending_email_change");
+        }
+        params.delete("reauth");
+      }
       const next = `${window.location.pathname}${params.toString() ? `?${params.toString()}` : ""}`;
       window.history.replaceState({}, "", next);
       setEmailSaving(false);
@@ -137,6 +153,35 @@ export default function SettingsPage() {
     setSaving(false);
   };
 
+  const handleGoogleEmailReauth = async () => {
+    setEmailError(null);
+    setEmailSuccess(null);
+    const mod = await import("@/lib/supabase-browser").catch(() => null);
+    const supabase = mod?.supabaseBrowser;
+    if (!supabase) {
+      setEmailError("Configuration Supabase manquante.");
+      return;
+    }
+
+    const callback = new URL(getAuthCallbackUrl());
+    callback.searchParams.set("email_reauth", "1");
+
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: callback.toString(),
+        queryParams: {
+          prompt: "select_account",
+        },
+      },
+    });
+
+    if (error) {
+      setEmailError(error.message);
+      return;
+    }
+  };
+
   const handleEmailUpdate = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setEmailSaving(true);
@@ -150,6 +195,35 @@ export default function SettingsPage() {
     }
 
     try {
+      if (isGoogleAccount) {
+        const mod = await import("@/lib/supabase-browser").catch(() => null);
+        const supabase = mod?.supabaseBrowser;
+        if (!supabase) {
+          setEmailError("Configuration Supabase manquante.");
+          return;
+        }
+
+        const { error: updateError, data } = await supabase.auth.updateUser({ email: newEmail.trim() });
+
+        if (updateError) {
+          throw new Error(updateError.message);
+        }
+
+        setEmailOriginal(newEmail.trim());
+        setUser((current) =>
+          current
+            ? {
+                ...current,
+                email: data.user?.email ?? newEmail.trim(),
+              }
+            : current
+        );
+        setEmailSuccess("Adresse email mise à jour.");
+        setShowEmailChangeForm(false);
+        setEmailReauthOpen(false);
+        return;
+      }
+
       const res = await fetch("/api/update-email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -207,6 +281,8 @@ export default function SettingsPage() {
     setNewEmail(emailOriginal);
     setVerificationCode("");
     setAwaitingVerification(false);
+    setShowEmailChangeForm(false);
+    setEmailReauthOpen(false);
     setEmailError(null);
     setEmailSuccess(null);
     if (typeof window !== "undefined") {
@@ -295,28 +371,52 @@ export default function SettingsPage() {
                 </div>
 
                 <div className="account-card">
-                  <div className="card-head">
-                    <div>
-                      <h3>Changer email</h3>
-                       <p className="muted">Une vérification par email sera demandée.</p>
-                    </div>
+                <div className="card-head">
+                  <div>
+                    <h3>Changer email</h3>
+                    <p className="muted">Une vérification par email sera demandée.</p>
                   </div>
+                </div>
                   <form className="account-form" onSubmit={awaitingVerification ? handleVerifyCode : handleEmailUpdate}>
                     <div className="field">
                       <label>Email actuel</label>
                       <input value={user.email ?? ""} disabled />
                     </div>
-                    <div className="field">
-                      <label>Nouvel email</label>
-                      <input 
-                        value={newEmail} 
-                        onChange={(e) => setNewEmail(e.target.value)} 
-                        placeholder="nouveau@email.com" 
-                        disabled={awaitingVerification}
-                      />
-                    </div>
-                    
-                    {awaitingVerification && (
+                    {isGoogleAccount && !showEmailChangeForm && !emailReauthOpen && (
+                      <div className="account-reauth">
+                        <button type="button" className="google-btn" onClick={() => setEmailReauthOpen(true)}>
+                          <i className="ri-google-fill" />
+                          Continuer avec Google
+                        </button>
+                      </div>
+                    )}
+
+                    {isGoogleAccount && emailReauthOpen && !showEmailChangeForm && (
+                      <div className="account-reauth">
+                        <p className="muted">Reconnectez-vous avec Google avant de choisir un autre email.</p>
+                        <button type="button" className="google-btn" onClick={handleGoogleEmailReauth}>
+                          <i className="ri-google-fill" />
+                          Continuer avec Google
+                        </button>
+                        <button type="button" className="ghost-btn" onClick={handleCancelEmailChange}>
+                          Annuler
+                        </button>
+                      </div>
+                    )}
+
+                    {(!isGoogleAccount || showEmailChangeForm) && (
+                      <div className="field">
+                        <label>Nouvel email</label>
+                        <input 
+                          value={newEmail} 
+                          onChange={(e) => setNewEmail(e.target.value)} 
+                          placeholder="nouveau@email.com" 
+                          disabled={awaitingVerification}
+                        />
+                      </div>
+                    )}
+
+                    {!isGoogleAccount && awaitingVerification && (
                       <div className="field">
                         <label>Code de vérification</label>
                         <input
@@ -333,18 +433,30 @@ export default function SettingsPage() {
                     {emailSuccess && <div className="update-success">{emailSuccess}</div>}
                     
                     <div className="form-actions">
-                      <button
-                        type="submit"
-                        disabled={
-                          emailSaving ||
-                          (!awaitingVerification && !newEmail.trim()) ||
-                          (!awaitingVerification && newEmail.trim().toLowerCase() === (emailOriginal || "").toLowerCase()) ||
-                          (awaitingVerification && !verificationCode.trim())
-                        }
-                      >
-                        {emailSaving ? "En cours..." : (awaitingVerification ? "Confirmer le code" : "Envoyer le code de vérification")}
-                      </button>
-                      {awaitingVerification && (
+                      {isGoogleAccount && !showEmailChangeForm ? (
+                        <button type="button" onClick={() => setEmailReauthOpen(true)}>
+                          Mettre à jour l'email
+                        </button>
+                      ) : (
+                        <button
+                          type="submit"
+                          disabled={
+                            emailSaving ||
+                            (!awaitingVerification && !newEmail.trim()) ||
+                            (!awaitingVerification && newEmail.trim().toLowerCase() === (emailOriginal || "").toLowerCase()) ||
+                            (!isGoogleAccount && awaitingVerification && !verificationCode.trim())
+                          }
+                        >
+                          {emailSaving
+                            ? "En cours..."
+                            : isGoogleAccount
+                              ? "Enregistrer"
+                              : awaitingVerification
+                                ? "Confirmer le code"
+                                : "Envoyer le code de vérification"}
+                        </button>
+                      )}
+                      {!isGoogleAccount && awaitingVerification && (
                         <button type="button" className="ghost-btn" onClick={handleCancelEmailChange}>
                           Annuler
                         </button>
@@ -366,7 +478,7 @@ export default function SettingsPage() {
                       <p>Confirmation, paiement et livraison.</p>
                     </div>
                     <label className="switch">
-                      <input type="checkbox" defaultChecked />
+                      <input type="checkbox" />
                       <span />
                     </label>
                   </div>
@@ -386,7 +498,6 @@ export default function SettingsPage() {
           </div>
         </section>
       </main>
-      <FooterMain />
     </>
   );
 }

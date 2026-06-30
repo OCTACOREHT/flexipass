@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import FooterMain from "@/components/FooterMain";
 import { getProductImageSrc, handleProductImageError } from "@/lib/product-brand";
 import { getPlanBoxData } from "@/lib/plan-display";
+import { getAuthCallbackUrl } from "@/lib/site-url";
 
 type Variant = { id: string; label: string; duration_days: number; price: number; currency: string };
 type Product = {
@@ -70,16 +71,6 @@ const normalizeSlug = (value: string) =>
     .replace(/\s+/g, "-")
     .replace(/%20/g, "-");
 const getProductSlug = (p: Product) => (p.id ? p.id : normalizeSlug(p.service_name || p.title));
-
-const getCategoryKey = (p: Product) => {
-  const hay = `${p.title ?? ""} ${p.subtitle ?? ""} ${p.short_description ?? ""}`.toLowerCase();
-  if (/xbox|playstation|psn|steam|nintendo|switch|gaming|game/.test(hay)) return "gaming";
-  if (/netflix|prime|spotify|youtube|stream|musique|video|divert/.test(hay)) return "divertissement";
-  if (/apple|chatgpt|copilot|claude|perplexity|slack|canva|tech|ia|ai|pro/.test(hay)) return "tech";
-  if (/gift|carte|shopping|store|eshop|wallet/.test(hay)) return "shopping";
-  return "all";
-};
-
 const PRIVACY_ACCEPTED_KEY = "flexipass_privacy_accepted";
 
 const persistPrivacyAccepted = () => {
@@ -94,6 +85,15 @@ const readPersistedPrivacyAccepted = () => {
   } catch {
     return false;
   }
+};
+
+const getCategoryKey = (p: Product) => {
+  const hay = `${p.title ?? ""} ${p.subtitle ?? ""} ${p.short_description ?? ""}`.toLowerCase();
+  if (/xbox|playstation|psn|steam|nintendo|switch|gaming|game/.test(hay)) return "gaming";
+  if (/netflix|prime|spotify|youtube|stream|musique|video|divert/.test(hay)) return "divertissement";
+  if (/apple|chatgpt|copilot|claude|perplexity|slack|canva|tech|ia|ai|pro/.test(hay)) return "tech";
+  if (/gift|carte|shopping|store|eshop|wallet/.test(hay)) return "shopping";
+  return "all";
 };
 
 // Hook client : récupère la session Supabase et fournit un nom si connecté
@@ -157,40 +157,22 @@ export default function Home() {
   const [searchBarVisible, setSearchBarVisible] = useState(true);
   const [authError, setAuthError] = useState<string | null>(null);
   const [authMessage, setAuthMessage] = useState<string | null>(null);
-  const [authLoading, setAuthLoading] = useState(false);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirm, setConfirm] = useState("");
-  const [fullName, setFullName] = useState("");
-  const [remember, setRemember] = useState(false);
   const [privacyAccepted, setPrivacyAccepted] = useState(false);
+  const [privacyPolicyAccepted, setPrivacyPolicyAccepted] = useState(false);
   const [policyStatusLoading, setPolicyStatusLoading] = useState(false);
   const [policyModalOpen, setPolicyModalOpen] = useState(false);
   const [policySubmitting, setPolicySubmitting] = useState(false);
   const [policyError, setPolicyError] = useState<string | null>(null);
   const [policyAcceptedAt, setPolicyAcceptedAt] = useState<string | null>(null);
-  const [authMode, setAuthMode] = useState<"login" | "signup" | "reset">("login");
+  const [signOutConfirmOpen, setSignOutConfirmOpen] = useState(false);
   const [loadingProducts, setLoadingProducts] = useState(true);
-  const canAttemptLogin = authMode !== "login" || privacyAccepted;
+  const canAttemptLogin = privacyAccepted || privacyPolicyAccepted;
+  const overlayOpen = loginOpen || policyModalOpen || cartOpen;
 
   useEffect(() => {
-    setPrivacyAccepted(readPersistedPrivacyAccepted());
+    setPrivacyPolicyAccepted(readPersistedPrivacyAccepted());
   }, []);
 
-  const switchAuthMode = (mode: "login" | "signup" | "reset") => {
-    setAuthMode(mode);
-    setAuthError(null);
-    setAuthMessage(null);
-    setAuthLoading(false);
-    if (mode === "login") {
-      setPassword("");
-      setConfirm("");
-    }
-    if (mode === "signup") {
-      setPassword("");
-      setConfirm("");
-    }
-  };
   useEffect(() => {
     if (user) {
       setLoginOpen(false);
@@ -246,10 +228,10 @@ export default function Home() {
         const accepted = Boolean(result?.accepted);
         if (accepted) {
           setPrivacyAccepted(true);
-          persistPrivacyAccepted();
+          setPrivacyPolicyAccepted(true);
           setPolicyAcceptedAt(result?.acceptance?.accepted_at || null);
           setPolicyModalOpen(false);
-        } else if (privacyAccepted) {
+        } else if (privacyPolicyAccepted) {
           try {
             await submitPolicyAcceptance(token);
           } catch {
@@ -267,7 +249,7 @@ export default function Home() {
     };
 
     checkPolicyStatus();
-  }, [user, privacyAccepted]);
+  }, [user, privacyAccepted, privacyPolicyAccepted]);
 
   useEffect(() => {
     if (!settingsOpen) return;
@@ -307,6 +289,27 @@ export default function Home() {
     };
   }, [menuOpen]);
 
+  useEffect(() => {
+    if (!overlayOpen) return;
+
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+    const previousBodyOverflow = document.body.style.overflow;
+    const previousHtmlOverflow = document.documentElement.style.overflow;
+    const previousBodyPaddingRight = document.body.style.paddingRight;
+
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+    if (scrollbarWidth > 0) {
+      document.body.style.paddingRight = `${scrollbarWidth}px`;
+    }
+
+    return () => {
+      document.body.style.overflow = previousBodyOverflow;
+      document.documentElement.style.overflow = previousHtmlOverflow;
+      document.body.style.paddingRight = previousBodyPaddingRight;
+    };
+  }, [overlayOpen]);
+
     useEffect(() => {
       // Ouvre le modal de connexion selon l'URL
       const params = new URLSearchParams(window.location.search);
@@ -314,8 +317,10 @@ export default function Home() {
       const login = params.get("login");
 
       if (login === "1") {
+        setPrivacyAccepted(false);
         setLoginOpen(true);
-        switchAuthMode("login");
+        setAuthError(null);
+        setAuthMessage(null);
         params.delete("login");
         const next = `${window.location.pathname}${params.toString() ? `?${params.toString()}` : ""}${window.location.hash}`;
         window.history.replaceState({}, "", next);
@@ -325,8 +330,9 @@ export default function Home() {
       // Récupère une éventuelle erreur OAuth dans l'URL et ouvre le modal
       if (err) {
         setAuthError(err);
+        setPrivacyAccepted(false);
         setLoginOpen(true);
-        switchAuthMode("login");
+        setAuthMessage(null);
         params.delete("auth_error");
         const next = `${window.location.pathname}${params.toString() ? `?${params.toString()}` : ""}${window.location.hash}`;
         window.history.replaceState({}, "", next);
@@ -479,102 +485,9 @@ export default function Home() {
     }
     const { error } = await supabaseBrowser.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${window.location.origin}/auth/callback` },
+      options: { redirectTo: getAuthCallbackUrl() },
     });
     if (error) setAuthError(error.message);
-  };
-
-  const handleLoginPassword = async () => {
-    setAuthError(null);
-    setAuthMessage(null);
-    if (!privacyAccepted) {
-      setAuthError("Vous devez accepter la politique de confidentialité avant de vous connecter.");
-      return;
-    }
-    setAuthLoading(true);
-    const mod = await import("@/lib/supabase-browser").catch(() => null);
-    const supabaseBrowser = mod?.supabaseBrowser;
-    if (!supabaseBrowser) {
-      setAuthError("Configuration Supabase manquante ou invalide.");
-      setAuthLoading(false);
-      return;
-    }
-    const { error } = await supabaseBrowser.auth.signInWithPassword({
-      email: email.trim(),
-      password,
-    });
-    setAuthLoading(false);
-    if (error) {
-      setAuthError(error.message);
-      return;
-    }
-    if (!remember) {
-      // Si l'utilisateur ne veut pas de persistance, on efface le stockage après la session en cours
-      supabaseBrowser.auth.onAuthStateChange((event) => {
-        if (event === "SIGNED_OUT") {
-          try {
-            localStorage.removeItem("supabase.auth.token");
-          } catch {
-            /* ignore */
-          }
-        }
-      });
-    }
-    setLoginOpen(false);
-  };
-
-  const handleSignup = async () => {
-    setAuthError(null);
-    setAuthMessage(null);
-    setAuthLoading(true);
-    const mod = await import("@/lib/supabase-browser").catch(() => null);
-    const supabaseBrowser = mod?.supabaseBrowser;
-    if (!supabaseBrowser) {
-      setAuthError("Configuration Supabase manquante ou invalide.");
-      setAuthLoading(false);
-      return;
-    }
-    if (password !== confirm) {
-      setAuthError("Les mots de passe ne correspondent pas.");
-      setAuthLoading(false);
-      return;
-    }
-    const { error } = await supabaseBrowser.auth.signUp({
-      email: email.trim(),
-      password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
-        data: fullName ? { full_name: fullName } : undefined,
-      },
-    });
-    setAuthLoading(false);
-    if (error) {
-      setAuthError(error.message);
-      return;
-    }
-    setAuthMessage("Vérifiez votre email pour confirmer votre compte.");
-  };
-
-  const handleReset = async () => {
-    setAuthError(null);
-    setAuthMessage(null);
-    setAuthLoading(true);
-    const mod = await import("@/lib/supabase-browser").catch(() => null);
-    const supabaseBrowser = mod?.supabaseBrowser;
-    if (!supabaseBrowser) {
-      setAuthError("Configuration Supabase manquante ou invalide.");
-      setAuthLoading(false);
-      return;
-    }
-    const { error } = await supabaseBrowser.auth.resetPasswordForEmail(email.trim(), {
-      redirectTo: `${window.location.origin}/auth/update`,
-    });
-    setAuthLoading(false);
-    if (error) {
-      setAuthError(error.message);
-      return;
-    }
-    setAuthMessage("Si un compte existe, un email de réinitialisation a été envoyé.");
   };
 
   const submitPolicyAcceptance = async (token: string) => {
@@ -593,10 +506,25 @@ export default function Home() {
 
     const acceptedAt = result?.acceptance?.accepted_at || new Date().toISOString();
     setPrivacyAccepted(true);
+    setPrivacyPolicyAccepted(true);
     persistPrivacyAccepted();
     setPolicyAcceptedAt(acceptedAt);
     setPolicyModalOpen(false);
+    setLoginOpen(false);
+    setPolicyError(null);
     return acceptedAt;
+  };
+
+  const waitForAccessToken = async (supabaseBrowser: any) => {
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const {
+        data: { session },
+      } = await supabaseBrowser.auth.getSession();
+      if (session?.access_token) return session.access_token;
+      await supabaseBrowser.auth.refreshSession().catch(() => null);
+      await new Promise((resolve) => setTimeout(resolve, 200));
+    }
+    return null;
   };
 
   const handleAcceptPolicy = async () => {
@@ -611,10 +539,7 @@ export default function Home() {
       return;
     }
 
-    const {
-      data: { session },
-    } = await supabaseBrowser.auth.getSession();
-    const token = session?.access_token;
+    const token = await waitForAccessToken(supabaseBrowser);
 
     if (!token) {
       setPolicyError("Session introuvable. Veuillez vous reconnecter.");
@@ -645,14 +570,11 @@ export default function Home() {
       console.warn("La déconnexion Supabase a renvoyé une erreur (souvent réseau) :", err);
     }
     setSettingsOpen(false);
-    switchAuthMode("login");
     setLoginOpen(false);
   };
 
   const requestSignOut = () => {
-    const confirmed = window.confirm("Êtes-vous sûr de vouloir vous déconnecter ?");
-    if (!confirmed) return;
-    void handleSignOut();
+    setSignOutConfirmOpen(true);
   };
 
   const closeMobileMenu = () => {
@@ -737,7 +659,16 @@ export default function Home() {
               type="button"
               className="user-chip"
               title={userLabel}
-              onClick={() => (user ? setSettingsOpen((v) => !v) : (switchAuthMode("login"), setLoginOpen(true)))}
+              onClick={() => {
+                if (user) {
+                  setSettingsOpen((v) => !v);
+                  return;
+                }
+                setAuthError(null);
+                setAuthMessage(null);
+                setPrivacyAccepted(readPersistedPrivacyAccepted());
+                setLoginOpen(true);
+              }}
               aria-expanded={settingsOpen}
               style={{
                 width: "auto",
@@ -874,7 +805,9 @@ export default function Home() {
                   className="mobile-menu-link mobile-menu-link--primary"
                   onClick={() => {
                     closeMobileMenu();
-                    switchAuthMode("login");
+                    setAuthError(null);
+                    setAuthMessage(null);
+                    setPrivacyAccepted(readPersistedPrivacyAccepted());
                     setLoginOpen(true);
                   }}
                 >
@@ -886,6 +819,37 @@ export default function Home() {
         </div>
       </header>
       <div className="nav-spacer" />
+
+      {signOutConfirmOpen && (
+        <div className="modal-overlay" onClick={() => setSignOutConfirmOpen(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-head">
+              <h3>Confirmation</h3>
+              <button className="icon-btn ghost" aria-label="Fermer" onClick={() => setSignOutConfirmOpen(false)}>
+                <i className="ri-close-line" />
+              </button>
+            </div>
+            <div className="modal-body">
+              <p>Êtes-vous sûr de vouloir vous déconnecter ?</p>
+              <div className="form-actions">
+                <button
+                  type="button"
+                  className="btn-full modal-primary"
+                  onClick={async () => {
+                    setSignOutConfirmOpen(false);
+                    await handleSignOut();
+                  }}
+                >
+                  Oui, me déconnecter
+                </button>
+                <button type="button" className="ghost-btn" onClick={() => setSignOutConfirmOpen(false)}>
+                  Annuler
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <section className="hero">
         <div className="hero-inner">
@@ -967,7 +931,7 @@ export default function Home() {
         <div className="section-head section-head--mobile-center">
           <h2>Explorer</h2>
           <a href="/catalogue" className="link">
-            Voir tout
+            Voir tout →
           </a>
         </div>
 
@@ -1130,11 +1094,7 @@ export default function Home() {
         <div className="modal-overlay" onClick={() => setLoginOpen(false)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-head">
-              <h3>
-                {authMode === "login" && "Connexion"}
-                {authMode === "signup" && "Créer un compte"}
-                {authMode === "reset" && "Mot de passe oublié"}
-              </h3>
+              <h3>Connexion</h3>
               <button className="icon-btn ghost" aria-label="Fermer" onClick={() => setLoginOpen(false)}>
                 <i className="ri-close-line" />
               </button>
@@ -1142,171 +1102,91 @@ export default function Home() {
             <div className="modal-body">
               {authError && <div className="auth-error">{authError}</div>}
               {authMessage && <div className="auth-success">{authMessage}</div>}
-              {authMode === "login" && (
-                <>
+              <div
+                style={{
+                  margin: "12px 0 10px",
+                  padding: "12px 14px",
+                  border: "1px solid #f3d7bf",
+                  borderRadius: "12px",
+                  background: "#fff7ef",
+                }}
+              >
+                <label
+                  style={{
+                    display: "flex",
+                    alignItems: "flex-start",
+                    gap: "10px",
+                    cursor: "pointer",
+                    color: "#3a2d24",
+                    fontSize: "14px",
+                    lineHeight: 1.5,
+                  }}
+                >
                   <input
-                    type="email"
-                    placeholder="Email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                  />
-                  <input
-                    type="password"
-                    placeholder="Mot de passe"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                  />
-                  <div
-                    style={{
-                      margin: "12px 0 10px",
-                      padding: "12px 14px",
-                      border: "1px solid #f3d7bf",
-                      borderRadius: "12px",
-                      background: "#fff7ef",
+                    type="checkbox"
+                    checked={privacyAccepted}
+                    onChange={(e) => {
+                      const accepted = e.target.checked;
+                      setPrivacyAccepted(accepted);
+                      if (accepted) {
+                        setPrivacyPolicyAccepted(true);
+                        persistPrivacyAccepted();
+                      }
                     }}
-                  >
-                    <label
-                      style={{
-                        display: "flex",
-                        alignItems: "flex-start",
-                        gap: "10px",
-                        cursor: "pointer",
-                        color: "#3a2d24",
-                        fontSize: "14px",
-                        lineHeight: 1.5,
-                      }}
+                    style={{ marginTop: "3px" }}
+                  />
+                  <span>
+                    Avant toute connexion, vous devez accepter la{" "}
+                    <a
+                      href="/confidentialite"
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{ color: "#ff6b00", textDecoration: "none", fontWeight: 400 }}
                     >
-                      <input
-                        type="checkbox"
-                        checked={privacyAccepted}
-                        onChange={(e) => {
-                          const accepted = e.target.checked;
-                          setPrivacyAccepted(accepted);
-                          if (accepted) {
-                            persistPrivacyAccepted();
-                          }
-                        }}
-                        style={{ marginTop: "3px" }}
-                      />
-                      <span>
-                        Avant toute connexion, vous devez accepter la{" "}
-                        <a href="/confidentialite" target="_blank" rel="noreferrer">
-                          politique de confidentialité
-                        </a>
-                        .
-                      </span>
+                      politique de confidentialité
+                    </a>
+                    .
+                  </span>
                     </label>
-                  </div>
-                  <label className="remember">
-                    <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} />
-                    <span>Se souvenir de moi</span>
-                  </label>
-                  {!privacyAccepted && (
-                    <div className="auth-error">
-                      Accès bloqué : cochez d’abord la case d’acceptation de la politique de confidentialité.
-                    </div>
-                  )}
-                  <button
-                    className="btn-full modal-primary"
-                    type="button"
-                    onClick={handleLoginPassword}
-                    disabled={authLoading || !canAttemptLogin}
-                    aria-disabled={!canAttemptLogin}
-                    style={{
-                      opacity: canAttemptLogin ? 1 : 0.55,
-                      cursor: canAttemptLogin ? "pointer" : "not-allowed",
-                    }}
-                    title={!canAttemptLogin ? "Vous devez accepter la politique de confidentialité avant toute connexion." : undefined}
-                  >
-                    {authLoading ? "Connexion..." : "Se connecter"}
-                  </button>
-                  <button
-                    className="google-btn"
-                    type="button"
-                    onClick={handleLoginGoogle}
-                    disabled={!canAttemptLogin}
-                    aria-disabled={!canAttemptLogin}
-                    style={{
-                      opacity: canAttemptLogin ? 1 : 0.55,
-                      cursor: canAttemptLogin ? "pointer" : "not-allowed",
-                    }}
-                    title={!canAttemptLogin ? "Vous devez accepter la politique de confidentialité avant toute connexion." : undefined}
-                  >
-                    <i className="ri-google-fill" />
-                    Continuer avec Google
-                  </button>
-                  <div className="modal-links">
-                    <button type="button" className="link-btn" onClick={() => switchAuthMode("signup")}>
-                      Pas encore inscrit ? Créer un compte
-                    </button>
-                    <button type="button" className="link-btn" onClick={() => switchAuthMode("reset")}>
-                      Mot de passe oublié
-                    </button>
-                  </div>
-                </>
+              </div>
+              <label className="remember">
+                <input type="checkbox" />
+                <span>Se souvenir de moi</span>
+              </label>
+              {!canAttemptLogin && (
+                <div className="auth-warning">
+                  Accès bloqué : cochez d’abord la case d’acceptation de la politique de confidentialité.
+                </div>
               )}
-
-              {authMode === "signup" && (
-                <>
-                  <input
-                    type="text"
-                    placeholder="Nom complet (optionnel)"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                  />
-                  <input
-                    type="email"
-                    placeholder="Email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                  />
-                  <input
-                    type="password"
-                    placeholder="Mot de passe"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                  />
-                  <input
-                    type="password"
-                    placeholder="Confirmer le mot de passe"
-                    value={confirm}
-                    onChange={(e) => setConfirm(e.target.value)}
-                  />
-                  <button className="btn-full modal-primary" type="button" onClick={handleSignup} disabled={authLoading}>
-                    {authLoading ? "Création..." : "Créer un compte"}
-                  </button>
-                  <div className="modal-links">
-                    <button type="button" className="link-btn" onClick={() => switchAuthMode("login")}>
-                      Déjà inscrit ? Se connecter
-                    </button>
-                    <button type="button" className="link-btn" onClick={() => switchAuthMode("reset")}>
-                      Mot de passe oublié
-                    </button>
-                  </div>
-                </>
-              )}
-
-              {authMode === "reset" && (
-                <>
-                  <input
-                    type="email"
-                    placeholder="Email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                  />
-                  <button className="btn-full modal-primary" type="button" onClick={handleReset} disabled={authLoading}>
-                    {authLoading ? "Envoi..." : "Envoyer le lien"}
-                  </button>
-                  <div className="modal-links">
-                    <button type="button" className="link-btn" onClick={() => switchAuthMode("login")}>
-                      Revenir à la connexion
-                    </button>
-                    <button type="button" className="link-btn" onClick={() => switchAuthMode("signup")}>
-                      Créer un compte
-                    </button>
-                  </div>
-                </>
-              )}
+              <button
+                className="btn-full modal-primary"
+                type="button"
+                onClick={handleLoginGoogle}
+                disabled={!canAttemptLogin}
+                aria-disabled={!canAttemptLogin}
+                style={{
+                  opacity: canAttemptLogin ? 1 : 0.55,
+                  cursor: canAttemptLogin ? "pointer" : "not-allowed",
+                }}
+                title={!canAttemptLogin ? "Vous devez accepter la politique de confidentialité avant toute connexion." : undefined}
+              >
+                Se connecter
+              </button>
+              <button
+                className="google-btn"
+                type="button"
+                onClick={handleLoginGoogle}
+                disabled={!canAttemptLogin}
+                aria-disabled={!canAttemptLogin}
+                style={{
+                  opacity: canAttemptLogin ? 1 : 0.55,
+                  cursor: canAttemptLogin ? "pointer" : "not-allowed",
+                }}
+                title={!canAttemptLogin ? "Vous devez accepter la politique de confidentialité avant toute connexion." : undefined}
+              >
+                <i className="ri-google-fill" />
+                Continuer avec Google
+              </button>
             </div>
           </div>
         </div>
@@ -1323,13 +1203,7 @@ export default function Home() {
               {policyError && <div className="auth-error">{policyError}</div>}
               {!policyStatusLoading && (
                 <>
-                  <p>
-                    Avant d’accéder au système, vous devez accepter la{" "}
-                    <a href="/confidentialite" target="_blank" rel="noreferrer">
-                      politique de confidentialité
-                    </a>
-                    .
-                  </p>
+                  <p>Avant d’accéder au système, vous devez accepter la politique de confidentialité.</p>
                   <p>
                     Cette acceptation est enregistrée avec votre identifiant, la date et l’heure, ainsi que votre
                     adresse IP lorsque celle-ci est disponible.

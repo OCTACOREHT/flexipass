@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { getProductImageSrc, handleProductImageError } from "@/lib/product-brand";
+import { getAuthCallbackUrl } from "@/lib/site-url";
 
 type Product = {
   id: string;
@@ -91,6 +93,7 @@ function useSessionUser() {
 }
 
 export default function HeaderMain() {
+  const pathname = usePathname();
   const user = useSessionUser();
   const userLabel = user?.name?.trim() || "Connexion";
   const [menuOpen, setMenuOpen] = useState(false);
@@ -104,22 +107,20 @@ export default function HeaderMain() {
   const [authError, setAuthError] = useState<string | null>(null);
   const [authMessage, setAuthMessage] = useState<string | null>(null);
   const [authLoading, setAuthLoading] = useState(false);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirm, setConfirm] = useState("");
-  const [fullName, setFullName] = useState("");
-  const [remember, setRemember] = useState(false);
   const [privacyAccepted, setPrivacyAccepted] = useState(false);
+  const [privacyPolicyAccepted, setPrivacyPolicyAccepted] = useState(false);
   const [policyStatusLoading, setPolicyStatusLoading] = useState(false);
   const [policyModalOpen, setPolicyModalOpen] = useState(false);
   const [policySubmitting, setPolicySubmitting] = useState(false);
   const [policyError, setPolicyError] = useState<string | null>(null);
   const [policyAcceptedAt, setPolicyAcceptedAt] = useState<string | null>(null);
-  const [authMode, setAuthMode] = useState<"login" | "signup" | "reset">("login");
-  const canAttemptLogin = authMode !== "login" || privacyAccepted;
+  const [signOutConfirmOpen, setSignOutConfirmOpen] = useState(false);
+  const canAttemptLogin = privacyAccepted || privacyPolicyAccepted;
+  const isLegalPage = pathname === "/confidentialite";
+  const overlayOpen = !isLegalPage && (loginOpen || policyModalOpen);
 
   useEffect(() => {
-    setPrivacyAccepted(readPersistedPrivacyAccepted());
+    setPrivacyPolicyAccepted(readPersistedPrivacyAccepted());
   }, []);
 
   useEffect(() => {
@@ -159,6 +160,27 @@ export default function HeaderMain() {
   }, [menuOpen]);
 
   useEffect(() => {
+    if (!overlayOpen) return;
+
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+    const previousBodyOverflow = document.body.style.overflow;
+    const previousHtmlOverflow = document.documentElement.style.overflow;
+    const previousBodyPaddingRight = document.body.style.paddingRight;
+
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+    if (scrollbarWidth > 0) {
+      document.body.style.paddingRight = `${scrollbarWidth}px`;
+    }
+
+    return () => {
+      document.body.style.overflow = previousBodyOverflow;
+      document.documentElement.style.overflow = previousHtmlOverflow;
+      document.body.style.paddingRight = previousBodyPaddingRight;
+    };
+  }, [overlayOpen]);
+
+  useEffect(() => {
     let lastY = window.pageYOffset || document.documentElement.scrollTop;
     
     const handleScroll = () => {
@@ -191,6 +213,12 @@ export default function HeaderMain() {
       setPolicyError(null);
     }
   }, [user]);
+
+  useEffect(() => {
+    if (!isLegalPage) return;
+    setLoginOpen(false);
+    setPolicyModalOpen(false);
+  }, [isLegalPage]);
 
   useEffect(() => {
     fetch("/api/products")
@@ -243,6 +271,8 @@ export default function HeaderMain() {
     persistPrivacyAccepted();
     setPolicyAcceptedAt(acceptedAt);
     setPolicyModalOpen(false);
+    setLoginOpen(false);
+    setPolicyError(null);
     return acceptedAt;
   };
 
@@ -291,10 +321,10 @@ export default function HeaderMain() {
         const accepted = Boolean(result?.accepted);
         if (accepted) {
           setPrivacyAccepted(true);
-          persistPrivacyAccepted();
+          setPrivacyPolicyAccepted(true);
           setPolicyAcceptedAt(result?.acceptance?.accepted_at || null);
           setPolicyModalOpen(false);
-        } else if (privacyAccepted) {
+        } else if (privacyPolicyAccepted) {
           try {
             await submitPolicyAcceptance(token);
           } catch {
@@ -312,126 +342,34 @@ export default function HeaderMain() {
     };
 
     checkPolicyStatus();
-  }, [user, privacyAccepted]);
+  }, [user, privacyAccepted, privacyPolicyAccepted]);
 
   const searched = useMemo(() => {
     if (!query.trim()) return [];
     return products.filter((p) => p.title.toLowerCase().includes(query.toLowerCase())).slice(0, 6);
   }, [products, query]);
 
-  const switchAuthMode = (mode: "login" | "signup" | "reset") => {
-    setAuthMode(mode);
-    setAuthError(null);
-    setAuthMessage(null);
-    setAuthLoading(false);
-    setPassword("");
-    setConfirm("");
-  };
-
   const handleLoginGoogle = async () => {
     setAuthError(null);
+    setAuthMessage(null);
     if (!privacyAccepted) {
       setAuthError("Vous devez accepter la politique de confidentialité avant de vous connecter.");
       return;
     }
+    setAuthLoading(true);
     const mod = await import("@/lib/supabase-browser").catch(() => null);
     const supabaseBrowser = mod?.supabaseBrowser;
     if (!supabaseBrowser) {
       setAuthError("Configuration Supabase manquante ou invalide.");
+      setAuthLoading(false);
       return;
     }
     const { error } = await supabaseBrowser.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${window.location.origin}/auth/callback` },
+      options: { redirectTo: getAuthCallbackUrl() },
     });
+    setAuthLoading(false);
     if (error) setAuthError(error.message);
-  };
-
-  const handleLoginPassword = async () => {
-    setAuthError(null);
-    if (!privacyAccepted) {
-      setAuthError("Vous devez accepter la politique de confidentialité avant de vous connecter.");
-      return;
-    }
-    setAuthLoading(true);
-    const mod = await import("@/lib/supabase-browser").catch(() => null);
-    const supabaseBrowser = mod?.supabaseBrowser;
-    if (!supabaseBrowser) {
-      setAuthError("Configuration Supabase manquante ou invalide.");
-      setAuthLoading(false);
-      return;
-    }
-    const { error } = await supabaseBrowser.auth.signInWithPassword({
-      email: email.trim(),
-      password,
-    });
-    setAuthLoading(false);
-    if (error) {
-      setAuthError(error.message);
-      return;
-    }
-    if (!remember) {
-      supabaseBrowser.auth.onAuthStateChange((event) => {
-        if (event === "SIGNED_OUT") {
-          try {
-            localStorage.removeItem("supabase.auth.token");
-          } catch {}
-        }
-      });
-    }
-    setLoginOpen(false);
-  };
-
-  const handleSignup = async () => {
-    setAuthError(null);
-    setAuthLoading(true);
-    const mod = await import("@/lib/supabase-browser").catch(() => null);
-    const supabaseBrowser = mod?.supabaseBrowser;
-    if (!supabaseBrowser) {
-      setAuthError("Configuration Supabase manquante ou invalide.");
-      setAuthLoading(false);
-      return;
-    }
-    if (password !== confirm) {
-      setAuthError("Les mots de passe ne correspondent pas.");
-      setAuthLoading(false);
-      return;
-    }
-    const { error } = await supabaseBrowser.auth.signUp({
-      email: email.trim(),
-      password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
-        data: fullName ? { full_name: fullName } : undefined,
-      },
-    });
-    setAuthLoading(false);
-    if (error) {
-      setAuthError(error.message);
-      return;
-    }
-    setAuthMessage("Vérifiez votre email pour confirmer votre compte.");
-  };
-
-  const handleReset = async () => {
-    setAuthError(null);
-    setAuthLoading(true);
-    const mod = await import("@/lib/supabase-browser").catch(() => null);
-    const supabaseBrowser = mod?.supabaseBrowser;
-    if (!supabaseBrowser) {
-      setAuthError("Configuration Supabase manquante ou invalide.");
-      setAuthLoading(false);
-      return;
-    }
-    const { error } = await supabaseBrowser.auth.resetPasswordForEmail(email.trim(), {
-      redirectTo: `${window.location.origin}/auth/update`,
-    });
-    setAuthLoading(false);
-    if (error) {
-      setAuthError(error.message);
-      return;
-    }
-    setAuthMessage("Si un compte existe, un email de réinitialisation a été envoyé.");
   };
 
   const handleAcceptPolicy = async () => {
@@ -446,10 +384,7 @@ export default function HeaderMain() {
       return;
     }
 
-    const {
-      data: { session },
-    } = await supabaseBrowser.auth.getSession();
-    const token = session?.access_token;
+    const token = await waitForAccessToken(supabaseBrowser);
 
     if (!token) {
       setPolicyError("Session introuvable. Veuillez vous reconnecter.");
@@ -474,6 +409,7 @@ export default function HeaderMain() {
       }
 
       setPrivacyAccepted(true);
+      setPrivacyPolicyAccepted(true);
       persistPrivacyAccepted();
       setPolicyAcceptedAt(result?.acceptance?.accepted_at || new Date().toISOString());
       setPolicyModalOpen(false);
@@ -483,6 +419,18 @@ export default function HeaderMain() {
     } finally {
       setPolicySubmitting(false);
     }
+  };
+
+  const waitForAccessToken = async (supabaseBrowser: any) => {
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const {
+        data: { session },
+      } = await supabaseBrowser.auth.getSession();
+      if (session?.access_token) return session.access_token;
+      await supabaseBrowser.auth.refreshSession().catch(() => null);
+      await new Promise((resolve) => setTimeout(resolve, 200));
+    }
+    return null;
   };
 
   const handleSignOut = async () => {
@@ -499,8 +447,11 @@ export default function HeaderMain() {
       // On continue quand même le nettoyage local pour éviter que l'utilisateur soit bloqué
     }
     setSettingsOpen(false);
-    switchAuthMode("login");
     setLoginOpen(true);
+  };
+
+  const requestSignOut = () => {
+    setSignOutConfirmOpen(true);
   };
 
   const closeMobileMenu = () => {
@@ -577,7 +528,16 @@ export default function HeaderMain() {
               type="button"
               className="user-chip"
               title={userLabel}
-              onClick={() => (user ? setSettingsOpen((v) => !v) : setLoginOpen(true))}
+              onClick={() => {
+                if (user) {
+                  setSettingsOpen((v) => !v);
+                  return;
+                }
+                setAuthError(null);
+                setAuthMessage(null);
+                setPrivacyAccepted(false);
+                setLoginOpen(true);
+              }}
               aria-expanded={settingsOpen}
               style={{
                 width: "auto",
@@ -613,7 +573,7 @@ export default function HeaderMain() {
                   <i className="ri-time-line" />
                   Historique
                 </Link>
-                <button type="button" className="dropdown-item danger" onClick={handleSignOut}>
+                <button type="button" className="dropdown-item danger" onClick={requestSignOut}>
                   <i className="ri-logout-box-r-line" />
                   Déconnexion
                 </button>
@@ -715,7 +675,7 @@ export default function HeaderMain() {
                     className="mobile-menu-link mobile-menu-link--danger"
                     onClick={() => {
                       closeMobileMenu();
-                      handleSignOut();
+                      requestSignOut();
                     }}
                   >
                     Déconnexion
@@ -727,7 +687,7 @@ export default function HeaderMain() {
                   className="mobile-menu-link mobile-menu-link--primary"
                   onClick={() => {
                     closeMobileMenu();
-                    switchAuthMode("login");
+                    setPrivacyAccepted(false);
                     setLoginOpen(true);
                   }}
                 >
@@ -740,15 +700,46 @@ export default function HeaderMain() {
       </header>
       <div className="nav-spacer" />
 
-      {loginOpen && (
-        <div className="modal-overlay" onClick={() => setLoginOpen(false)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()} style={{ maxHeight: "90vh", overflowY: "auto" }}>
+      {signOutConfirmOpen && (
+        <div className="modal-overlay" onClick={() => setSignOutConfirmOpen(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-head">
-              <h3>
-                {authMode === "login" && "Connexion"}
-                {authMode === "signup" && "Créer un compte"}
-                {authMode === "reset" && "Mot de passe oublié"}
-              </h3>
+              <h3>Confirmation</h3>
+              <button className="icon-btn ghost" aria-label="Fermer" onClick={() => setSignOutConfirmOpen(false)}>
+                <i className="ri-close-line" />
+              </button>
+            </div>
+            <div className="modal-body">
+              <p>Êtes-vous sûr de vouloir vous déconnecter ?</p>
+              <div className="form-actions">
+                <button
+                  type="button"
+                  className="btn-full modal-primary"
+                  onClick={async () => {
+                    setSignOutConfirmOpen(false);
+                    await handleSignOut();
+                  }}
+                >
+                  Oui, me déconnecter
+                </button>
+                <button type="button" className="ghost-btn" onClick={() => setSignOutConfirmOpen(false)}>
+                  Annuler
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {!isLegalPage && loginOpen && (
+        <div className="modal-overlay" onClick={() => setLoginOpen(false)}>
+          <div
+            className="modal"
+            onClick={(e) => e.stopPropagation()}
+            style={{ maxHeight: "min(92vh, calc(100dvh - 32px))", overflowY: "auto" }}
+          >
+            <div className="modal-head">
+              <h3>Connexion</h3>
               <button className="icon-btn ghost" aria-label="Fermer" onClick={() => setLoginOpen(false)}>
                 <i className="ri-close-line" />
               </button>
@@ -756,163 +747,79 @@ export default function HeaderMain() {
             <div className="modal-body">
               {authError && <div className="auth-error">{authError}</div>}
               {authMessage && <div className="auth-success">{authMessage}</div>}
-
-              {authMode === "login" && (
-                <>
-                  <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
+              <div
+                style={{
+                  margin: "12px 0 10px",
+                  padding: "12px 14px",
+                  border: "1px solid #f3d7bf",
+                  borderRadius: "12px",
+                  background: "#fff7ef",
+                }}
+              >
+                <label
+                  style={{
+                    display: "flex",
+                    alignItems: "flex-start",
+                    gap: "10px",
+                    cursor: "pointer",
+                    color: "#3a2d24",
+                    fontSize: "14px",
+                    lineHeight: 1.5,
+                  }}
+                >
                   <input
-                    type="password"
-                    placeholder="Mot de passe"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                  />
-                  <div
-                    style={{
-                      margin: "12px 0 10px",
-                      padding: "12px 14px",
-                      border: "1px solid #f3d7bf",
-                      borderRadius: "12px",
-                      background: "#fff7ef",
+                    type="checkbox"
+                    checked={privacyAccepted}
+                    onChange={(e) => {
+                      const accepted = e.target.checked;
+                      setPrivacyAccepted(accepted);
+                      if (accepted) {
+                        setPrivacyPolicyAccepted(true);
+                        persistPrivacyAccepted();
+                      }
                     }}
-                  >
-                    <label
-                      style={{
-                        display: "flex",
-                        alignItems: "flex-start",
-                        gap: "10px",
-                        cursor: "pointer",
-                        color: "#3a2d24",
-                        fontSize: "14px",
-                        lineHeight: 1.5,
-                      }}
+                    style={{ marginTop: "3px" }}
+                  />
+                  <span>
+                    Avant toute connexion, vous devez accepter la{" "}
+                    <Link
+                      href="/confidentialite"
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{ color: "#ff6b00", textDecoration: "none", fontWeight: 400 }}
                     >
-                      <input
-                        type="checkbox"
-                        checked={privacyAccepted}
-                        onChange={(e) => {
-                          const accepted = e.target.checked;
-                          setPrivacyAccepted(accepted);
-                          if (accepted) {
-                            persistPrivacyAccepted();
-                          }
-                        }}
-                        style={{ marginTop: "3px" }}
-                      />
-                      <span>
-                        Avant toute connexion, vous devez accepter la{" "}
-                        <Link href="/confidentialite" target="_blank" rel="noreferrer">
-                          politique de confidentialité
-                        </Link>
-                        .
-                      </span>
-                    </label>
-                  </div>
-                  <label className="remember">
-                    <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} />
-                    <span>Se souvenir de moi</span>
-                  </label>
-                  {!privacyAccepted && (
-                    <div className="auth-error">
-                      Accès bloqué : cochez d’abord la case d’acceptation de la politique de confidentialité.
-                    </div>
-                  )}
-                  <button
-                    className="btn-full modal-primary"
-                    type="button"
-                    onClick={handleLoginPassword}
-                    disabled={authLoading || !canAttemptLogin}
-                    aria-disabled={!canAttemptLogin}
-                    style={{
-                      opacity: canAttemptLogin ? 1 : 0.55,
-                      cursor: canAttemptLogin ? "pointer" : "not-allowed",
-                    }}
-                    title={!canAttemptLogin ? "Vous devez accepter la politique de confidentialité avant toute connexion." : undefined}
-                  >
-                    {authLoading ? "Connexion..." : "Se connecter"}
-                  </button>
-                  <button
-                    className="google-btn"
-                    type="button"
-                    onClick={handleLoginGoogle}
-                    disabled={!canAttemptLogin}
-                    aria-disabled={!canAttemptLogin}
-                    style={{
-                      opacity: canAttemptLogin ? 1 : 0.55,
-                      cursor: canAttemptLogin ? "pointer" : "not-allowed",
-                    }}
-                    title={!canAttemptLogin ? "Vous devez accepter la politique de confidentialité avant toute connexion." : undefined}
-                  >
-                    <i className="ri-google-fill" />
-                    Continuer avec Google
-                  </button>
-                  <div className="modal-links">
-                    <button type="button" className="link-btn" onClick={() => switchAuthMode("signup")}>
-                      Pas encore inscrit ? Créer un compte
-                    </button>
-                    <button type="button" className="link-btn" onClick={() => switchAuthMode("reset")}>
-                      Mot de passe oublié
-                    </button>
-                  </div>
-                </>
+                      politique de confidentialité
+                    </Link>
+                    .
+                  </span>
+                </label>
+              </div>
+              {!canAttemptLogin && (
+                <div className="auth-error">
+                  Accès bloqué : cochez d’abord la case d’acceptation de la politique de confidentialité.
+                </div>
               )}
-
-              {authMode === "signup" && (
-                <>
-                  <input
-                    type="text"
-                    placeholder="Nom complet (optionnel)"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                  />
-                  <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
-                  <input
-                    type="password"
-                    placeholder="Mot de passe"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                  />
-                  <input
-                    type="password"
-                    placeholder="Confirmer le mot de passe"
-                    value={confirm}
-                    onChange={(e) => setConfirm(e.target.value)}
-                  />
-                  <button className="btn-full modal-primary" type="button" onClick={handleSignup} disabled={authLoading}>
-                    {authLoading ? "Création..." : "Créer un compte"}
-                  </button>
-                  <div className="modal-links">
-                    <button type="button" className="link-btn" onClick={() => switchAuthMode("login")}>
-                      Déjà inscrit ? Se connecter
-                    </button>
-                    <button type="button" className="link-btn" onClick={() => switchAuthMode("reset")}>
-                      Mot de passe oublié
-                    </button>
-                  </div>
-                </>
-              )}
-
-              {authMode === "reset" && (
-                <>
-                  <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
-                  <button className="btn-full modal-primary" type="button" onClick={handleReset} disabled={authLoading}>
-                    {authLoading ? "Envoi..." : "Envoyer le lien"}
-                  </button>
-                  <div className="modal-links">
-                    <button type="button" className="link-btn" onClick={() => switchAuthMode("login")}>
-                      Revenir à la connexion
-                    </button>
-                    <button type="button" className="link-btn" onClick={() => switchAuthMode("signup")}>
-                      Créer un compte
-                    </button>
-                  </div>
-                </>
-              )}
+              <button
+                className="google-btn"
+                type="button"
+                onClick={handleLoginGoogle}
+                disabled={!canAttemptLogin || authLoading}
+                aria-disabled={!canAttemptLogin || authLoading}
+                style={{
+                  opacity: canAttemptLogin && !authLoading ? 1 : 0.55,
+                  cursor: canAttemptLogin && !authLoading ? "pointer" : "not-allowed",
+                }}
+                title={!canAttemptLogin ? "Vous devez accepter la politique de confidentialité avant toute connexion." : undefined}
+              >
+                <i className="ri-google-fill" />
+                {authLoading ? "Connexion..." : "Continuer avec Google"}
+              </button>
             </div>
           </div>
         </div>
       )}
 
-      {user && policyModalOpen && (
+      {!isLegalPage && user && policyModalOpen && (
         <div className="modal-overlay" onClick={() => {}}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-head">
@@ -923,13 +830,7 @@ export default function HeaderMain() {
               {policyError && <div className="auth-error">{policyError}</div>}
               {!policyStatusLoading && (
                 <>
-                  <p>
-                    Avant d’accéder au système, vous devez accepter la{" "}
-                    <Link href="/confidentialite" target="_blank" rel="noreferrer">
-                      politique de confidentialité
-                    </Link>
-                    .
-                  </p>
+                  <p>Avant d’accéder au système, vous devez accepter la politique de confidentialité.</p>
                   <p>
                     Cette acceptation est enregistrée avec votre identifiant, la date et l’heure, ainsi que votre adresse
                     IP lorsque celle-ci est disponible.

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { supabaseBrowser } from "@/lib/supabase-browser";
+import { getAuthCallbackUrl } from "@/lib/site-url";
 
 export default function SignUp() {
   const [email, setEmail] = useState("");
@@ -31,7 +32,7 @@ export default function SignUp() {
       email: email.trim(),
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        emailRedirectTo: getAuthCallbackUrl(),
         data: name ? { full_name: name } : undefined,
       },
     });

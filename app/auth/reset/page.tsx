@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { supabaseBrowser } from "@/lib/supabase-browser";
+import { getPasswordUpdateUrl } from "@/lib/site-url";
 
 export default function ResetPassword() {
   const [email, setEmail] = useState("");
@@ -23,7 +24,7 @@ export default function ResetPassword() {
     }
 
     const { error } = await supabaseBrowser.auth.resetPasswordForEmail(email.trim(), {
-      redirectTo: `${window.location.origin}/auth/update`,
+      redirectTo: getPasswordUpdateUrl(),
     });
     setLoading(false);
     if (error) {
