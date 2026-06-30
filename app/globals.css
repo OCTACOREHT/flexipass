@@ -1159,6 +1159,9 @@ a:hover {
     display: block;
     width: 100%;
     padding: 0 20px 10px;
+    position: relative;
+    overflow: visible;
+    z-index: 50;
   }
 
   .mobile-search-wrap .nav-search {
@@ -4686,8 +4689,8 @@ a:hover {
 @media (max-width: 1024px) {
   .mobile-search-wrap {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    overflow: hidden;
-    max-height: 200px; /* Increased to be safe */
+    overflow: visible;
+    max-height: none;
     opacity: 1;
     display: block !important;
   }
@@ -4701,5 +4704,6 @@ a:hover {
     margin-bottom: 0 !important;
     pointer-events: none !important;
     transform: translateY(-20px);
+    overflow: hidden;
   }
 }
