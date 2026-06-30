@@ -1592,7 +1592,7 @@ a:hover {
 
 @media (max-width: 640px) {
   .modal-overlay {
-    align-items: flex-start;
+    align-items: center;
     padding: 12px;
   }
 
