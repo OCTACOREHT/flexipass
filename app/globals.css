@@ -199,6 +199,11 @@ a:hover {
   align-items: center;
   gap: 10px;
   text-decoration: none;
+  position: relative;
+  z-index: 2;
+  cursor: pointer;
+  pointer-events: auto;
+  flex-shrink: 0;
 }
 
 .brand-logo img {
@@ -1132,6 +1137,7 @@ a:hover {
 
   .brand-logo {
     order: 1;
+    flex-shrink: 0;
   }
 
   .brand-logo img {
@@ -3036,17 +3042,23 @@ a:hover {
 
 @media (max-width: 560px) {
   .cart-drawer {
-    align-items: stretch;
+    align-items: center;
+    justify-content: center;
+    padding: 12px;
+    background: rgba(20, 14, 8, 0.58);
   }
 
   .cart-panel {
-    width: 100%;
-    border-left: none;
-    box-shadow: none;
-    height: 100dvh;
-    max-height: 100dvh;
-    padding: 12px 12px calc(12px + env(safe-area-inset-bottom));
-    border-radius: 0;
+    width: min(100%, 520px);
+    border-left: 1px solid #efd8c2;
+    border: 1px solid #efd8c2;
+    box-shadow: 0 24px 60px -24px rgba(0, 0, 0, 0.45);
+    height: auto;
+    max-height: calc(100dvh - 24px);
+    min-height: calc(100dvh - 24px);
+    padding: 14px 14px calc(14px + env(safe-area-inset-bottom));
+    border-radius: 24px;
+    background: linear-gradient(180deg, #fffefb, #fff6ee);
   }
 
   .cart-item {
@@ -3067,12 +3079,30 @@ a:hover {
     height: 56px;
   }
 
+  .cart-head h4 {
+    font-size: 20px;
+  }
+
+  .cart-empty {
+    color: #4f4752;
+    font-size: 15px;
+    line-height: 1.45;
+    padding: 30px 18px;
+    background: linear-gradient(180deg, #ffffff, #fff8f1);
+    border-color: #f0dcc7;
+    box-shadow: 0 14px 30px -24px rgba(0, 0, 0, 0.24);
+  }
+
   .cart-title {
-    font-size: 17px;
+    font-size: 16px;
+    line-height: 1.28;
+    white-space: normal;
   }
 
   .cart-price {
-    font-size: 16px;
+    font-size: 17px;
+    font-weight: 800;
+    color: #ff5a00;
   }
 
   .cart-remove {
@@ -3082,11 +3112,16 @@ a:hover {
   }
 
   .cart-total strong {
-    font-size: 17px;
+    font-size: 18px;
   }
 
   .cart-list {
     padding-right: 0;
+  }
+
+  .cart-footer {
+    padding-top: 12px;
+    border-top: 1px solid #f0e0d1;
   }
 }
 
@@ -4705,5 +4740,17 @@ a:hover {
     pointer-events: none !important;
     transform: translateY(-20px);
     overflow: hidden;
+  }
+
+  .nav.menu-open .mobile-search-wrap.mobile-search-hidden {
+    max-height: calc(100dvh - 108px) !important;
+    opacity: 1 !important;
+    padding-top: 0 !important;
+    padding-bottom: 10px !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    pointer-events: auto !important;
+    transform: none !important;
+    overflow: visible !important;
   }
 }

@@ -117,7 +117,7 @@ export default function HeaderMain() {
   const [signOutConfirmOpen, setSignOutConfirmOpen] = useState(false);
   const canAttemptLogin = privacyAccepted || privacyPolicyAccepted;
   const isLegalPage = pathname === "/confidentialite";
-  const overlayOpen = !isLegalPage && (loginOpen || policyModalOpen);
+  const overlayOpen = loginOpen || (!isLegalPage && policyModalOpen);
 
   useEffect(() => {
     setPrivacyPolicyAccepted(readPersistedPrivacyAccepted());
@@ -468,7 +468,7 @@ export default function HeaderMain() {
     <>
       <header className={`nav ${menuOpen ? "menu-open" : ""}`}>
         <div className="nav-inner">
-          <Link href="/" className="brand-logo">
+          <Link href="/" className="brand-logo" aria-label="Aller à la page d'accueil" title="Accueil">
             <img src="/Flexipass%20.png" alt="FlexiPass" />
             <span className="brand-logo-text">
               <span className="brand-logo-flexi">Flexi</span>
@@ -731,7 +731,7 @@ export default function HeaderMain() {
         </div>
       )}
 
-      {!isLegalPage && loginOpen && (
+      {loginOpen && (
         <div className="modal-overlay" onClick={() => setLoginOpen(false)}>
           <div
             className="modal"

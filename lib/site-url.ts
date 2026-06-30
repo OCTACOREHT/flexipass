@@ -13,6 +13,9 @@ const getEnvSiteUrl = () => {
 };
 
 export const getSiteUrl = () => {
+  if (process.env.NODE_ENV === "production") {
+    return defaultSiteUrl;
+  }
   if (typeof window !== "undefined" && window.location?.origin) {
     return normalize(window.location.origin);
   }

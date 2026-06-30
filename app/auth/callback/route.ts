@@ -1,13 +1,14 @@
-﻿import { NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
+import { NextResponse } from "next/server";
+import { SITE_URL } from "@/lib/site-url";
 
 // OAuth callback (Google, etc.)
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const code = url.searchParams.get("code");
 
-  // Prepare redirect response
-  const redirectUrl = new URL("/", request.url);
+  // Always redirect back to the production site root.
+  const redirectUrl = new URL("/", SITE_URL);
   const response = NextResponse.redirect(redirectUrl);
 
   // Helper to read cookies from the incoming request header
@@ -41,11 +42,10 @@ export async function GET(request: Request) {
     if (error) {
       response.headers.set(
         "Location",
-        new URL(`/?auth_error=${encodeURIComponent(error.message)}`, request.url).toString()
+        new URL(`/?auth_error=${encodeURIComponent(error.message)}`, SITE_URL).toString()
       );
     }
   }
 
   return response;
 }
-
