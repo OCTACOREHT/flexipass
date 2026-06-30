@@ -97,7 +97,6 @@ const subscribeCart = (onStoreChange: () => void) => {
 
 export default function PaiementPage() {
   const items = useSyncExternalStore(subscribeCart, getCartSnapshot, getServerCartSnapshot);
-  const [message, setMessage] = useState<string | null>(null);
   const [orderError, setOrderError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [authRequired, setAuthRequired] = useState(false);
@@ -110,7 +109,6 @@ export default function PaiementPage() {
 
     setSubmitting(true);
     setOrderError(null);
-    setMessage(null);
     setAuthRequired(false);
 
     try {
@@ -167,12 +165,9 @@ export default function PaiementPage() {
       if (typeof window !== "undefined") {
         localStorage.setItem(CART_KEY, JSON.stringify([]));
         window.dispatchEvent(new Event("cart:updated"));
-        setMessage("Commande créée ! Redirection WhatsApp en cours…");
         window.location.href = buildWhatsAppUrl(whatsappMessage);
         return;
       }
-
-      setMessage("Commande créée. Finalisez via votre application WhatsApp.");
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : "Échec création commande, réessayez.";
       setOrderError(errorMessage);
@@ -317,11 +312,6 @@ export default function PaiementPage() {
                 </Link>
               </div>
 
-              {message && (
-                <div className="auth-success" style={{ marginTop: 10 }}>
-                  <i className="ri-checkbox-circle-line" aria-hidden="true" /> {message}
-                </div>
-              )}
               {orderError && (
                 <div className="auth-error" style={{ marginTop: 10 }}>
                   <i className="ri-error-warning-line" aria-hidden="true" /> {orderError}

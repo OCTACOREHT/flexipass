@@ -25,6 +25,7 @@ type Product = {
 type Category = { key: string; label: string; icon: string };
 
 const CART_KEY = "flexipass_cart";
+const LAST_USER_NAME_KEY = "flexipass_last_user_name";
 
 const categories: Category[] = [
   { key: "all", label: "Toutes", icon: "ri-gift-line" },
@@ -99,6 +100,16 @@ const getCategoryKey = (p: Product) => {
 // Hook client : récupère la session Supabase et fournit un nom si connecté
 function useSessionUser() {
   const [user, setUser] = useState<null | { name: string; avatarUrl?: string | null }>(null);
+  const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => {
+    try {
+      const cachedName = window.localStorage.getItem(LAST_USER_NAME_KEY);
+      if (cachedName) {
+        setUser((current) => current ?? { name: cachedName });
+      }
+    } catch {}
+  }, []);
 
   useEffect(() => {
     let unsubscribe: (() => void) | undefined;
@@ -118,6 +129,7 @@ function useSessionUser() {
               }
             : null
         );
+        setHydrated(true);
       });
 
       const { data: sub } = supabaseBrowser.auth.onAuthStateChange((_evt, session) => {
@@ -130,6 +142,7 @@ function useSessionUser() {
               }
             : null
         );
+        setHydrated(true);
       });
 
       unsubscribe = () => sub?.subscription.unsubscribe();
@@ -139,12 +152,12 @@ function useSessionUser() {
     return () => unsubscribe?.();
   }, []);
 
-  return user;
+  return { user, hydrated };
 }
 
 export default function Home() {
-  const user = useSessionUser();
-  const userLabel = user?.name?.trim() || "Connexion";
+  const { user, hydrated } = useSessionUser();
+  const userLabel = user?.name?.trim() || (hydrated ? "Connexion" : "Chargement...");
   const [products, setProducts] = useState<Product[]>([]);
   const [active, setActive] = useState<string>("all");
   const [query, setQuery] = useState("");
@@ -174,14 +187,21 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    if (!hydrated) return;
     if (user) {
+      try {
+        window.localStorage.setItem(LAST_USER_NAME_KEY, user.name);
+      } catch {}
       setLoginOpen(false);
     } else {
+      try {
+        window.localStorage.removeItem(LAST_USER_NAME_KEY);
+      } catch {}
       setPolicyModalOpen(false);
       setPolicyAcceptedAt(null);
       setPolicyError(null);
     }
-  }, [user]);
+  }, [user, hydrated]);
 
   useEffect(() => {
     const checkPolicyStatus = async () => {
@@ -672,23 +692,28 @@ export default function Home() {
               aria-expanded={settingsOpen}
               style={{
                 width: "auto",
-                minWidth: 0,
-                maxWidth: "clamp(96px, 34vw, 156px)",
+                minWidth: "clamp(124px, 28vw, 164px)",
+                maxWidth: "clamp(124px, 34vw, 176px)",
                 display: "inline-flex",
                 alignItems: "center",
                 gap: "6px",
                 padding: "0 10px",
+                justifyContent: "flex-start",
+                transition: "min-width 180ms ease, max-width 180ms ease, transform 180ms ease, opacity 180ms ease",
               }}
             >
               <i className="ri-user-smile-line" />
               <span
                 className="user-name"
                 style={{
-                  display: "inline-block",
+                  display: "block",
+                  flex: "1 1 auto",
+                  minWidth: 0,
                   maxWidth: "calc(100% - 22px)",
                   overflow: "hidden",
                   textOverflow: "ellipsis",
                   whiteSpace: "nowrap",
+                  lineHeight: 1.1,
                 }}
               >
                 {userLabel}
