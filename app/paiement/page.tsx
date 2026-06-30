@@ -14,7 +14,7 @@ type CartItem = {
 };
 
 const CART_KEY = "flexipass_cart";
-const WHATSAPP_NUMBER = "50939434094";
+const WHATSAPP_NUMBER = "50938341517";
 const EMPTY_CART: CartItem[] = [];
 
 let cachedRawCart = "__INIT__";
