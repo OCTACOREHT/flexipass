@@ -113,65 +113,64 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: orderItemsInsertError }, { status: 500 });
     }
 
-    // Respond immediately — email is sent asynchronously to avoid SMTP timeouts
-    const response = NextResponse.json({ order, email_sent: false }, { status: 201 });
-
     const emailSubject = `Confirmation de commande #${order.id}`;
     const shouldEmail = (order.payment_method || "").toLowerCase() !== "moncash_test";
+    let emailSent = false;
+    let emailError: string | null = null;
 
     if (shouldEmail) {
       const productIds = normalizedItems.map((i) => i.product_id);
-      void (async () => {
-        try {
-          const { data: products } = await supabase
-            .from("products")
-            .select("id,title,image_url,service_name")
-            .in("id", productIds);
+      try {
+        const { data: products } = await supabase
+          .from("products")
+          .select("id,title,image_url,service_name")
+          .in("id", productIds);
 
-          const productMap = new Map(
-            (products || []).map((p: any) => [
-              p.id,
-              { title: p.title || p.service_name || p.id, image_url: p.image_url || null },
-            ])
-          );
+        const productMap = new Map(
+          (products || []).map((p: any) => [
+            p.id,
+            { title: p.title || p.service_name || p.id, image_url: p.image_url || null },
+          ])
+        );
 
-          const emailItems = normalizedItems.map((item) => {
-            const meta = productMap.get(item.product_id);
-            return {
-              product_id: item.product_id,
-              product_name: meta?.title || item.product_id,
-              product_image: meta?.image_url || null,
-              quantity: item.quantity ?? 0,
-              price: item.price ?? 0,
-            };
-          });
-
-          const emailResult = await sendOrderConfirmationEmail({ order, items: emailItems, totalPrice });
-          if (!emailResult) return;
-
-          const logPayload: Record<string, any> = {
-            order_id: order.id,
-            user_id: user.id,
-            to_email: user.email,
-            subject: emailSubject,
-            status: emailResult.success ? "success" : "failed",
-            sujet: emailSubject,
-            statut: emailResult.success ? "success" : "failed",
-            erreur: emailResult.success ? null : emailResult.error,
-            sent_at: new Date().toISOString(),
-            created_at: new Date().toISOString(),
-            modele: "order_confirmation",
-            template: "order_confirmation",
+        const emailItems = normalizedItems.map((item) => {
+          const meta = productMap.get(item.product_id);
+          return {
+            product_id: item.product_id,
+            product_name: meta?.title || item.product_id,
+            product_image: meta?.image_url || null,
+            quantity: item.quantity ?? 0,
+            price: item.price ?? 0,
           };
-          const { error: logError } = await supabase.from("email_log").insert([logPayload]);
-          if (logError) console.error("Email log insert error:", logError);
-        } catch (err) {
-          console.error("Background email error:", err);
-        }
-      })();
+        });
+
+        const emailResult = await sendOrderConfirmationEmail({ order, items: emailItems, totalPrice });
+        emailSent = Boolean(emailResult?.success);
+        emailError = emailResult?.success ? null : emailResult?.error || null;
+
+        const logPayload: Record<string, any> = {
+          order_id: order.id,
+          user_id: user.id,
+          to_email: user.email,
+          subject: emailSubject,
+          status: emailResult?.success ? "success" : "failed",
+          sujet: emailSubject,
+          statut: emailResult?.success ? "success" : "failed",
+          erreur: emailResult?.success ? null : emailResult?.error,
+          sent_at: new Date().toISOString(),
+          created_at: new Date().toISOString(),
+          modele: "order_confirmation",
+          template: "order_confirmation",
+        };
+        const { error: logError } = await supabase.from("email_log").insert([logPayload]);
+        if (logError) console.error("Email log insert error:", logError);
+      } catch (err) {
+        emailError = err instanceof Error ? err.message : "Unknown email error";
+        console.error("Order confirmation email error:", err);
+      }
     }
 
-    return response;
+    return NextResponse.json({ order, email_sent: emailSent, email_error: emailError }, { status: 201 });
   } catch (error: any) {
     console.error("Erreur creation commande:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
