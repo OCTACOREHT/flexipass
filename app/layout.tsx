@@ -1,7 +1,13 @@
 import type { Metadata } from "next";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import AuthCallbackHandler from "@/components/AuthCallbackHandler";
 import SessionTimeout from "@/components/SessionTimeout";
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-sans",
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.flexipass.shop"),
@@ -27,7 +33,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="fr">
+    <html lang="fr" className={inter.variable}>
       <head>
         <link
           rel="stylesheet"
@@ -35,14 +41,7 @@ export default function RootLayout({
         />
       </head>
 
-      <body
-        style={
-          {
-            "--font-sans":
-              "Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          } as React.CSSProperties
-        }
-      >
+      <body>
         <AuthCallbackHandler />
         <SessionTimeout />
         {children}

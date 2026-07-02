@@ -976,11 +976,26 @@ export default function Home() {
         {loadingProducts && visibleProducts.length === 0 ? (
           <div className="compact-grid">
             {Array.from({ length: 8 }).map((_, i) => (
-              <article className="compact-card skeleton" key={`sk-${i}`}>
-                <div className="compact-logo" />
-                <div className="compact-info">
-                  <div className="compact-title" />
-                  <div className="compact-subtitle" />
+              <article className="compact-card skeleton" key={`sk-${i}`} style={{ width: '100%' }}>
+                <div className="compact-logo" style={{ background: '#f5ede6' }}></div>
+                <div className="compact-info" style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  {/* Title */}
+                  <div className="skeleton-line" style={{ width: '120px', height: '16px', background: '#e3d7cb', margin: 0, borderRadius: '4px' }}></div>
+                  {/* Subtitle */}
+                  <div className="skeleton-line" style={{ width: '80px', height: '12px', background: '#eee5db', margin: 0, borderRadius: '4px' }}></div>
+                  {/* Meta */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', margin: '4px 0' }}>
+                    <div className="skeleton-line" style={{ width: '110px', height: '10px', background: '#eee5db', margin: 0, borderRadius: '3px' }}></div>
+                    <div className="skeleton-line" style={{ width: '90px', height: '10px', background: '#eee5db', margin: 0, borderRadius: '3px' }}></div>
+                  </div>
+                  {/* Price */}
+                  <div className="skeleton-line" style={{ width: '70px', height: '16px', background: '#ffdcc8', margin: 0, borderRadius: '4px' }}></div>
+                </div>
+                <div className="compact-actions" style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                  {/* Orange button */}
+                  <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#ffdcc8' }}></div>
+                  {/* Eye button */}
+                  <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#f5ede6' }}></div>
                 </div>
               </article>
             ))}
@@ -996,7 +1011,7 @@ export default function Home() {
               );
               return (
                 <article key={p.id} className={`compact-card ${p.type === "account" ? "luxe" : ""}`}>
-                  <div className="compact-logo">
+                  <div className="compact-logo-white">
                     <img
                       src={getProductImageSrc(p)}
                       alt={p.title}
@@ -1067,7 +1082,7 @@ export default function Home() {
               );
               return (
               <article key={p.id} className="compact-card luxe">
-                <div className="compact-logo">
+                <div className="compact-logo-white">
                   <img
                     src={getProductImageSrc(p)}
                     alt={p.title}

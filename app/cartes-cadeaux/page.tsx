@@ -18,6 +18,10 @@ const gifts: GiftItem[] = [
   { title: "Xbox Gift Card", desc: "Jeux et contenus Xbox", price: "1350 HTG", plan: "12 mois", duration_days: 360 },
   { title: "Steam Wallet", desc: "Crédits Steam PC", price: "675 HTG", plan: "12 mois", duration_days: 360 },
   { title: "Nintendo eShop", desc: "Crédits Nintendo Switch", price: "1350 HTG", plan: "12 mois", duration_days: 360 },
+  { title: "Roblox", desc: "Robux et abonnements", price: "450 HTG", plan: "Variable", duration_days: 0 },
+  { title: "Netflix", desc: "Cartes abonnements", price: "1125 HTG", plan: "1 mois", duration_days: 30 },
+  { title: "Apple Gift Card", desc: "App Store & iTunes", price: "900 HTG", plan: "Variable", duration_days: 0 },
+  { title: "Google Play", desc: "Jeux et applications", price: "900 HTG", plan: "Variable", duration_days: 0 },
 ];
 
 export default function CartesCadeauxPage() {
@@ -25,32 +29,35 @@ export default function CartesCadeauxPage() {
     const planMeta = getPlanBoxData(item.plan, item.duration_days);
 
     return (
-      <article className="market-card market-card--service" key={item.title}>
-        <div className="market-service-row">
-          <div className="compact-logo" aria-hidden="true">
-            <img
-              src={getProductImageSrc(item)}
-              alt=""
-              width={32}
-              height={32}
-              loading="lazy"
-            />
-          </div>
-          <div className="market-service-content">
-            <h3 className="brand-name">{item.title}</h3>
-            <div className="muted">{item.desc}</div>
-            <div className="market-service-meta">
-              <span className="market-service-meta-line">Plan : {planMeta.planLabel}</span>
-              <span className="market-service-meta-line">
-                Durée : <strong className="market-service-meta-strong">{planMeta.durationLabel}</strong>
-              </span>
-            </div>
-            <div className="price market-service-price">{item.price}</div>
-          </div>
+      <article className="compact-card" key={item.title}>
+        <div className="compact-logo">
+          <img
+            src={getProductImageSrc(item)}
+            alt={item.title}
+            width={32}
+            height={32}
+            loading="lazy"
+          />
         </div>
-        <a className="btn-full ghost-btn" href="/catalogue">
-          Voir détails
-        </a>
+        <div className="compact-info">
+          <h3 className="compact-title">{item.title}</h3>
+          <div className="compact-subtitle">{item.desc}</div>
+          <div className="compact-meta">
+            <span className="compact-meta-line">Plan : {planMeta.planLabel}</span>
+            <span className="compact-meta-line">
+              Durée : <strong className="compact-meta-strong">{planMeta.durationLabel}</strong>
+            </span>
+          </div>
+          <div className="compact-price">{item.price}</div>
+        </div>
+        <div className="compact-actions">
+          <button className="btn-icon primary" title="Ajouter au panier">
+            <i className="ri-shopping-cart-2-line" />
+          </button>
+          <a className="btn-icon" href="/catalogue" title="Voir les détails">
+            <i className="ri-arrow-right-line" />
+          </a>
+        </div>
       </article>
     );
   };
@@ -58,52 +65,71 @@ export default function CartesCadeauxPage() {
   return (
     <>
       <HeaderMain />
-      <main className="market-shell">
-        <section className="market-hero">
-          <div className="market-hero-inner">
-            <div>
-              <p className="hero-eyebrow">FlexiPass</p>
-              <h1>Cartes cadeaux</h1>
-              <p>Offrez la liberté de choisir : cartes digitales, livraison instantanée.</p>
-              <div className="market-hero-actions">
-                <a className="btn-primary" href="/catalogue">Voir le catalogue</a>
-                <a className="btn-ghost" href="/streaming">Voir le streaming</a>
-              </div>
+      <main className="page-wrap">
+        <section className="hero" style={{ marginBottom: '40px' }}>
+          <div className="hero-inner" style={{ padding: '60px 20px 80px', textAlign: 'center' }}>
+            <div className="hero-eyebrow">FLEXIPASS</div>
+            <h1 style={{ margin: '16px auto' }}>Cartes cadeaux digitales</h1>
+            <p style={{ margin: '0 auto 24px', opacity: 0.9 }}>
+              Offrez la liberté de choisir. Des cartes numériques pour tous vos besoins,<br/>
+              livrées instantanément par email et sécurisées.
+            </p>
+            <div className="hero-cta" style={{ justifyContent: 'center' }}>
+              <a className="btn-primary" href="/catalogue">Voir le catalogue</a>
+              <a className="btn-ghost" style={{ background: 'rgba(255,255,255,0.15)', color: '#fff', borderColor: 'rgba(255,255,255,0.2)' }} href="/streaming">Voir le streaming</a>
             </div>
           </div>
         </section>
 
-        <section className="market-section">
-          <div className="section-head market-head market-head--split">
-            <h2>Sélections populaires</h2>
-            <Link className="link" href="/">Retour accueil</Link>
+        <section className="section" style={{ paddingTop: '20px' }}>
+          <div className="section-head">
+            <h2 style={{ fontSize: '28px' }}>Sélections populaires</h2>
+            <Link className="link" href="/">Retour accueil →</Link>
           </div>
-          <div className="market-grid">
+          <div className="compact-grid" style={{ marginTop: '30px' }}>
             {gifts.map((item) => renderGiftCard(item))}
           </div>
         </section>
 
-        <section className="market-section">
-          <div className="market-feature-strip">
-            <div className="market-feature">
-              <div className="market-dot">Fast</div>
+        <section className="section" style={{ paddingTop: '10px', paddingBottom: '80px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '24px' }}>
+            <div className="feature-card" style={{ display: 'flex', alignItems: 'flex-start', gap: '18px', padding: '24px', background: '#fff', borderRadius: '16px', boxShadow: '0 8px 30px rgba(0,0,0,0.04)' }}>
+              <div style={{ width: '48px', height: '48px', borderRadius: '10px', background: '#fff0e6', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ff4d00', fontSize: '24px', flexShrink: 0 }}>
+                <i className="ri-flashlight-line"></i>
+              </div>
               <div>
-                <strong>Instantané</strong>
-                <div className="muted">Livraison immédiate par email</div>
+                <strong style={{ display: 'block', fontSize: '16px', marginBottom: '6px', color: '#2e2a32', fontWeight: 800 }}>Instantané</strong>
+                <div style={{ fontSize: '14px', color: '#6f656e', lineHeight: 1.4 }}>Livraison par email dès la validation.</div>
               </div>
             </div>
-            <div className="market-feature">
-              <div className="market-dot">Safe</div>
+            
+            <div className="feature-card" style={{ display: 'flex', alignItems: 'flex-start', gap: '18px', padding: '24px', background: '#fff', borderRadius: '16px', boxShadow: '0 8px 30px rgba(0,0,0,0.04)' }}>
+              <div style={{ width: '48px', height: '48px', borderRadius: '10px', background: '#fff0e6', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ff4d00', fontSize: '24px', flexShrink: 0 }}>
+                <i className="ri-shield-check-line"></i>
+              </div>
               <div>
-                <strong>Sécurisé</strong>
-                <div className="muted">Paiement protégé et fiable</div>
+                <strong style={{ display: 'block', fontSize: '16px', marginBottom: '6px', color: '#2e2a32', fontWeight: 800 }}>Sécurisé</strong>
+                <div style={{ fontSize: '14px', color: '#6f656e', lineHeight: 1.4 }}>Paiements chiffrés et 100% protégés.</div>
               </div>
             </div>
-            <div className="market-feature">
-              <div className="market-dot">Gift</div>
+
+            <div className="feature-card" style={{ display: 'flex', alignItems: 'flex-start', gap: '18px', padding: '24px', background: '#fff', borderRadius: '16px', boxShadow: '0 8px 30px rgba(0,0,0,0.04)' }}>
+              <div style={{ width: '48px', height: '48px', borderRadius: '10px', background: '#fff0e6', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ff4d00', fontSize: '24px', flexShrink: 0 }}>
+                <i className="ri-gift-line"></i>
+              </div>
               <div>
-                <strong>Idéal cadeau</strong>
-                <div className="muted">Montants variés, valides immédiatement</div>
+                <strong style={{ display: 'block', fontSize: '16px', marginBottom: '6px', color: '#2e2a32', fontWeight: 800 }}>Idéal cadeau</strong>
+                <div style={{ fontSize: '14px', color: '#6f656e', lineHeight: 1.4 }}>Montants variés, utilisables de suite.</div>
+              </div>
+            </div>
+
+            <div className="feature-card" style={{ display: 'flex', alignItems: 'flex-start', gap: '18px', padding: '24px', background: '#fff', borderRadius: '16px', boxShadow: '0 8px 30px rgba(0,0,0,0.04)' }}>
+              <div style={{ width: '48px', height: '48px', borderRadius: '10px', background: '#fff0e6', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ff4d00', fontSize: '24px', flexShrink: 0 }}>
+                <i className="ri-customer-service-2-line"></i>
+              </div>
+              <div>
+                <strong style={{ display: 'block', fontSize: '16px', marginBottom: '6px', color: '#2e2a32', fontWeight: 800 }}>Support 7j/7</strong>
+                <div style={{ fontSize: '14px', color: '#6f656e', lineHeight: 1.4 }}>Une assistance experte à votre écoute.</div>
               </div>
             </div>
           </div>

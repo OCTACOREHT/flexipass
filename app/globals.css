@@ -29,7 +29,7 @@ body {
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
-  font-family: var(--font-sans), "Inter", system-ui, -apple-system, sans-serif;
+  font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
   font-weight: 400;
   line-height: 1.6;
   letter-spacing: -0.01em;
@@ -47,7 +47,7 @@ h1,
 h2,
 h3,
 h4 {
-  font-family: var(--font-sans), "Inter", system-ui, -apple-system, sans-serif;
+  font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
   letter-spacing: -0.02em;
   font-weight: 600;
   margin: 0;
@@ -736,6 +736,7 @@ a:hover {
   gap: 10px;
   flex-wrap: nowrap;
   justify-content: flex-start;
+  align-items: center;
   overflow-x: auto;
   padding: 4px 0 12px;
   -webkit-overflow-scrolling: touch;
@@ -757,6 +758,7 @@ a:hover {
   gap: 8px;
   font-weight: 500;
   color: #3d3640;
+  white-space: nowrap;
 }
 
 .pill-count {
@@ -820,14 +822,14 @@ a:hover {
 /* Desktop Grid View (More compact) */
 @media (min-width: 641px) {
   .compact-grid {
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
   }
 }
 
 .compact-card {
   background: var(--card);
   border: 1px solid var(--border);
-  border-radius: 18px;
+  border-radius: 16px;
   padding: 12px;
   display: flex;
   align-items: center;
@@ -839,9 +841,9 @@ a:hover {
 }
 
 .compact-card:hover {
-  transform: translateY(-2px);
-  border-color: var(--primary);
-  box-shadow: 0 10px 25px -15px rgba(0, 0, 0, 0.15);
+  transform: translateY(-3px);
+  border-color: var(--primary-strong) !important;
+  box-shadow: 0 10px 25px -5px rgba(255, 77, 0, 0.2) !important;
 }
 
 .compact-logo {
@@ -849,13 +851,25 @@ a:hover {
   height: 48px;
   min-width: 48px;
   border-radius: 12px;
-  background: #f8f3ed;
+  background: #ffffff;
   display: grid;
   place-items: center;
-  border: 1px solid rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(0, 0, 0, 0.06);
 }
 
-.compact-logo img {
+.compact-logo-white {
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
+  border-radius: 12px;
+  background: #ffffff !important;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+}
+
+.compact-logo img,
+.compact-logo-white img {
   width: 32px;
   height: 32px;
   object-fit: contain;
@@ -3460,7 +3474,7 @@ a:hover {
   }
 }
 
-/* ── Payment page additions ── */
+/* â”€â”€ Payment page additions â”€â”€ */
 .pay-hero-icon {
   width: 50px;
   height: 50px;
@@ -4514,11 +4528,13 @@ a:hover {
   display: grid;
   gap: 18px;
   position: relative;
+  align-content: start;
 }
 
 .market-section {
   display: grid;
   gap: 16px;
+  align-content: start;
 }
 
 .market-head {
@@ -4621,8 +4637,19 @@ a:hover {
 }
 
 .market-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 20px 40px -30px rgba(35, 20, 10, 0.45);
+  transform: translateY(-3px);
+  border-color: var(--primary-strong) !important;
+  box-shadow: 0 10px 25px -5px rgba(255, 77, 0, 0.2) !important;
+}
+
+.feature-card {
+  transition: all 200ms ease;
+  border: 1px solid #f2e8dd;
+}
+.feature-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--primary-strong) !important;
+  box-shadow: 0 10px 25px -5px rgba(255, 77, 0, 0.2) !important;
 }
 
 .market-card--premium {
