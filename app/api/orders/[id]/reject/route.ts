@@ -8,9 +8,9 @@ export const runtime = "nodejs";
 async function sendOrderRejectedEmailFallback(order: any) {
   const host = process.env.EMAIL_HOST || "";
   const user = process.env.EMAIL_USER || "";
-  const pass = process.env.EMAIL_PASSWORD || "";
+  const pass = (process.env.EMAIL_PASSWORD || "").replace(/\s+/g, "").trim();
   const port = Number(process.env.EMAIL_PORT || 587);
-  let from = process.env.EMAIL_FROM || "pitonrodjy@gmail.com";
+  let from = process.env.EMAIL_FROM?.trim() || user.trim() || "noreply@flexipass.com";
   if (from && !from.includes("<")) {
     from = `FlexiPass <${from}>`;
   }

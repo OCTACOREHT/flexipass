@@ -55,7 +55,7 @@ const normalizeBaseUrl = (value: string) => value.replace(/\/+$/, "");
 const getSmtpConfig = () => {
   const host = process.env.EMAIL_HOST?.trim() || "";
   const user = process.env.EMAIL_USER?.trim() || "";
-  const pass = process.env.EMAIL_PASSWORD?.trim() || "";
+  const pass = process.env.EMAIL_PASSWORD?.replace(/\s+/g, "").trim() || "";
   const port = Number(process.env.EMAIL_PORT || 587);
   let from = process.env.EMAIL_FROM?.trim() || user || "";
   if (from && !from.includes("<")) {
@@ -85,9 +85,11 @@ const buildSendOptions = (
   html: string,
   attachments?: any[]
 ) => {
-  const { from } = getSmtpConfig();
+  const { from, user } = getSmtpConfig();
   return {
     from,
+    sender: user,
+    replyTo: from,
     to,
     subject,
     text,
@@ -372,7 +374,7 @@ export async function sendOrderConfirmationEmail({
     process.env.APP_URL ||
     "";
   const baseUrl = siteUrl ? normalizeBaseUrl(siteUrl) : "";
-  const siteHome = baseUrl || "https://flexipass.com";
+  const siteHome = baseUrl || "https://www.flexipass.shop";
   const instagramUrl = process.env.NEXT_PUBLIC_INSTAGRAM_URL || process.env.INSTAGRAM_URL || siteHome;
   const facebookUrl = process.env.NEXT_PUBLIC_FACEBOOK_URL || process.env.FACEBOOK_URL || siteHome;
   const linkedinUrl = process.env.NEXT_PUBLIC_LINKEDIN_URL || process.env.LINKEDIN_URL || siteHome;
@@ -692,7 +694,7 @@ export async function sendAdminInvitationEmail({
     process.env.APP_URL ||
     "";
   const baseUrl = siteUrl ? normalizeBaseUrl(siteUrl) : "";
-  const siteHome = baseUrl || "https://flexipass.com";
+  const siteHome = baseUrl || "https://www.flexipass.shop";
   const instagramUrl = process.env.NEXT_PUBLIC_INSTAGRAM_URL || process.env.INSTAGRAM_URL || siteHome;
   const facebookUrl = process.env.NEXT_PUBLIC_FACEBOOK_URL || process.env.FACEBOOK_URL || siteHome;
   const linkedinUrl = process.env.NEXT_PUBLIC_LINKEDIN_URL || process.env.LINKEDIN_URL || siteHome;
@@ -840,7 +842,7 @@ export async function sendAdminPromotionEmail({
     process.env.APP_URL ||
     "";
   const baseUrl = siteUrl ? normalizeBaseUrl(siteUrl) : "";
-  const siteHome = baseUrl || "https://flexipass.com";
+  const siteHome = baseUrl || "https://www.flexipass.shop";
   const instagramUrl = process.env.NEXT_PUBLIC_INSTAGRAM_URL || process.env.INSTAGRAM_URL || siteHome;
   const facebookUrl = process.env.NEXT_PUBLIC_FACEBOOK_URL || process.env.FACEBOOK_URL || siteHome;
   const linkedinUrl = process.env.NEXT_PUBLIC_LINKEDIN_URL || process.env.LINKEDIN_URL || siteHome;
@@ -1005,7 +1007,7 @@ export async function sendAdminWelcomeEmail({
     process.env.APP_URL ||
     "";
   const baseUrl = siteUrl ? normalizeBaseUrl(siteUrl) : "";
-  const siteHome = baseUrl || "https://flexipass.com";
+  const siteHome = baseUrl || "https://www.flexipass.shop";
   const instagramUrl = process.env.NEXT_PUBLIC_INSTAGRAM_URL || process.env.INSTAGRAM_URL || siteHome;
   const facebookUrl = process.env.NEXT_PUBLIC_FACEBOOK_URL || process.env.FACEBOOK_URL || siteHome;
   const linkedinUrl = process.env.NEXT_PUBLIC_LINKEDIN_URL || process.env.LINKEDIN_URL || siteHome;

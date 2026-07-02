@@ -24,9 +24,9 @@ export async function POST(request: Request) {
       process.env.NEXT_PUBLIC_SITE_URL ||
       process.env.NEXT_PUBLIC_BASE_URL ||
       process.env.SITE_URL ||
-      "https://flexipass.com";
+      "https://www.flexipass.shop";
     const baseUrl = normalizeBaseUrl(rawBaseUrl);
-    const siteHome = baseUrl || "https://flexipass.com";
+    const siteHome = baseUrl || "https://www.flexipass.shop";
     const instagramUrl = process.env.NEXT_PUBLIC_INSTAGRAM_URL || process.env.INSTAGRAM_URL || siteHome;
     const facebookUrl = process.env.NEXT_PUBLIC_FACEBOOK_URL || process.env.FACEBOOK_URL || siteHome;
     const linkedinUrl = process.env.NEXT_PUBLIC_LINKEDIN_URL || process.env.LINKEDIN_URL || siteHome;
@@ -40,9 +40,9 @@ export async function POST(request: Request) {
 
     const host = process.env.EMAIL_HOST || "";
     const user = process.env.EMAIL_USER || "";
-    const pass = process.env.EMAIL_PASSWORD || "";
+    const pass = (process.env.EMAIL_PASSWORD || "").replace(/\s+/g, "").trim();
     const port = Number(process.env.EMAIL_PORT || 587);
-    let from = process.env.EMAIL_FROM || user || "noreply@flexipass.com";
+    let from = process.env.EMAIL_FROM?.trim() || user.trim() || "noreply@flexipass.com";
     if (from && !from.includes("<")) {
       from = `FlexiPass <${from}>`;
     }
