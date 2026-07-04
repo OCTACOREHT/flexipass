@@ -11,7 +11,7 @@ type ToasterProps = {
 
 const variantStyles: Record<string, string> = {
   success:
-    "border-emerald-200/70 text-emerald-900 bg-emerald-50/90 shadow-emerald-500/20",
+    "border-[#ff6a1a] text-white bg-[#ff6a1a] shadow-[0_18px_40px_-24px_rgba(255,106,26,0.65)]",
   error: "border-rose-200/70 text-rose-900 bg-rose-50/90 shadow-rose-500/20",
   info: "border-indigo-200/80 text-slate-900 bg-white/90 shadow-indigo-500/20",
 };
@@ -40,7 +40,7 @@ export default function Toaster({ toasts, onDismiss, className, toastClassName }
               <button
                 type="button"
                 onClick={() => onDismiss(toast.id)}
-                className="text-xs font-semibold text-slate-500 transition hover:text-slate-800"
+                className="rounded-md border border-black/10 bg-white/70 px-3 py-1 text-xs font-semibold text-black transition hover:bg-white/90"
                 aria-label="Fermer la notification"
               >
                 Fermer
