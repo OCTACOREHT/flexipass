@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import FooterMain from "@/components/FooterMain";
 import HeaderMain from "@/components/HeaderMain";
-import { addItemToCart } from "@/components/cart/AddToCartButton";
+import AddToCartButton from "@/components/cart/AddToCartButton";
 import { getProductImageSrc, handleProductImageError } from "@/lib/product-brand";
 import { getPlanBoxData } from "@/lib/plan-display";
 
@@ -218,21 +218,21 @@ export default function CataloguePage() {
                       <div className="compact-meta">
                         <span className="compact-meta-line">Plan : {cleanText(planMeta.planLabel)}</span>
                         <span className="compact-meta-line">
-                          DurÃ©e : <strong className="compact-meta-strong">{cleanText(planMeta.durationLabel)}</strong>
+                          Durée : <strong className="compact-meta-strong">{cleanText(planMeta.durationLabel)}</strong>
                         </span>
                       </div>
                       <div className="compact-price">{displayPrice}</div>
                     </div>
 
                     <div className="compact-actions">
-                      <button
-                        type="button"
-                        className="btn-icon primary"
-                        onClick={() => addItemToCart({ id: p.id, title: getDisplayTitle(p.title), price: selectedVariant?.price ?? p.price, image: getProductImageSrc(p) })}
-                        title="Ajouter au panier"
-                      >
-                        <i className="ri-shopping-cart-2-line" />
-                      </button>
+                      <AddToCartButton
+                        item={{
+                          id: p.id,
+                          title: getDisplayTitle(p.title),
+                          price: selectedVariant?.price ?? p.price,
+                          image: getProductImageSrc(p),
+                        }}
+                      />
                       <a
                         className="btn-icon"
                         href={`/product/${encodeURIComponent(getProductSlug(p))}`}

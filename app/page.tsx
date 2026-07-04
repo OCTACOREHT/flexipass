@@ -777,7 +777,7 @@ export default function Home() {
                 </button>
               </div>
             )}
-            <button className="icon-btn cart-btn" aria-label="Panier" onClick={() => setCartOpen((v) => !v)}>
+            <button className="icon-btn cart-btn cart-touch-btn" aria-label="Panier" onClick={() => setCartOpen((v) => !v)}>
               <i className="ri-shopping-bag-3-line" />
               <span className="cart-badge">{cartCount}</span>
             </button>

@@ -17,15 +17,16 @@ export default function FooterMain() {
             </div>
             <p>Cartes cadeaux et abonnements numériques pour tous vos services préférés.</p>
           </div>
-          <div className="footer-col">
+          <div className="footer-col footer-nav">
             <h4>Navigation</h4>
             <ul>
               <li><Link href="/">Accueil</Link></li>
               <li><Link href="/catalogue">Catalogue</Link></li>
+              <li className="footer-mobile-only"><Link href="/streaming">Streaming</Link></li>
               <li><Link href="/aide">Aide</Link></li>
             </ul>
           </div>
-          <div className="footer-col">
+          <div className="footer-col footer-legal">
             <h4>Légal</h4>
             <ul>
               <li><Link href="/cgu">CGU</Link></li>
@@ -33,7 +34,7 @@ export default function FooterMain() {
               <li><Link href="/mentions-legales">Mentions légales</Link></li>
             </ul>
           </div>
-          <div className="footer-col">
+          <div className="footer-col footer-follow">
             <h4>Suivez-nous</h4>
             <div className="footer-socials">
               <a

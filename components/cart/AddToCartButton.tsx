@@ -67,7 +67,7 @@ export default function AddToCartButton({
   title = "Ajouter au panier",
 }: Props) {
   return (
-    <button type="button" className={className} title={title} onClick={() => addItemToCart(item)}>
+    <button type="button" className={`${className} cart-touch-btn`} title={title} onClick={() => addItemToCart(item)}>
       <i className={iconClass} />
     </button>
   );

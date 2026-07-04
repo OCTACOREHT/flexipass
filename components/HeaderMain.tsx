@@ -631,7 +631,7 @@ export default function HeaderMain() {
               </div>
             )}
             <button
-              className="icon-btn cart-btn"
+              className="icon-btn cart-btn cart-touch-btn"
               aria-label="Panier"
               onClick={() => {
                 if (typeof window !== "undefined") {
