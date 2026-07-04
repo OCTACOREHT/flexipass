@@ -5,6 +5,7 @@ import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import HeaderMain from "@/components/HeaderMain";
 import FooterMain from "@/components/FooterMain";
+import { emitCartToast } from "@/components/cart/cart-toast";
 import { getProductImageSrc, handleProductImageError } from "@/lib/product-brand";
 
 type Plan = { name: string; note: string; price: string; label?: string; href?: string };
@@ -372,6 +373,7 @@ export default function ProductPage() {
 
       localStorage.setItem(CART_KEY, JSON.stringify(list));
       pushCartUpdate();
+      emitCartToast({ message: "Produit ajouté au panier.", variant: "success", duration: 1500 });
       setCartNote("Ajouté au panier.");
       setTimeout(() => setCartNote(null), 2000);
     } catch {

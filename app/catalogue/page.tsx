@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import FooterMain from "@/components/FooterMain";
 import HeaderMain from "@/components/HeaderMain";
+import { addItemToCart } from "@/components/cart/AddToCartButton";
 import { getProductImageSrc, handleProductImageError } from "@/lib/product-brand";
 import { getPlanBoxData } from "@/lib/plan-display";
 
@@ -227,10 +228,10 @@ export default function CataloguePage() {
                       <button
                         type="button"
                         className="btn-icon primary"
-                        onClick={() => {}}
-                        title="DÃ©tails"
+                        onClick={() => addItemToCart({ id: p.id, title: getDisplayTitle(p.title), price: selectedVariant?.price ?? p.price, image: getProductImageSrc(p) })}
+                        title="Ajouter au panier"
                       >
-                        <i className="ri-arrow-right-line" />
+                        <i className="ri-shopping-cart-2-line" />
                       </button>
                       <a
                         className="btn-icon"

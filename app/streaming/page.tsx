@@ -1,5 +1,6 @@
 import FooterMain from "@/components/FooterMain";
 import HeaderMain from "@/components/HeaderMain";
+import AddToCartButton from "@/components/cart/AddToCartButton";
 import { getProductImageSrc } from "@/lib/product-brand";
 import { getPlanBoxData } from "@/lib/plan-display";
 import Link from "next/link";
@@ -56,9 +57,13 @@ export default function StreamingPage() {
           <div className="compact-price">{item.price}</div>
         </div>
         <div className="compact-actions">
-          <button className="btn-icon primary" title="Ajouter au panier">
-            <i className="ri-shopping-cart-2-line" />
-          </button>
+          <AddToCartButton
+            item={{
+              title: item.title,
+              price: item.price,
+              image: getProductImageSrc(item),
+            }}
+          />
           <a className="btn-icon" href="/catalogue" title="Voir les détails">
             <i className="ri-arrow-right-line" />
           </a>

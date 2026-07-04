@@ -5,6 +5,9 @@ import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { getProductImageSrc, handleProductImageError } from "@/lib/product-brand";
 import { getAuthCallbackUrl } from "@/lib/site-url";
+import Toaster from "@/components/admin/ui/Toaster";
+import { useToasts } from "@/components/admin/hooks/useToasts";
+import { CART_TOAST_EVENT, type CartToastDetail } from "@/components/cart/cart-toast";
 
 type Product = {
   id: string;
@@ -128,6 +131,7 @@ export default function HeaderMain() {
   const [policyError, setPolicyError] = useState<string | null>(null);
   const [policyAcceptedAt, setPolicyAcceptedAt] = useState<string | null>(null);
   const [signOutConfirmOpen, setSignOutConfirmOpen] = useState(false);
+  const { toasts, pushToast, dismissToast } = useToasts();
   const canAttemptLogin = privacyAccepted || privacyPolicyAccepted;
   const isLegalPage = pathname === "/confidentialite";
   const overlayOpen = loginOpen || (!isLegalPage && policyModalOpen);
@@ -192,6 +196,22 @@ export default function HeaderMain() {
       document.body.style.paddingRight = previousBodyPaddingRight;
     };
   }, [overlayOpen]);
+
+  useEffect(() => {
+    const onToast = (event: Event) => {
+      const detail = (event as CustomEvent<CartToastDetail>).detail;
+      if (!detail?.message) return;
+      pushToast({
+        message: detail.message,
+        title: detail.title,
+        variant: detail.variant ?? "success",
+        duration: detail.duration ?? 1500,
+      });
+    };
+
+    window.addEventListener(CART_TOAST_EVENT, onToast as EventListener);
+    return () => window.removeEventListener(CART_TOAST_EVENT, onToast as EventListener);
+  }, [pushToast]);
 
   useEffect(() => {
     let lastY = window.pageYOffset || document.documentElement.scrollTop;
@@ -486,6 +506,12 @@ export default function HeaderMain() {
 
   return (
     <>
+      <Toaster
+        toasts={toasts}
+        onDismiss={dismissToast}
+        className="fixed right-6 top-6 z-[1205] flex w-[min(360px,92vw)] flex-col gap-3"
+        toastClassName="animate-[toast-rise-in_180ms_ease-out]"
+      />
       <header className={`nav ${menuOpen ? "menu-open" : ""}`}>
         <div className="nav-inner">
           <Link href="/" className="brand-logo" aria-label="Aller à la page d'accueil" title="Accueil">
