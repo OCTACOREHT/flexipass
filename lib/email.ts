@@ -194,6 +194,14 @@ const toEmailAssetUrl = (raw: string | undefined, baseUrl: string) => {
     : `${baseUrl}/${value.replace(/^\/+/, "")}`;
 };
 
+const getPublicEmailAssetUrl = (relativePath: string, siteHome: string) => {
+  const cleanHome = siteHome.trim().replace(/\/+$/, "");
+  const isLocal = /^https?:\/\/(localhost|127\.0\.0\.1|172\.)/i.test(cleanHome);
+  const base = isLocal ? "https://flexipass.shop" : cleanHome;
+  const path = relativePath.startsWith("/") ? relativePath : `/${relativePath}`;
+  return `${base}${path}`;
+};
+
 const toStatusCopy = (status: string) => {
   const normalized = status.toLowerCase();
 
@@ -293,13 +301,16 @@ export const buildEmailFooterHtml = ({
     { href: linkedinUrl || siteHome, icon: "linkedin" as const, ariaLabel: "LinkedIn" },
   ];
 
-  const buildSocialCell = (social: (typeof socials)[number]) => `
-    <td style="padding:0 7px;">
-      <a href="${social.href}" aria-label="${social.ariaLabel}" style="display:inline-block;width:46px;height:46px;line-height:46px;text-align:center;background:#FFFFFF;border:1px solid #F0D8BE;border-radius:999px;color:#FF6A1A;text-decoration:none;">
-        <span style="display:inline-block;vertical-align:middle;">${renderRemixIcon(social.icon)}</span>
-      </a>
-    </td>
-  `;
+  const buildSocialCell = (social: (typeof socials)[number]) => {
+    const iconUrl = getPublicEmailAssetUrl(`assets/email-icons/${social.icon}.png`, siteHome);
+    return `
+      <td style="padding:0 7px;">
+        <a href="${social.href}" aria-label="${social.ariaLabel}" style="display:inline-block;width:46px;height:46px;background:#FFFFFF;border:1px solid #F0D8BE;border-radius:999px;text-decoration:none;text-align:center;vertical-align:middle;line-height:46px;">
+          <img src="${iconUrl}" alt="${social.ariaLabel}" width="20" height="20" style="display:inline-block;vertical-align:middle;border:none;" />
+        </a>
+      </td>
+    `;
+  };
 
   return `
     <tr>
@@ -379,26 +390,7 @@ export async function sendOrderConfirmationEmail({
   const facebookUrl = process.env.NEXT_PUBLIC_FACEBOOK_URL || process.env.FACEBOOK_URL || siteHome;
   const linkedinUrl = process.env.NEXT_PUBLIC_LINKEDIN_URL || process.env.LINKEDIN_URL || siteHome;
   const tiktokUrl = process.env.NEXT_PUBLIC_TIKTOK_URL || process.env.TIKTOK_URL || siteHome;
-  const primaryLogoPath = path.join(process.cwd(), "public", "Flexipass-email.png");
-  const fallbackLogoPath = path.join(
-    process.cwd(),
-    "public",
-    "assets",
-    "images",
-    "brands",
-    "logo-flexipass.png"
-  );
-  const logoPath = existsSync(primaryLogoPath) ? primaryLogoPath : fallbackLogoPath;
-  const logoUrl =
-    logoEnv ||
-    (baseUrl
-      ? existsSync(primaryLogoPath)
-        ? `${baseUrl}/Flexipass-email.png`
-        : `${baseUrl}/assets/images/brands/logo-flexipass.png`
-      : "");
-  const logoCid = "flexipass-logo";
-  const hasLocalLogo = existsSync(logoPath);
-
+  const logoUrl = logoEnv || (baseUrl ? getPublicEmailAssetUrl("Flexipass-email.png", baseUrl) : "");
   const { from } = getSmtpConfig();
   const transporter = createEmailTransporter();
 
@@ -412,11 +404,9 @@ export async function sendOrderConfirmationEmail({
   const paymentLabel = escapeHtml(toPaymentLabel(order.payment_method || "virement"));
   const emailAddress = escapeHtml(String(order.customer_email || "client@flexipass.ht"));
   const orderId = escapeHtml(String(order.id || ""));
-  const logoMarkup = hasLocalLogo
-    ? `<img src="cid:${logoCid}" alt="FlexiPass" style="height:48px;display:inline-block;" />`
-    : logoUrl
-      ? `<img src="${logoUrl}" alt="FlexiPass" style="height:48px;display:inline-block;" />`
-      : `<div style="display:inline-block;background:#FFF4DE;color:#C26A13;border-radius:16px;padding:12px 16px;font-size:18px;font-weight:800;">FlexiPass</div>`;
+  const logoMarkup = logoUrl
+    ? `<img src="${logoUrl}" alt="FlexiPass" style="height:48px;display:inline-block;border:none;" />`
+    : `<div style="display:inline-block;background:#FFF4DE;color:#C26A13;border-radius:16px;padding:12px 16px;font-size:18px;font-weight:800;">FlexiPass</div>`;
 
   const html = `
 <!DOCTYPE html>
@@ -567,9 +557,7 @@ export async function sendOrderConfirmationEmail({
     });
 
     const info = await transporter.sendMail(
-      buildSendOptions(order.customer_email || "", subject, text, html, hasLocalLogo
-        ? [{ filename: path.basename(logoPath), path: logoPath, cid: logoCid }]
-        : undefined)
+      buildSendOptions(order.customer_email || "", subject, text, html)
     );
     console.info("Email sent (order confirmation)", { from, to: order.customer_email, messageId: (info as any)?.messageId, response: (info as any)?.response });
     return { success: true };
@@ -700,36 +688,15 @@ export async function sendAdminInvitationEmail({
   const linkedinUrl = process.env.NEXT_PUBLIC_LINKEDIN_URL || process.env.LINKEDIN_URL || siteHome;
   const tiktokUrl = process.env.NEXT_PUBLIC_TIKTOK_URL || process.env.TIKTOK_URL || siteHome;
   
-  const primaryLogoPath = path.join(process.cwd(), "public", "Flexipass-email.png");
-  const fallbackLogoPath = path.join(
-    process.cwd(),
-    "public",
-    "assets",
-    "images",
-    "brands",
-    "logo-flexipass.png"
-  );
-  const logoPath = existsSync(primaryLogoPath) ? primaryLogoPath : fallbackLogoPath;
-  const logoUrl =
-    logoEnv ||
-    (baseUrl
-      ? existsSync(primaryLogoPath)
-        ? `${baseUrl}/Flexipass-email.png`
-        : `${baseUrl}/assets/images/brands/logo-flexipass.png`
-      : "");
-  const logoCid = "flexipass-logo";
-  const hasLocalLogo = existsSync(logoPath);
-
+  const logoUrl = logoEnv || (baseUrl ? getPublicEmailAssetUrl("Flexipass-email.png", baseUrl) : "");
   const { from } = getSmtpConfig();
   const transporter = createEmailTransporter();
 
   const subject = `Invitation à rejoindre l'administration FlexiPass`;
   
-  const logoMarkup = hasLocalLogo
-    ? `<img src="cid:${logoCid}" alt="FlexiPass" style="height:48px;display:inline-block;" />`
-    : logoUrl
-      ? `<img src="${logoUrl}" alt="FlexiPass" style="height:48px;display:inline-block;" />`
-      : `<div style="display:inline-block;background:#FFF4DE;color:#C26A13;border-radius:16px;padding:12px 16px;font-size:18px;font-weight:800;">FlexiPass</div>`;
+  const logoMarkup = logoUrl
+    ? `<img src="${logoUrl}" alt="FlexiPass" style="height:48px;display:inline-block;border:none;" />`
+    : `<div style="display:inline-block;background:#FFF4DE;color:#C26A13;border-radius:16px;padding:12px 16px;font-size:18px;font-weight:800;">FlexiPass</div>`;
 
   const html = `
 <!DOCTYPE html>
@@ -809,9 +776,7 @@ export async function sendAdminInvitationEmail({
     const text = `Bonjour ${name},\n\nVous avez été invité à rejoindre la console de gestion de FlexiPass.\n\nPour activer votre compte et définir votre mot de passe, veuillez vous rendre sur le lien suivant :\n${activationLink}\n\nMerci,\nL'équipe FlexiPass`;
 
     const info = await transporter.sendMail(
-      buildSendOptions(email, subject, text, html, hasLocalLogo
-        ? [{ filename: path.basename(logoPath), path: logoPath, cid: logoCid }]
-        : undefined)
+      buildSendOptions(email, subject, text, html)
     );
     console.info("Email sent (admin invitation)", { from, to: email, messageId: (info as any)?.messageId, response: (info as any)?.response });
     return { success: true };
@@ -848,36 +813,15 @@ export async function sendAdminPromotionEmail({
   const linkedinUrl = process.env.NEXT_PUBLIC_LINKEDIN_URL || process.env.LINKEDIN_URL || siteHome;
   const tiktokUrl = process.env.NEXT_PUBLIC_TIKTOK_URL || process.env.TIKTOK_URL || siteHome;
   
-  const primaryLogoPath = path.join(process.cwd(), "public", "Flexipass-email.png");
-  const fallbackLogoPath = path.join(
-    process.cwd(),
-    "public",
-    "assets",
-    "images",
-    "brands",
-    "logo-flexipass.png"
-  );
-  const logoPath = existsSync(primaryLogoPath) ? primaryLogoPath : fallbackLogoPath;
-  const logoUrl =
-    logoEnv ||
-    (baseUrl
-      ? existsSync(primaryLogoPath)
-        ? `${baseUrl}/Flexipass-email.png`
-        : `${baseUrl}/assets/images/brands/logo-flexipass.png`
-      : "");
-  const logoCid = "flexipass-logo";
-  const hasLocalLogo = existsSync(logoPath);
-
+  const logoUrl = logoEnv || (baseUrl ? getPublicEmailAssetUrl("Flexipass-email.png", baseUrl) : "");
   const { from } = getSmtpConfig();
   const transporter = createEmailTransporter();
 
   const subject = `Accès Administrateur activé sur FlexiPass`;
   
-  const logoMarkup = hasLocalLogo
-    ? `<img src="cid:${logoCid}" alt="FlexiPass" style="height:48px;display:inline-block;" />`
-    : logoUrl
-      ? `<img src="${logoUrl}" alt="FlexiPass" style="height:48px;display:inline-block;" />`
-      : `<div style="display:inline-block;background:#FFF4DE;color:#C26A13;border-radius:16px;padding:12px 16px;font-size:18px;font-weight:800;">FlexiPass</div>`;
+  const logoMarkup = logoUrl
+    ? `<img src="${logoUrl}" alt="FlexiPass" style="height:48px;display:inline-block;border:none;" />`
+    : `<div style="display:inline-block;background:#FFF4DE;color:#C26A13;border-radius:16px;padding:12px 16px;font-size:18px;font-weight:800;">FlexiPass</div>`;
 
   const loginUrl = `${siteHome}/admin-login`;
 
@@ -976,9 +920,7 @@ export async function sendAdminPromotionEmail({
       : `Bonjour ${name},\n\nVotre compte a été promu au rôle d'administrateur (${roleName}) sur FlexiPass.\n\nVous pouvez vous connecter immédiatement à la console d'administration avec vos identifiants habituels :\n${loginUrl}\n\nL'équipe FlexiPass`;
 
     const info = await transporter.sendMail(
-      buildSendOptions(email, subject, text, html, hasLocalLogo
-        ? [{ filename: path.basename(logoPath), path: logoPath, cid: logoCid }]
-        : undefined)
+      buildSendOptions(email, subject, text, html)
     );
     console.info("Email sent (admin promotion)", { from, to: email, messageId: (info as any)?.messageId, response: (info as any)?.response });
     return { success: true };
@@ -1013,36 +955,15 @@ export async function sendAdminWelcomeEmail({
   const linkedinUrl = process.env.NEXT_PUBLIC_LINKEDIN_URL || process.env.LINKEDIN_URL || siteHome;
   const tiktokUrl = process.env.NEXT_PUBLIC_TIKTOK_URL || process.env.TIKTOK_URL || siteHome;
   
-  const primaryLogoPath = path.join(process.cwd(), "public", "Flexipass-email.png");
-  const fallbackLogoPath = path.join(
-    process.cwd(),
-    "public",
-    "assets",
-    "images",
-    "brands",
-    "logo-flexipass.png"
-  );
-  const logoPath = existsSync(primaryLogoPath) ? primaryLogoPath : fallbackLogoPath;
-  const logoUrl =
-    logoEnv ||
-    (baseUrl
-      ? existsSync(primaryLogoPath)
-        ? `${baseUrl}/Flexipass-email.png`
-        : `${baseUrl}/assets/images/brands/logo-flexipass.png`
-      : "");
-  const logoCid = "flexipass-logo";
-  const hasLocalLogo = existsSync(logoPath);
-
+  const logoUrl = logoEnv || (baseUrl ? getPublicEmailAssetUrl("Flexipass-email.png", baseUrl) : "");
   const { from } = getSmtpConfig();
   const transporter = createEmailTransporter();
 
   const subject = `Votre compte administrateur FlexiPass a été créé`;
   
-  const logoMarkup = hasLocalLogo
-    ? `<img src="cid:${logoCid}" alt="FlexiPass" style="height:48px;display:inline-block;" />`
-    : logoUrl
-      ? `<img src="${logoUrl}" alt="FlexiPass" style="height:48px;display:inline-block;" />`
-      : `<div style="display:inline-block;background:#FFF4DE;color:#C26A13;border-radius:16px;padding:12px 16px;font-size:18px;font-weight:800;">FlexiPass</div>`;
+  const logoMarkup = logoUrl
+    ? `<img src="${logoUrl}" alt="FlexiPass" style="height:48px;display:inline-block;border:none;" />`
+    : `<div style="display:inline-block;background:#FFF4DE;color:#C26A13;border-radius:16px;padding:12px 16px;font-size:18px;font-weight:800;">FlexiPass</div>`;
 
   const loginUrl = `${siteHome}/admin-login`;
 
@@ -1140,9 +1061,7 @@ export async function sendAdminWelcomeEmail({
     const text = `Bonjour ${name},\n\nVotre compte administrateur FlexiPass a été créé.\n\nEmail: ${email}\nMot de passe temporaire: ${tempPassword || "Contactez l'administrateur"}\n\nConnectez-vous ici: ${loginUrl}\n\nL'équipe FlexiPass`;
 
     const info = await transporter.sendMail(
-      buildSendOptions(email, subject, text, html, hasLocalLogo
-        ? [{ filename: path.basename(logoPath), path: logoPath, cid: logoCid }]
-        : undefined)
+      buildSendOptions(email, subject, text, html)
     );
     console.info("Email sent (admin welcome)", { from, to: email, messageId: (info as any)?.messageId, response: (info as any)?.response });
     return { success: true };

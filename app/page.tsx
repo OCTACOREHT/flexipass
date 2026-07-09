@@ -2,6 +2,9 @@
 
 import { useEffect, useMemo, useState } from "react";
 import FooterMain from "@/components/FooterMain";
+import Toaster from "@/components/admin/ui/Toaster";
+import { useToasts } from "@/components/admin/hooks/useToasts";
+import { CART_TOAST_EVENT, type CartToastDetail, emitCartToast } from "@/components/cart/cart-toast";
 import { getProductImageSrc, handleProductImageError } from "@/lib/product-brand";
 import { getPlanBoxData } from "@/lib/plan-display";
 import { getAuthCallbackUrl } from "@/lib/site-url";
@@ -179,6 +182,8 @@ export default function Home() {
   const [policyAcceptedAt, setPolicyAcceptedAt] = useState<string | null>(null);
   const [signOutConfirmOpen, setSignOutConfirmOpen] = useState(false);
   const [loadingProducts, setLoadingProducts] = useState(true);
+  const [checkoutPending, setCheckoutPending] = useState(false);
+  const { toasts, pushToast, dismissToast } = useToasts();
   const canAttemptLogin = privacyAccepted || privacyPolicyAccepted;
   const overlayOpen = loginOpen || policyModalOpen || cartOpen;
 
@@ -202,6 +207,30 @@ export default function Home() {
       setPolicyError(null);
     }
   }, [user, hydrated]);
+
+  useEffect(() => {
+    if (!checkoutPending || !user) return;
+    setCheckoutPending(false);
+    setLoginOpen(false);
+    setCartOpen(false);
+    window.location.href = "/paiement";
+  }, [checkoutPending, user]);
+
+  useEffect(() => {
+    const onToast = (event: Event) => {
+      const detail = (event as CustomEvent<CartToastDetail>).detail;
+      if (!detail?.message) return;
+      pushToast({
+        message: detail.message,
+        title: detail.title,
+        variant: detail.variant ?? "success",
+        duration: detail.duration ?? 1500,
+      });
+    };
+
+    window.addEventListener(CART_TOAST_EVENT, onToast as EventListener);
+    return () => window.removeEventListener(CART_TOAST_EVENT, onToast as EventListener);
+  }, [pushToast]);
 
   useEffect(() => {
     const checkPolicyStatus = async () => {
@@ -476,7 +505,7 @@ export default function Home() {
       }
       return [...items, { id: p.id, title: getDisplayTitle(p.title), price: price ?? p.price, qty: 1, image: getProductImageSrc(p) }];
     });
-    setCartOpen(true);
+    emitCartToast({ message: "Produit ajouté au panier.", variant: "success", duration: 1500 });
   };
 
   const updateQty = (id: string, price: number, delta: number) => {
@@ -616,12 +645,25 @@ export default function Home() {
   };
   const handleCheckout = () => {
     if (cartItems.length === 0) return;
+    if (!user) {
+      setCheckoutPending(true);
+      setCartOpen(false);
+      setAuthError("Connectez-vous avec Google pour commander.");
+      setLoginOpen(true);
+      return;
+    }
     setCartOpen(false);
     window.location.href = "/paiement";
   };
 
   return (
     <main>
+      <Toaster
+        toasts={toasts}
+        onDismiss={dismissToast}
+        className="fixed right-6 top-6 z-[1205] flex w-[min(360px,92vw)] flex-col gap-3"
+        toastClassName="animate-[toast-rise-in_180ms_ease-out]"
+      />
       <header className={`nav ${menuOpen ? "menu-open" : ""}`}>
         <div className="nav-inner">
           <div className="brand-logo">
@@ -712,7 +754,7 @@ export default function Home() {
                 </button>
               </div>
             )}
-            <button className="icon-btn cart-btn" aria-label="Panier" onClick={() => setCartOpen((v) => !v)}>
+            <button className="icon-btn cart-btn cart-touch-btn" aria-label="Panier" onClick={() => setCartOpen((v) => !v)}>
               <i className="ri-shopping-bag-3-line" />
               <span className="cart-badge">{cartCount}</span>
             </button>
