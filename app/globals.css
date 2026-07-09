@@ -1235,11 +1235,11 @@ a:hover {
     min-width: 0;
     max-width: 132px;
     height: 42px;
-    padding: 0 10px;
+    padding: 0 12px;
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    border-radius: 14px;
+    border-radius: 999px;
     font-size: 14px;
   }
 
@@ -1309,8 +1309,9 @@ a:hover {
   .user-chip {
     max-width: 112px;
     font-size: 12px;
-    padding: 0 8px;
+    padding: 0 10px;
     gap: 5px;
+    border-radius: 999px;
   }
 
   .user-chip .user-name {
@@ -2767,16 +2768,23 @@ a:hover {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 10px;
-  border-radius: 14px;
+  padding: 8px 16px;
+  border-radius: 999px;
   background: #f7f4ee;
   border: 1.2px solid #e7e1d8;
   font-weight: 700;
   color: #2f2a33;
-  max-width: 140px;
+  max-width: 150px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  cursor: pointer;
+  transition: background 150ms ease, border-color 150ms ease;
+}
+
+.user-chip:hover {
+  background: #fdfbf7;
+  border-color: #d7d1c8;
 }
 
 .user-chip i {

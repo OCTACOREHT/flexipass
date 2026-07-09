@@ -559,32 +559,9 @@ export default function HeaderMain() {
                 setLoginOpen(true);
               }}
               aria-expanded={settingsOpen}
-              style={{
-                width: "auto",
-                minWidth: "clamp(124px, 28vw, 164px)",
-                maxWidth: "clamp(124px, 34vw, 176px)",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "6px",
-                padding: "0 10px",
-                justifyContent: "flex-start",
-                transition: "min-width 180ms ease, max-width 180ms ease, transform 180ms ease, opacity 180ms ease",
-              }}
             >
               <i className="ri-user-smile-line" />
-              <span
-                className="user-name"
-                style={{
-                  display: "block",
-                  flex: "1 1 auto",
-                  minWidth: 0,
-                  maxWidth: "calc(100% - 22px)",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                  lineHeight: 1.1,
-                }}
-              >
+              <span className="user-name">
                 {userLabel}
               </span>
             </button>
