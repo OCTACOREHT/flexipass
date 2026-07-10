@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useEffect, useState } from "react";
 import { X, ExternalLink, ShieldCheck } from "lucide-react";
@@ -133,35 +133,34 @@ export default function OrderModal({ order, isOpen, onClose, onSuccess }: OrderM
       setIsRejecting(false);
     }
   };
-
-  return (
+  return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose}></div>
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose}></div>
 
-      <div className="relative bg-[#1e1e2e] w-full max-w-2xl rounded-3xl border border-zinc-800 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-        <div className="p-6 border-b border-zinc-800 flex items-center justify-between bg-[#27293d]/50">
+      <div className="relative bg-white w-full max-w-2xl rounded-3xl border border-[#efe5d9] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+        <div className="p-6 border-b border-[#efe5d9] flex items-center justify-between bg-white">
           <div>
-            <h2 className="text-xl font-bold text-zinc-100 flex items-center gap-2">
-              Détails de la Commande <span className="text-zinc-500 text-sm font-mono">#{order.id.slice(0, 8)}</span>
+            <h2 className="text-xl font-bold text-[#2f2a33] flex items-center gap-2">
+              Détails de la Commande <span className="text-zinc-400 text-sm font-mono">#{order.id.slice(0, 8)}</span>
             </h2>
-            <p className="text-zinc-500 text-xs">
+            <p className="text-zinc-500 text-xs mt-0.5">
               Passée le {format(new Date(order.created_at), "d MMMM yyyy 'à' HH:mm")}
             </p>
           </div>
           <button
             onClick={onClose}
-            className="p-2 text-zinc-500 hover:text-zinc-200 transition-colors bg-zinc-800/50 rounded-full"
+            className="p-2 text-zinc-400 hover:text-[#ff6a1a] hover:bg-zinc-100 transition-colors rounded-full"
           >
             <X size={20} />
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-6 space-y-8">
+        <div className="flex-1 overflow-y-auto p-6 space-y-8 bg-white">
           <div className="grid grid-cols-2 gap-6">
             <div className="space-y-1">
               <p className="text-zinc-500 text-[10px] uppercase font-bold tracking-widest">Client</p>
-              <p className="text-zinc-200 font-medium">
-                {(order as any).user_name || "Client"} -
+              <p className="text-[#2f2a33] font-semibold">
+                {(order as any).user_name || "Client"} -{" "}
                 <span className="text-zinc-500 font-mono text-[10px]">
                   {(order as any).email || (order as any).customer_email || order.user_id}
                 </span>
@@ -169,67 +168,66 @@ export default function OrderModal({ order, isOpen, onClose, onSuccess }: OrderM
             </div>
             <div className="space-y-1">
               <p className="text-zinc-500 text-[10px] uppercase font-bold tracking-widest">Montant de la Commande</p>
-              <p className="text-2xl font-bold text-zinc-100">${Number(order.total_amount).toFixed(2)}</p>
+              <p className="text-2xl font-bold text-[#ff6a1a]">{Number(order.total_amount).toFixed(2)} HTG</p>
             </div>
           </div>
 
-          <div className="space-y-4 p-6 rounded-2xl border border-red-500/20 bg-gradient-to-br from-[#2b1a2a] via-[#241a2e] to-[#1a1f3b]">
+          <div className="space-y-4 p-6 rounded-2xl border border-[#efe5d9] bg-zinc-50/50">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3 text-red-400">
-                <div className="w-9 h-9 rounded-xl bg-red-500/15 border border-red-500/20 flex items-center justify-center">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-white border border-[#efe5d9] flex items-center justify-center text-[#ff6a1a]">
                   <ShieldCheck size={18} />
                 </div>
                 <div>
-                  <p className="text-[11px] uppercase font-black tracking-widest">Livraison du compte</p>
-                  <p className="text-[12px] text-zinc-400">Le champ Email se remplit automatiquement, saisis manuellement les autres.</p>
+                  <p className="text-[11px] uppercase font-black tracking-widest text-[#ff6a1a]">Livraison du compte</p>
+                  <p className="text-[12px] text-zinc-500">Le champ Email se remplit automatiquement, saisis manuellement les autres.</p>
                 </div>
               </div>
               {loadingAccounts && <span className="text-[10px] text-zinc-500">Chargement...</span>}
             </div>
 
-
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="text-[10px] uppercase text-zinc-500">Email du compte</label>
-              <input
-                type="email"
-                value={accountEmail}
-                onChange={(e) => setAccountEmail(e.target.value)}
-                disabled={!!selectedAccountId}
-                onFocus={() => {
-                  if (selectedAccountId && !accountEmail) {
-                    const acc = accounts.find((a) => a.id === selectedAccountId);
-                    if (acc) setAccountEmail(acc.email || "");
-                  }
-                }}
-                className="w-full mt-2 rounded-xl bg-[#0f1222] border border-zinc-800 px-3 py-2 text-zinc-200 focus:outline-none focus:ring-2 focus:ring-red-500/40 disabled:opacity-60"
-              />
+                <label className="text-[10px] uppercase font-bold text-zinc-500">Email du compte</label>
+                <input
+                  type="email"
+                  value={accountEmail}
+                  onChange={(e) => setAccountEmail(e.target.value)}
+                  disabled={!!selectedAccountId}
+                  onFocus={() => {
+                    if (selectedAccountId && !accountEmail) {
+                      const acc = accounts.find((a) => a.id === selectedAccountId);
+                      if (acc) setAccountEmail(acc.email || "");
+                    }
+                  }}
+                  className="w-full mt-2 rounded-xl bg-white border border-[#e7e1d8] px-3 py-2 text-[#2f2a33] placeholder-zinc-400 focus:outline-none focus:border-[#ff8a00] focus:ring-4 focus:ring-[#ff8a00]/5 disabled:opacity-60"
+                />
               </div>
               <div>
-                <label className="text-[10px] uppercase text-zinc-500">Mot de passe</label>
-              <input
-                type="text"
-                value={accountPassword}
-                onChange={(e) => setAccountPassword(e.target.value)}
-                disabled={!!selectedAccountId}
-                onFocus={() => {
-                  if (selectedAccountId && !accountPassword) {
-                    const acc = accounts.find((a) => a.id === selectedAccountId);
-                    if (acc) setAccountPassword(acc.password_encrypted || "");
-                  }
-                }}
-                className="w-full mt-2 rounded-xl bg-[#0f1222] border border-zinc-800 px-3 py-2 text-zinc-200 focus:outline-none focus:ring-2 focus:ring-red-500/40 disabled:opacity-60"
-              />
+                <label className="text-[10px] uppercase font-bold text-zinc-500">Mot de passe</label>
+                <input
+                  type="text"
+                  value={accountPassword}
+                  onChange={(e) => setAccountPassword(e.target.value)}
+                  disabled={!!selectedAccountId}
+                  onFocus={() => {
+                    if (selectedAccountId && !accountPassword) {
+                      const acc = accounts.find((a) => a.id === selectedAccountId);
+                      if (acc) setAccountPassword(acc.password_encrypted || "");
+                    }
+                  }}
+                  className="w-full mt-2 rounded-xl bg-white border border-[#e7e1d8] px-3 py-2 text-[#2f2a33] placeholder-zinc-400 focus:outline-none focus:border-[#ff8a00] focus:ring-4 focus:ring-[#ff8a00]/5 disabled:opacity-60"
+                />
               </div>
             </div>
 
             <div>
-              <label className="text-[10px] uppercase text-zinc-500">Profil (optionnel)</label>
+              <label className="text-[10px] uppercase font-bold text-zinc-500">Profil (optionnel)</label>
               <input
                 type="text"
                 value={accountProfile}
                 onChange={(e) => setAccountProfile(e.target.value)}
-                className="w-full mt-2 rounded-xl bg-[#0f1222] border border-zinc-800 px-3 py-2 text-zinc-200 focus:outline-none focus:ring-2 focus:ring-red-500/40"
+                className="w-full mt-2 rounded-xl bg-white border border-[#e7e1d8] px-3 py-2 text-[#2f2a33] placeholder-zinc-400 focus:outline-none focus:border-[#ff8a00] focus:ring-4 focus:ring-[#ff8a00]/5"
               />
             </div>
           </div>
@@ -242,22 +240,22 @@ export default function OrderModal({ order, isOpen, onClose, onSuccess }: OrderM
                   href={order.payment_proof_url}
                   target="_blank"
                   rel="noreferrer"
-                  className="text-red-500 text-xs flex items-center gap-1 hover:underline"
+                  className="text-[#ff6a1a] text-xs flex items-center gap-1 hover:underline font-bold"
                 >
                   Ouvrir dans un nouvel onglet <ExternalLink size={12} />
                 </a>
               </div>
-              <div className="relative aspect-video w-full rounded-2xl overflow-hidden bg-zinc-900 border border-zinc-800 group">
+              <div className="relative aspect-video w-full rounded-2xl overflow-hidden bg-zinc-50 border border-[#efe5d9] group">
                 <img src={order.payment_proof_url} alt="Preuve de Paiement" className="w-full h-full object-contain" />
               </div>
             </div>
           )}
         </div>
 
-        <div className="p-6 border-t border-zinc-800 bg-[#27293d]/50 flex items-center justify-between">
+        <div className="p-6 border-t border-[#efe5d9] bg-white flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div
-              className={`w-2 h-2 rounded-full ${
+              className={`w-2.5 h-2.5 rounded-full ${
                 order.status === "completed" || order.status === "delivered"
                   ? "bg-emerald-500"
                   : order.status === "rejected"
@@ -265,7 +263,7 @@ export default function OrderModal({ order, isOpen, onClose, onSuccess }: OrderM
                   : "bg-amber-500"
               }`}
             ></div>
-            <span className="text-xs text-zinc-400 capitalize">
+            <span className="text-xs text-zinc-600 font-bold capitalize">
               {order.status === "completed" || order.status === "delivered"
                 ? "Terminee"
                 : order.status === "rejected"
@@ -276,7 +274,7 @@ export default function OrderModal({ order, isOpen, onClose, onSuccess }: OrderM
           <div className="flex gap-3">
             <button
               onClick={onClose}
-              className="px-6 py-2.5 rounded-xl text-zinc-400 font-medium hover:bg-zinc-800 transition-all border border-transparent hover:border-zinc-700"
+              className="px-6 py-2.5 rounded-xl text-zinc-600 font-semibold hover:bg-zinc-100 hover:text-zinc-800 transition-all border border-transparent"
             >
               Fermer
             </button>
@@ -285,10 +283,10 @@ export default function OrderModal({ order, isOpen, onClose, onSuccess }: OrderM
                 <button
                   onClick={handleReject}
                   disabled={isRejecting || isApproving}
-                  className="px-6 py-2.5 rounded-xl font-bold transition-all flex items-center gap-2 bg-red-600 hover:bg-red-400 text-white shadow-lg shadow-red-500/20 disabled:opacity-50"
+                  className="px-6 py-2.5 rounded-xl font-bold transition-all flex items-center gap-2 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 disabled:opacity-50"
                 >
                   {isRejecting ? (
-                    <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+                    <div className="w-5 h-5 border-2 border-red-700/20 border-t-red-700 rounded-full animate-spin"></div>
                   ) : (
                     <X size={18} />
                   )}
@@ -297,10 +295,10 @@ export default function OrderModal({ order, isOpen, onClose, onSuccess }: OrderM
                 <button
                   onClick={handleApprove}
                   disabled={isApproving || isRejecting}
-                  className="px-8 py-2.5 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl transition-all flex items-center gap-2 shadow-lg shadow-red-500/20 disabled:opacity-50"
+                  className="px-8 py-2.5 bg-[#ff6a1a] hover:bg-[#ff5a00] text-white font-bold rounded-xl transition-all flex items-center gap-2 shadow-md shadow-[#ff6a1a]/15 disabled:opacity-50"
                 >
                   {isApproving ? (
-                    <div className="w-6 h-6 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+                    <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
                   ) : (
                     <ShieldCheck size={20} />
                   )}

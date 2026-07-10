@@ -11,18 +11,18 @@ interface StatCardProps {
 
 export default function StatCard({ title, value, icon: Icon, trend, trendUp }: StatCardProps) {
   return (
-    <div className="bg-[#1e1e2e] p-6 rounded-2xl border border-zinc-800 flex items-start justify-between shadow-lg hover:border-zinc-700 transition-colors">
+    <div className="bg-white p-4 rounded-[1.25rem] border border-[#efe5d9] flex items-start justify-between shadow-sm hover:shadow-md hover:border-[#ff8a00]/30 transition-all duration-300 group min-h-[100px] h-full">
       <div>
-        <p className="text-zinc-500 text-sm font-medium mb-1">{title}</p>
-        <h3 className="text-2xl font-bold text-zinc-100">{value}</h3>
+        <p className="text-zinc-500 text-xs font-medium mb-1">{title}</p>
+        <h3 className="text-xl font-bold text-[#2f2a33]">{value}</h3>
         {trend && (
-          <p className={`text-xs mt-2 flex items-center ${trendUp ? "text-emerald-500" : "text-red-500"}`}>
-            {trend} <span className="text-zinc-500 ml-1">ces 30 derniers jours</span>
+          <p className={`text-[10px] mt-1.5 ${trendUp ? "text-emerald-600" : "text-[#ff6a1a]"}`}>
+            {trend} <span className="text-zinc-400 block mt-0.5">ces 30 derniers jours</span>
           </p>
         )}
       </div>
-      <div className="p-3 bg-zinc-800/50 rounded-xl text-red-500 border border-zinc-700">
-        <Icon size={24} />
+      <div className="p-2.5 bg-zinc-50 rounded-xl text-[#ff6a1a] border border-zinc-100 group-hover:bg-[#ff8a00]/5 group-hover:scale-110 transition-all duration-300 shrink-0">
+        <Icon size={20} />
       </div>
     </div>
   );

@@ -104,26 +104,28 @@ export default function AdminClientsPage() {
 
         <div className="admin-card wide">
           <h3>Liste clients</h3>
-          <div className="admin-table">
-            <div className="admin-row head">
-              <span>Nom</span>
-              <span>Email</span>
-              <span>Statut</span>
-              <span>Actions</span>
-            </div>
-            {filtered.length === 0 && <div className="admin-empty">Aucun client trouvé.</div>}
-            {filtered.map((c) => (
-              <div className="admin-row" key={c.id} style={{ gridTemplateColumns: "1.2fr 1.2fr 0.6fr 0.6fr" }}>
-                <span>{c.name}</span>
-                <span>{c.email}</span>
-                <span>{c.status}</span>
-                <span>
-                  <button className="link danger" onClick={() => setConfirmDelete(c)}>
-                    Supprimer
-                  </button>
-                </span>
+          <div className="overflow-x-auto w-full no-scrollbar">
+            <div className="admin-table min-w-[600px]">
+              <div className="admin-row head">
+                <span>Nom</span>
+                <span>Email</span>
+                <span>Statut</span>
+                <span>Actions</span>
               </div>
-            ))}
+              {filtered.length === 0 && <div className="admin-empty">Aucun client trouvé.</div>}
+              {filtered.map((c) => (
+                <div className="admin-row" key={c.id} style={{ gridTemplateColumns: "1.2fr 1.2fr 0.6fr 0.6fr" }}>
+                  <span>{c.name}</span>
+                  <span>{c.email}</span>
+                  <span>{c.status}</span>
+                  <span>
+                    <button className="link danger" onClick={() => setConfirmDelete(c)}>
+                      Supprimer
+                    </button>
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>

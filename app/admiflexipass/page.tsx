@@ -128,33 +128,33 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="space-y-8 pb-12">
+    <div className="space-y-5 pb-8">
       {/* Header section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="text-4xl font-black italic uppercase tracking-tighter text-zinc-100 flex items-center gap-3">
-            Vue d'ensemble <span className="text-red-500">Admin</span>
+          <h1 className="text-3xl font-extrabold tracking-tight text-[#2f2a33] flex items-center gap-3">
+            Tableau de bord <span className="text-[#ff6a1a]">Admin</span>
           </h1>
-          <p className="text-zinc-500 font-medium uppercase tracking-widest text-xs mt-1">
-            Hub d'Intelligence d'Affaires FlexiPass
+          <p className="text-zinc-500 font-medium tracking-wide text-sm mt-1">
+            Gérez vos commandes, produits et utilisateurs en toute simplicité.
           </p>
         </div>
         <div className="flex items-center gap-3">
           <button 
             onClick={fetchDashboardData}
-            className="p-4 bg-[#1e1e2e] border border-zinc-800 rounded-2xl text-zinc-400 hover:text-white transition-all shadow-lg shadow-black/20"
+            className="flex items-center gap-2 px-4 py-2.5 bg-white border border-[#efe5d9] text-zinc-600 rounded-xl hover:text-[#ff6a1a] hover:bg-zinc-50 hover:border-orange-200 transition-all shadow-sm font-semibold text-sm"
+            title="Rafraîchir les données"
           >
-            <RefreshCcw size={20} className={isLoading ? "animate-spin" : ""} />
+            <RefreshCcw size={16} className={isLoading ? "animate-spin" : ""} />
+            <span>Actualiser</span>
           </button>
-          <div className="bg-red-500/10 border border-red-500/20 px-6 py-4 rounded-2xl flex items-center gap-3 text-red-500">
-            <Zap size={20} fill="currentColor" className="animate-pulse" />
-            <span className="text-[10px] font-black uppercase tracking-[0.2em]">Synchro en temps réel active</span>
-          </div>
         </div>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div
+        className="gap-4 w-full"
+        style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))" }}
+      >
         <StatCard 
           title="Chiffre d'Affaires Total" 
           value={`${stats.totalSales.toLocaleString()} HTG`} 
@@ -182,12 +182,12 @@ export default function AdminDashboard() {
       {/* Recent Activity Section */}
       <div className="space-y-6">
         <div className="flex items-center justify-between px-2">
-          <h2 className="text-2xl font-black italic uppercase tracking-tight text-zinc-100 flex items-center gap-3">
+          <h2 className="text-xl font-bold text-[#2f2a33] tracking-tight">
             Flux Prioritaire
           </h2>
           <Link 
             href="/admiflexipass/orders" 
-            className="px-4 py-2 bg-zinc-800/50 hover:bg-zinc-800 rounded-xl text-zinc-400 hover:text-red-500 text-xs font-black uppercase tracking-widest flex items-center gap-2 transition-all"
+            className="px-4 py-2 bg-white border border-[#efe5d9] hover:bg-zinc-50 hover:border-orange-200 rounded-xl text-zinc-600 hover:text-[#ff6a1a] text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-all shadow-sm"
           >
             Voir tout <ArrowRight size={14} />
           </Link>
@@ -197,6 +197,7 @@ export default function AdminDashboard() {
           orders={recentOrders} 
           onView={handleViewOrder} 
           isLoading={isLoading} 
+          onRefresh={fetchDashboardData}
         />
       </div>
 

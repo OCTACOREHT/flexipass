@@ -56,22 +56,26 @@ export default function ImageUploader({ currentImageUrl, onUpload }: ImageUpload
         )}
       </div>
 
-      <div className={`relative group w-full aspect-video rounded-3xl border-2 border-dashed transition-all flex flex-col items-center justify-center overflow-hidden cursor-pointer ${
-        preview ? 'border-zinc-800 bg-[#0f0f23]' : 'border-zinc-800 hover:border-red-500/50 hover:bg-zinc-800/20'
+      <div className={`relative group w-full aspect-[4/3] rounded-[2rem] border-2 border-dashed transition-all flex flex-col items-center justify-center overflow-hidden cursor-pointer ${
+        preview ? 'border-[#ff6a1a] bg-orange-50/30' : 'border-[#d4d4d8] hover:border-[#ff6a1a] hover:bg-[#ff6a1a]/5 bg-zinc-50/50'
       }`}>
         {preview ? (
           <>
-            <img src={preview} alt="Preview" className="w-full h-full object-contain" />
-            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white pointer-events-none">
-              <Upload size={32} />
-              <p className="text-xs font-bold mt-2 font-mono">CHANGE MEDIA</p>
+            <img src={preview} alt="Preview" className="w-full h-full object-contain p-2" />
+            <div className="absolute inset-0 bg-white/80 opacity-0 group-hover:opacity-100 backdrop-blur-[2px] transition-all duration-300 flex flex-col items-center justify-center text-[#ff6a1a] pointer-events-none">
+              <div className="p-3 bg-white rounded-full shadow-sm mb-2">
+                <Upload size={24} />
+              </div>
+              <p className="text-[10px] font-extrabold uppercase tracking-widest text-[#2f2a33]">Changer le Média</p>
             </div>
           </>
         ) : (
-          <div className="flex flex-col items-center text-zinc-600 group-hover:text-zinc-400">
-            <ImageIcon size={48} strokeWidth={1} />
-            <p className="text-sm font-bold mt-4 font-mono">DRAG & DROP OR CLICK</p>
-            <p className="text-[10px] mt-1 font-medium italic">Supports PNG, JPG (Max 5MB)</p>
+          <div className="flex flex-col items-center text-zinc-400 group-hover:text-[#ff6a1a] transition-colors duration-300">
+            <div className="p-4 bg-white rounded-2xl shadow-sm mb-4 text-[#2f2a33] group-hover:text-[#ff6a1a] group-hover:shadow-md transition-all">
+              <ImageIcon size={32} strokeWidth={1.5} />
+            </div>
+            <p className="text-[11px] font-extrabold uppercase tracking-[0.15em] text-[#2f2a33]">Glissez ou Cliquez</p>
+            <p className="text-[10px] mt-2 font-medium text-zinc-400">PNG, JPG (Max 5MB)</p>
           </div>
         )}
         

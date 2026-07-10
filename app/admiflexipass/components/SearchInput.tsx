@@ -13,13 +13,13 @@ export default function SearchInput({ value, onChange, placeholder }: SearchInpu
   return (
     <div className="relative group">
       <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
-        <Search className="h-5 w-5 text-zinc-600 group-focus-within:text-red-500 transition-colors" />
+        <Search className="h-5 w-5 text-zinc-400 group-focus-within:text-[#ff8a00] transition-colors" />
       </div>
       <input
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="block w-full bg-[#1e1e2e] border border-zinc-800 rounded-[1.5rem] pl-14 pr-5 py-4 text-zinc-200 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500/50 transition-all font-medium"
+        className="block w-full bg-white border border-[#efe5d9] rounded-[1.5rem] pl-14 pr-5 py-3.5 text-[#2f2a33] placeholder-zinc-400 focus:outline-none focus:border-[#ff8a00] focus:ring-4 focus:ring-[#ff8a00]/5 transition-all font-semibold"
         placeholder={placeholder || "Rechercher des données..."}
       />
     </div>

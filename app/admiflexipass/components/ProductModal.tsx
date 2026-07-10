@@ -23,7 +23,7 @@ export default function ProductModal({ product, isOpen, onClose, onSave }: Produ
     image_url: "",
     short_description: "",
     active: true,
-    type: "account"
+    type: "gaming"
   });
   
   const [isSaving, setIsSaving] = useState(false);
@@ -41,7 +41,7 @@ export default function ProductModal({ product, isOpen, onClose, onSave }: Produ
           image_url: product.image_url || "",
           short_description: product.short_description || "",
           active: product.active ?? true,
-          type: product.type || "account"
+          type: product.type || "gaming"
         });
       } else {
         setFormData({
@@ -53,7 +53,7 @@ export default function ProductModal({ product, isOpen, onClose, onSave }: Produ
           image_url: "",
           short_description: "",
           active: true,
-          type: "account"
+          type: "gaming"
         });
       }
       setShowConfirm(false);
@@ -79,7 +79,7 @@ export default function ProductModal({ product, isOpen, onClose, onSave }: Produ
       image_url: formData.image_url,
       short_description: formData.short_description,
       active: formData.active,
-      type: formData.type || "account"
+      type: formData.type || "gaming"
     };
 
     try {
@@ -102,136 +102,144 @@ export default function ProductModal({ product, isOpen, onClose, onSave }: Produ
 
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/90 backdrop-blur-xl" onClick={onClose}></div>
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose}></div>
       
-      <div className="relative bg-[#0d0d12] w-full max-w-4xl rounded-[2.5rem] border border-zinc-800 shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
-        <div className="p-8 border-b border-zinc-900 flex items-center justify-between text-zinc-100 bg-[#16161e]/50">
+      <div className="relative bg-white w-full max-w-5xl rounded-[2.5rem] border border-[#efe5d9] overflow-hidden animate-in fade-in zoom-in duration-300">
+        <div className="p-8 border-b border-[#efe5d9] flex items-center justify-between text-[#2f2a33] bg-white">
           <div className="flex items-center gap-4">
-            <div className={`p-4 rounded-2xl ${product ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-500'}`}>
+            <div className="p-4 rounded-2xl bg-zinc-50 text-[#ff6a1a] border border-zinc-100">
               {product ? <Save size={28} /> : <PackagePlus size={28} />}
             </div>
             <div>
-              <h2 className="text-3xl font-black italic uppercase tracking-tighter">
+              <h2 className="text-xl font-bold tracking-tight text-[#2f2a33]">
                 {product ? "Modifier Produit" : "Nouvel Inventaire"}
               </h2>
-              <p className="text-zinc-500 text-[10px] font-black uppercase tracking-[0.3em]">Système de Gestion SKU</p>
+              <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-[0.2em] mt-0.5">Système de Gestion SKU</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-3 text-zinc-500 hover:text-white bg-zinc-900 rounded-full transition-all border border-zinc-800">
+          <button onClick={onClose} className="p-2 text-zinc-400 hover:text-[#ff6a1a] hover:bg-zinc-100 bg-white rounded-full transition-all border border-[#efe5d9]">
             <X size={20} />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-8 grid grid-cols-1 md:grid-cols-2 gap-10 max-h-[75vh] overflow-y-auto custom-scrollbar">
-          <div className="space-y-6">
-            <div className="space-y-2">
-              <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">Titre</label>
-              <div className="relative">
-                <Tag className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-600" size={18} />
-                <input
-                  type="text"
-                  required
-                  value={formData.title || ""}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  className="w-full bg-[#16161e] border border-zinc-800 rounded-2xl pl-12 pr-5 py-5 text-zinc-100 focus:border-red-500/50 outline-none transition-all font-bold"
+        <form onSubmit={handleSubmit} className="p-8 space-y-8 max-h-[75vh] overflow-y-auto custom-scrollbar bg-white">
+          {/* Top part: 3 Columns */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
+            {/* Column 1: Media */}
+            <div className="space-y-6">
+              <ImageUploader currentImageUrl={formData.image_url || ""} onUpload={(url) => setFormData({ ...formData, image_url: url })} />
+            </div>
+
+            {/* Column 2: Basic Info */}
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest ml-1">Titre</label>
+                <div className="relative">
+                  <Tag className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
+                  <input
+                    type="text"
+                    required
+                    value={formData.title || ""}
+                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    className="w-full bg-white border border-[#e7e1d8] rounded-2xl pl-12 pr-5 py-3.5 text-[#2f2a33] placeholder-zinc-400 focus:outline-none focus:border-[#ff8a00] focus:ring-4 focus:ring-[#ff8a00]/5 transition-all font-semibold"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest ml-1">Description Courte</label>
+                <textarea
+                  rows={5}
+                  value={formData.short_description || ""}
+                  onChange={(e) => setFormData({ ...formData, short_description: e.target.value })}
+                  className="w-full bg-white border border-[#e7e1d8] rounded-2xl p-4 text-[#2f2a33] placeholder-zinc-400 focus:outline-none focus:border-[#ff8a00] focus:ring-4 focus:ring-[#ff8a00]/5 transition-all resize-none"
                 />
               </div>
             </div>
-            <div className="space-y-2">
-              <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">Description Courte</label>
-              <textarea
-                rows={4}
-                value={formData.short_description || ""}
-                onChange={(e) => setFormData({ ...formData, short_description: e.target.value })}
-                className="w-full bg-[#16161e] border border-zinc-800 rounded-2xl p-6 text-zinc-300 focus:border-red-500/50 outline-none transition-all resize-none"
-              />
-            </div>
-            <ImageUploader currentImageUrl={formData.image_url || ""} onUpload={(url) => setFormData({ ...formData, image_url: url })} />
-          </div>
 
-          <div className="space-y-6">
-            <div className="grid grid-cols-2 gap-5">
+            {/* Column 3: Pricing & Plan */}
+            <div className="space-y-6">
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">Prix</label>
+                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest ml-1">Prix</label>
                 <div className="relative">
-                  <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-600" size={18} />
+                  <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
                   <input
                     type="number"
                     step="0.01"
                     required
                     value={formData.price || ""}
                     onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                    className="w-full bg-[#16161e] border border-zinc-800 rounded-2xl pl-12 pr-5 py-5 text-zinc-100 focus:border-red-500/50 outline-none transition-all font-mono text-xl"
+                    className="w-full bg-white border border-[#e7e1d8] rounded-2xl pl-12 pr-5 py-3.5 text-[#2f2a33] placeholder-zinc-400 focus:outline-none focus:border-[#ff8a00] focus:ring-4 focus:ring-[#ff8a00]/5 transition-all font-mono"
                   />
                 </div>
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">Devise</label>
+                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest ml-1">Devise</label>
                 <select
-                  value={formData.currency || "USD"}
+                  value={formData.currency || "HTG"}
                   onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
-                  className="w-full bg-[#16161e] border border-zinc-800 rounded-2xl px-6 py-5 text-zinc-100 focus:border-red-500/50 outline-none transition-all cursor-pointer font-bold"
+                  className="w-full bg-white border border-[#e7e1d8] rounded-2xl px-5 py-3.5 text-[#2f2a33] focus:outline-none focus:border-[#ff8a00] focus:ring-4 focus:ring-[#ff8a00]/5 transition-all cursor-pointer font-semibold"
                 >
-                  <option value="USD">USD ($)</option>
                   <option value="HTG">HTG (G)</option>
+                  <option value="USD">USD ($)</option>
                   <option value="EUR">EUR (€)</option>
                 </select>
               </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-5">
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">Type de Produit</label>
-                <select
-                  value={formData.type || "account"}
-                  onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                  className="w-full bg-[#16161e] border border-zinc-800 rounded-2xl px-6 py-5 text-zinc-100 focus:border-red-500/50 outline-none transition-all cursor-pointer font-bold"
-                >
-                  <option value="account">Compte (Streaming/Premium)</option>
-                  <option value="giftcard">Carte Cadeau (V-Bucks/PSN/Steam)</option>
-                </select>
-              </div>
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">Plan / Valeur</label>
+                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest ml-1">Plan / Valeur</label>
                 <input
                   type="text"
                   placeholder="Ex: Premium 4K ou $20"
                   value={formData.plan || ""}
                   onChange={(e) => setFormData({ ...formData, plan: e.target.value })}
-                  className="w-full bg-[#16161e] border border-zinc-800 rounded-2xl px-6 py-5 text-zinc-100 focus:border-red-500/50 outline-none transition-all font-bold"
+                  className="w-full bg-white border border-[#e7e1d8] rounded-2xl px-5 py-3.5 text-[#2f2a33] placeholder-zinc-400 focus:outline-none focus:border-[#ff8a00] focus:ring-4 focus:ring-[#ff8a00]/5 transition-all font-semibold"
                 />
               </div>
             </div>
+          </div>
 
+          {/* Bottom part: Type, Duration & Centered Submit in 3 Columns */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
             <div className="space-y-2">
-                <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">Durée (Jours - Pour Comptes)</label>
-                <input
-                  type="number"
-                  value={formData.duration_days || ""}
-                  onChange={(e) => setFormData({ ...formData, duration_days: e.target.value })}
-                  className="w-full bg-[#16161e] border border-zinc-800 rounded-2xl px-6 py-5 text-zinc-100 focus:border-red-500/50 outline-none transition-all font-mono"
-                  placeholder="Ex: 30 (Laissez vide pour Carte Cadeau)"
-                />
+              <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest ml-1">Type / Catégorie</label>
+              <select
+                value={formData.type || "gaming"}
+                onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                className="w-full bg-white border border-[#e7e1d8] rounded-2xl px-5 py-3.5 text-[#2f2a33] focus:outline-none focus:border-[#ff8a00] focus:ring-4 focus:ring-[#ff8a00]/5 transition-all cursor-pointer font-semibold"
+              >
+                <option value="gaming">Gaming</option>
+                <option value="tech">Tech</option>
+                <option value="shopping">Shopping</option>
+                <option value="divertissement">Divertissement</option>
+              </select>
             </div>
-
-            <div className="pt-10 border-t border-zinc-900">
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest ml-1">Durée (Jours)</label>
+              <input
+                type="number"
+                value={formData.duration_days || ""}
+                onChange={(e) => setFormData({ ...formData, duration_days: e.target.value })}
+                className="w-full bg-white border border-[#e7e1d8] rounded-2xl px-5 py-3.5 text-[#2f2a33] placeholder-zinc-400 focus:outline-none focus:border-[#ff8a00] focus:ring-4 focus:ring-[#ff8a00]/5 transition-all font-mono"
+                placeholder="Ex: 30 (Laissez vide pour Carte Cadeau)"
+              />
+            </div>
+            <div>
                {showConfirm ? (
-                 <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2">
-                    <div className="flex items-center gap-3 p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl text-emerald-500">
-                       <AlertCircle size={20} />
-                       <span className="text-sm font-bold">Confirmer les modifications ?</span>
+                 <div className="space-y-3 animate-in fade-in slide-in-from-bottom-2">
+                    <div className="flex items-center justify-center gap-2 p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-700">
+                       <AlertCircle size={16} />
+                       <span className="text-xs font-bold">Confirmer ?</span>
                     </div>
-                    <div className="flex gap-3">
-                       <button type="button" onClick={() => setShowConfirm(false)} className="flex-1 py-4 bg-zinc-900 border border-zinc-800 text-zinc-400 font-bold rounded-2xl hover:bg-zinc-800 transition-all">Annuler</button>
-                       <button type="submit" disabled={isSaving} className="flex-1 py-4 bg-emerald-600 text-white font-black italic uppercase rounded-2xl hover:bg-emerald-500 shadow-lg shadow-emerald-500/20 transition-all">{isSaving ? "Sync..." : "Confirmer"}</button>
+                    <div className="flex gap-2">
+                       <button type="button" onClick={() => setShowConfirm(false)} className="flex-1 py-2.5 text-xs bg-white border border-[#efe5d9] text-zinc-600 font-bold rounded-xl hover:bg-zinc-50 hover:text-zinc-800 transition-all">Annuler</button>
+                       <button type="submit" disabled={isSaving} className="flex-1 py-2.5 text-xs bg-emerald-600 text-white font-bold uppercase rounded-xl hover:bg-emerald-500 transition-all">{isSaving ? "Sync..." : "Confirmer"}</button>
                     </div>
                  </div>
                ) : (
                 <button
                   type="submit"
-                  className="w-full py-6 bg-red-600 hover:bg-red-500 text-white font-black italic uppercase tracking-[0.2em] rounded-2xl shadow-2xl shadow-red-600/20 flex items-center justify-center gap-4 transition-all active:scale-95"
+                  className="w-full py-3.5 bg-[#ff6a1a] hover:bg-[#ff5a00] text-white font-bold uppercase tracking-wider text-xs rounded-2xl flex items-center justify-center gap-4 transition-all active:scale-95"
                 >
-                  <Check size={24} />
+                  <Check size={18} />
                   {product ? "Synchroniser" : "Enregistrer SKU"}
                 </button>
                )}

@@ -52,29 +52,29 @@ export default function UserModal({ user, isOpen, onClose, onSave }: UserModalPr
 
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={onClose}></div>
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose}></div>
       
-      <div className="relative bg-[#1e1e2e] w-full max-w-lg rounded-[2.5rem] border border-zinc-800 shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
-        <div className="p-8 border-b border-zinc-800 flex items-center justify-between text-zinc-100">
+      <div className="relative bg-white w-full max-w-lg rounded-[2.5rem] border border-[#efe5d9] shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
+        <div className="p-8 border-b border-[#efe5d9] flex items-center justify-between text-[#2f2a33] bg-white">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-red-500/10 rounded-xl text-red-500">
+            <div className="p-3 bg-zinc-50 rounded-xl text-[#ff6a1a] border border-zinc-100">
               {user ? <Save size={24} /> : <UserPlus size={24} />}
             </div>
             <div>
-              <h2 className="text-2xl font-black italic uppercase tracking-tighter">
+              <h2 className="text-xl font-bold tracking-tight text-[#2f2a33]">
                 {user ? "Modifier Membre" : "Nouveau Membre"}
               </h2>
-              <p className="text-zinc-500 text-xs font-medium uppercase tracking-widest">
+              <p className="text-zinc-500 text-xs font-semibold uppercase tracking-widest mt-0.5">
                 Contrôle d'accès système
               </p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 text-zinc-500 hover:text-white bg-zinc-800/50 rounded-full transition-all">
+          <button onClick={onClose} className="p-2 text-zinc-400 hover:text-[#ff6a1a] hover:bg-zinc-100 rounded-full transition-all">
             <X size={20} />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-8 space-y-6">
+        <form onSubmit={handleSubmit} className="p-8 space-y-6 bg-white">
           <div className="space-y-2">
             <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest ml-1">Nom Complet</label>
             <input
@@ -82,7 +82,7 @@ export default function UserModal({ user, isOpen, onClose, onSave }: UserModalPr
               required
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full bg-[#0f0f23] border border-zinc-800 rounded-2xl px-5 py-4 text-zinc-200 focus:ring-2 focus:ring-red-500/50 focus:border-red-500 outline-none transition-all shadow-inner"
+              className="w-full bg-white border border-[#e7e1d8] rounded-2xl px-5 py-3.5 text-[#2f2a33] placeholder-zinc-400 focus:outline-none focus:border-[#ff8a00] focus:ring-4 focus:ring-[#ff8a00]/5 transition-all shadow-sm"
               placeholder="ex: Jean Dupont"
             />
           </div>
@@ -94,7 +94,7 @@ export default function UserModal({ user, isOpen, onClose, onSave }: UserModalPr
               required
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              className="w-full bg-[#0f0f23] border border-zinc-800 rounded-2xl px-5 py-4 text-zinc-200 focus:ring-2 focus:ring-red-500/50 focus:border-red-500 outline-none transition-all shadow-inner"
+              className="w-full bg-white border border-[#e7e1d8] rounded-2xl px-5 py-3.5 text-[#2f2a33] placeholder-zinc-400 focus:outline-none focus:border-[#ff8a00] focus:ring-4 focus:ring-[#ff8a00]/5 transition-all shadow-sm"
               placeholder="user@flexipass.com"
             />
           </div>
@@ -107,12 +107,12 @@ export default function UserModal({ user, isOpen, onClose, onSave }: UserModalPr
                 onClick={() => setFormData({ ...formData, role: 'client' })}
                 className={`flex items-center justify-center gap-2 p-4 rounded-2xl border transition-all ${
                   formData.role === 'client' 
-                    ? 'bg-zinc-800 border-zinc-700 text-zinc-100 shadow-lg' 
-                    : 'bg-[#0f0f23] border-zinc-800 text-zinc-500 hover:border-zinc-700'
+                    ? 'bg-[#2f2a33] border-[#2f2a33] text-white shadow-sm font-bold text-sm' 
+                    : 'bg-white border-[#e7e1d8] text-zinc-500 hover:border-[#ff8a00] hover:text-[#ff8a00] font-bold text-sm'
                 }`}
               >
                 <UserIcon size={18} />
-                <span className="font-bold text-sm">Client</span>
+                <span>Client</span>
               </button>
               <button
                 type="button"
@@ -120,13 +120,13 @@ export default function UserModal({ user, isOpen, onClose, onSave }: UserModalPr
                 onClick={() => setFormData({ ...formData, role: 'admin' })}
                 className={`flex items-center justify-center gap-2 p-4 rounded-2xl border transition-all ${
                   formData.role === 'admin' 
-                    ? 'bg-red-500/10 border-red-500/50 text-red-500 shadow-lg shadow-red-500/10' 
-                    : 'bg-[#0f0f23] border-zinc-800 text-zinc-500 hover:border-zinc-700'
+                    ? 'bg-[#ff6a1a] border-[#ff6a1a] text-white shadow-sm font-bold text-sm' 
+                    : 'bg-white border-[#e7e1d8] text-zinc-500 hover:border-[#ff8a00] hover:text-[#ff8a00] font-bold text-sm'
                 } ${(user !== null && user.role === 'client') ? 'opacity-30 cursor-not-allowed grayscale' : ''}`}
                 title={(user !== null && user.role === 'client') ? "Un client ne peut pas être promu admin ici. Créez un nouvel accès admin." : ""}
               >
                 <Shield size={18} />
-                <span className="font-bold text-sm">Admin</span>
+                <span>Admin</span>
               </button>
             </div>
           </div>
@@ -135,13 +135,13 @@ export default function UserModal({ user, isOpen, onClose, onSave }: UserModalPr
             <button
               type="submit"
               disabled={isSaving}
-              className="w-full py-4 bg-red-600 hover:bg-red-500 text-white font-black italic uppercase tracking-wider rounded-2xl shadow-xl shadow-red-500/20 flex items-center justify-center gap-3 transition-all active:scale-95 disabled:opacity-50"
+              className="w-full py-3.5 bg-[#ff6a1a] hover:bg-[#ff5a00] text-white font-bold uppercase tracking-wider text-xs rounded-2xl shadow-sm flex items-center justify-center gap-3 transition-all active:scale-95 disabled:opacity-50"
             >
               {isSaving ? (
-                <div className="w-6 h-6 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+                <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
               ) : (
                 <>
-                  {user ? <Save size={20} /> : <UserPlus size={20} />}
+                  {user ? <Save size={18} /> : <UserPlus size={18} />}
                   {user ? "Mettre à jour" : "Créer l'accès"}
                 </>
               )}

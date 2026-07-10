@@ -59,10 +59,10 @@ function SectionTitle({
   subtitle: string;
 }) {
   return (
-    <div className="max-w-4xl">
-      <p className="mb-2 text-[10px] font-black uppercase tracking-[0.45em] text-red-500">{badge}</p>
-      <h2 className="text-2xl font-black uppercase tracking-tight text-white sm:text-3xl">{title}</h2>
-      <p className="mt-3 max-w-3xl text-sm leading-6 text-zinc-400">{subtitle}</p>
+    <div className="max-w-2xl">
+      <p className="mb-1 text-[9px] font-bold uppercase tracking-[0.35em] text-[#ff6a1a]">{badge}</p>
+      <h2 className="text-base font-bold tracking-tight text-[#2f2a33]">{title}</h2>
+      <p className="mt-1 text-xs text-zinc-500">{subtitle}</p>
     </div>
   );
 }
@@ -83,11 +83,11 @@ function Button({
   external?: boolean;
 }) {
   const base =
-    "inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold uppercase tracking-wider transition-all duration-200";
+    "inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-xs font-bold uppercase tracking-wider transition-all duration-200 shadow-sm";
   const style =
     tone === "primary"
-      ? "bg-[#e63946] text-white hover:bg-[#ff7a59] hover:text-white hover:shadow-xl hover:shadow-orange-500/20"
-      : "bg-[#171717] text-zinc-100 border border-[#2a2a2a] hover:border-red-500/35 hover:bg-[#1f1f1f]";
+      ? "bg-[#ff6a1a] text-white hover:bg-[#ff5a00]"
+      : "bg-white text-zinc-600 border border-[#efe5d9] hover:bg-[#fff9f4] hover:text-[#ff6a1a] hover:border-orange-200";
 
   if (href) {
     return (
@@ -120,15 +120,15 @@ function StatCard({
   badgeClass,
 }: CardItem) {
   return (
-    <div className="group overflow-hidden rounded-xl border border-[#2a2a2a] bg-[#1a1a1a] p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-red-500/35 hover:shadow-lg hover:shadow-black/30">
+    <div className="group overflow-hidden rounded-xl border border-[#efe5d9] bg-white p-3.5 transition-all duration-200 hover:-translate-y-0.5 hover:border-orange-200 hover:shadow-sm">
       <div className="min-w-0">
-        <p className="text-[10px] font-black uppercase tracking-[0.35em] text-red-500/90">{label}</p>
-        <p className={`mt-2 text-2xl font-black text-white ${valueClassName}`}>{value}</p>
-        <p className="mt-1 text-xs leading-5 text-zinc-400">{description}</p>
+        <p className="text-[9px] font-bold uppercase tracking-[0.25em] text-[#ff6a1a]/95">{label}</p>
+        <p className={`mt-1 text-lg font-bold text-[#2f2a33] ${valueClassName}`}>{value}</p>
+        <p className="mt-0.5 text-[11px] text-zinc-500">{description}</p>
       </div>
       {badge ? (
         <div
-          className={`mt-4 inline-flex items-center rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.25em] ${badgeClass}`}
+          className={`mt-2 inline-flex items-center rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.15em] border ${badgeClass}`}
         >
           {badge}
         </div>
@@ -139,12 +139,12 @@ function StatCard({
 
 function GridCard({ item }: { item: CardItem }) {
   const cardClasses =
-    "group block overflow-hidden rounded-xl border border-[#2a2a2a] bg-[#1a1a1a] p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-red-500/35 hover:shadow-lg hover:shadow-black/30";
+    "group block overflow-hidden rounded-xl border border-[#efe5d9] bg-white p-3.5 transition-all duration-200 hover:-translate-y-0.5 hover:border-orange-200 hover:shadow-sm";
 
   const content = (
     <div className="min-w-0">
-      <h3 className="text-sm font-bold text-white">{item.label}</h3>
-      <p className="mt-1 text-xs leading-5 text-zinc-400">{item.description}</p>
+      <h3 className="text-xs font-bold text-[#2f2a33] group-hover:text-[#ff6a1a] transition-colors">{item.label}</h3>
+      <p className="mt-0.5 text-[11px] text-zinc-500">{item.description}</p>
     </div>
   );
 
@@ -169,39 +169,32 @@ export default function SettingsPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[#0d0d0d] text-white">
-      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-        <section className="rounded-xl border border-[#2a2a2a] bg-[#111111] p-6 shadow-2xl shadow-black/25 sm:p-8">
-          <div className="flex flex-col gap-6">
-            <div className="max-w-4xl">
-              <p className="text-[10px] font-black uppercase tracking-[0.45em] text-red-500">ADMIN</p>
-              <div className="mt-2 flex flex-wrap items-start gap-3">
-                <h1 className="text-3xl font-black uppercase tracking-tight sm:text-4xl lg:text-5xl">
-                  Paramètres du Panel FlexiPass
-                </h1>
-                <Sparkles className="mt-1 text-red-500" size={24} aria-hidden="true" />
-              </div>
-              <p className="mt-3 max-w-3xl text-sm leading-6 text-zinc-400 sm:text-base">
-                Page claire et liée au panel. Les accès sont simples, les textes sont bien rangés, et les cartes
-                restent lisibles sans débordement.
-              </p>
-            </div>
-
-            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-              <Button href="http://localhost:3000" external tone="primary" icon={ExternalLink}>
-                Aller au site
-              </Button>
-              <Button onClick={handleLogout} icon={LogOut}>
-                Déconnexion
-              </Button>
-              <Button onClick={handleRefresh} icon={RefreshCcw}>
-                Rafraîchir
-              </Button>
-            </div>
+    <main className="min-h-screen bg-transparent">
+      <div className="w-full pb-6">
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-5">
+          <div>
+            <h1 className="text-2xl font-extrabold tracking-tight text-[#2f2a33] flex items-center gap-2">
+              Paramètres du <span className="text-[#ff6a1a]">Panel</span>
+            </h1>
+            <p className="text-zinc-500 font-medium tracking-wide text-xs mt-0.5">
+              Configurez votre panel et gérez votre session.
+            </p>
           </div>
-        </section>
 
-        <section className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="flex items-center gap-2">
+            <Button href="http://localhost:3000" external tone="dark" icon={ExternalLink}>
+              Site Public
+            </Button>
+            <Button onClick={handleLogout} tone="primary" icon={LogOut}>
+              Déconnexion
+            </Button>
+          </div>
+        </div>
+
+        <section
+          className="mt-4 gap-3"
+          style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))" }}
+        >
           <StatCard
             label="Accès"
             value="Rapide"
@@ -214,43 +207,49 @@ export default function SettingsPage() {
             value="Ouvert"
             description="Le site public est disponible."
             icon={Globe}
-            valueClassName="text-green-400"
+            valueClassName="text-emerald-600"
             badge="Ouvert"
-            badgeClass="bg-green-500/10 text-green-400"
+            badgeClass="bg-emerald-50 text-emerald-700 border-emerald-200"
           />
           <StatCard
             label="Statut"
             value="ACTIF"
             description="Le panel est prêt et fonctionnel."
             icon={Shield}
-            valueClassName="text-green-400"
+            valueClassName="text-emerald-600"
             badge="ACTIF"
-            badgeClass="bg-green-500/10 text-green-400"
+            badgeClass="bg-emerald-50 text-emerald-700 border-emerald-200"
           />
         </section>
 
-        <section className="mt-6 rounded-xl border border-[#2a2a2a] bg-[#111111] p-6 sm:p-8">
+        <section className="mt-4 rounded-xl border border-[#efe5d9] bg-white p-4 sm:p-5">
           <SectionTitle
-            badge="●●●●●●●"
+            badge="MODULES"
             title="Modules du panel"
             subtitle="Accédez directement aux sections principales sans passer par le menu."
           />
 
-          <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-6">
+          <div
+            className="mt-3 gap-3"
+            style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))" }}
+          >
             {modules.map((item) => (
               <GridCard key={item.label} item={item} />
             ))}
           </div>
         </section>
 
-        <section className="mt-6 rounded-xl border border-[#2a2a2a] bg-[#111111] p-6 sm:p-8">
+        <section className="mt-4 rounded-xl border border-[#efe5d9] bg-white p-4 sm:p-5">
           <SectionTitle
-            badge="●●●●●●●"
+            badge="INFORMATIONS"
             title="Infos du panel"
             subtitle="Infos simples pour garder la page fiable et lisible à l'admin."
           />
 
-          <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <div
+            className="mt-3 gap-3"
+            style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))" }}
+          >
             {infos.map((item) => (
               <GridCard key={item.label} item={item} />
             ))}

@@ -16,36 +16,36 @@ export default function DeleteConfirm({ isOpen, title, message, onClose, onConfi
 
   return (
     <div className="fixed inset-0 z-[80] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={onClose}></div>
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose}></div>
       
-      <div className="relative bg-[#1e1e2e] w-full max-w-md rounded-[2rem] border border-zinc-800 shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
-        <div className="p-6 border-b border-zinc-800 flex items-center gap-4 bg-red-500/5">
-          <div className="p-3 bg-red-500/10 rounded-xl text-red-500">
+      <div className="relative bg-white w-full max-w-md rounded-[2rem] border border-[#efe5d9] shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+        <div className="p-6 border-b border-[#efe5d9] flex items-center gap-4 bg-red-50">
+          <div className="p-3 bg-red-100/50 rounded-xl text-red-600">
             <AlertTriangle size={24} />
           </div>
           <div>
-            <h2 className="text-xl font-black italic uppercase tracking-tighter text-zinc-100">
+            <h2 className="text-lg font-bold tracking-tight text-[#2f2a33]">
               {title}
             </h2>
           </div>
         </div>
 
         <div className="p-8">
-          <p className="text-zinc-400 text-sm leading-relaxed">
+          <p className="text-zinc-500 text-sm leading-relaxed">
             {message}
           </p>
         </div>
 
-        <div className="p-6 border-t border-zinc-800 bg-[#27293d]/50 flex gap-3">
+        <div className="p-6 border-t border-[#efe5d9] bg-white flex gap-3">
           <button 
             onClick={onClose}
-            className="flex-1 py-3 text-zinc-400 font-bold uppercase tracking-widest text-xs hover:bg-zinc-800 rounded-xl transition-all"
+            className="flex-1 py-3 text-zinc-600 font-bold uppercase tracking-wider text-xs hover:bg-zinc-100 rounded-xl transition-all"
           >
             Annuler
           </button>
           <button 
             onClick={onConfirm}
-            className="flex-1 py-3 bg-red-600 hover:bg-red-500 text-white font-black uppercase tracking-widest text-xs rounded-xl shadow-lg shadow-red-500/20 transition-all active:scale-95"
+            className="flex-1 py-3 bg-red-600 hover:bg-red-500 text-white font-bold uppercase tracking-wider text-xs rounded-xl shadow-md shadow-red-500/10 transition-all active:scale-95"
           >
             Confirmer la suppression
           </button>

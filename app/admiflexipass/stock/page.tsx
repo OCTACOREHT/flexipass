@@ -95,30 +95,24 @@ export default function StockPage() {
   return (
     <div className="space-y-10 pb-20">
       {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 bg-[#12121a]/50 p-8 rounded-[2rem] border border-zinc-900 backdrop-blur-md">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="text-5xl font-black italic uppercase tracking-tighter text-zinc-100 flex items-center gap-4">
-            Gestion du <span className="text-red-500">Stock</span>
+          <h1 className="text-3xl font-extrabold tracking-tight text-[#2f2a33] flex items-center gap-3">
+            Gestion du <span className="text-[#ff6a1a]">Stock</span>
           </h1>
-          <p className="text-zinc-500 font-black uppercase tracking-[0.4em] text-[10px] mt-2 flex items-center gap-2">
-            <span className="w-2 h-2 bg-emerald-500 rounded-full animate-ping"></span>
-            Flux d'inventaire en temps réel actif
+          <p className="text-zinc-500 font-medium tracking-wide text-sm mt-1">
+            Gérez votre catalogue de produits et inventaire.
           </p>
         </div>
         
-        <div className="flex items-center gap-4">
-          <button 
-            onClick={fetchProducts}
-            className="p-5 bg-zinc-900 border border-zinc-800 rounded-3xl text-zinc-400 hover:text-white hover:border-zinc-500 transition-all active:scale-90"
-          >
-            <RefreshCcw size={22} className={isLoading ? "animate-spin" : ""} />
-          </button>
+        <div className="flex items-center gap-3">
           <button 
             onClick={handleCreateTrigger}
-            className="px-10 py-5 bg-red-600 hover:bg-red-500 text-white font-black italic uppercase tracking-widest rounded-3xl shadow-[0_10px_30px_-10px_rgba(239,68,68,0.5)] flex items-center gap-3 transition-all active:scale-95"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all shadow-sm font-semibold text-sm"
+            style={{ backgroundColor: '#ff6a1a', color: 'white' }}
           >
-            <PackagePlus size={24} />
-            Ajouter un produit
+            <PackagePlus size={16} />
+            <span>Nouveau</span>
           </button>
         </div>
       </div>
@@ -134,12 +128,12 @@ export default function StockPage() {
       </div>
 
       <div className="relative group min-h-[400px]">
-        <div className="absolute -inset-1 bg-gradient-to-r from-red-500/10 to-transparent rounded-[2.5rem] blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
         <ProductTable 
           products={filteredProducts} 
           isLoading={isLoading} 
           onEdit={handleEditTrigger}
           onDelete={(product) => { setSelectedProduct(product); setIsDeleteOpen(true); }}
+          onRefresh={fetchProducts}
         />
       </div>
 

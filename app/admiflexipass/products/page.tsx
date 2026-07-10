@@ -380,74 +380,76 @@ export default function AdminProductsPage() {
 
         <div className="admin-card wide">
           <h3>Produits (liste)</h3>
-          <div className="admin-table">
-            <div className="admin-table-head">
-              <input
-                className="admin-search"
-                placeholder="Rechercher un produit..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </div>
-            <div className="admin-row head">
-              <span>Image</span>
-              <span>Titre</span>
-              <span>Type</span>
-              <span>Prix</span>
-              <span>Plan</span>
-              <span>Actif</span>
-              <span>Variants</span>
-              <span>URL image</span>
-              <span>Détails</span>
-              <span>Actions</span>
-            </div>
-            {filteredProducts.map((p) => (
-              <div className="admin-row" key={p.id}>
-                <span>
-                  <img
-                    className="admin-thumb"
-                    src={toProxyImage(p.image_url)}
-                    alt={p.title}
-                    onError={(e) => {
-                      (e.currentTarget as HTMLImageElement).src = "/assets/images/brands/chatgpt.svg";
-                    }}
-                  />
-                </span>
-                <span>{p.title}</span>
-                <span>{p.type}</span>
-                <span>
-                  {p.price} {p.currency}
-                </span>
-                <span>{p.plan || "-"}</span>
-                <span>{p.active ? "Oui" : "Non"}</span>
-                <span className="muted">{variants.filter((v) => v.product_id === p.id).length}</span>
-                <span>
-                  {p.image_url ? (
-                    <a className="link" href={p.image_url} target="_blank" rel="noreferrer">
-                      Ouvrir
-                    </a>
-                  ) : (
-                    <span className="muted">Aucune</span>
-                  )}
-                </span>
-                <span>
-                  <a className="link" href={`/product/${p.id}`} target="_blank" rel="noreferrer">
-                    Voir
-                  </a>
-                </span>
-                <span>
-                  <button className="link" type="button" onClick={() => setEditing(p)}>
-                    Modifier
-                  </button>
-                  <button className="link danger" type="button" onClick={() => setConfirmDelete(p)}>
-                    Supprimer
-                  </button>
-                </span>
+          <div className="overflow-x-auto w-full no-scrollbar">
+            <div className="admin-table min-w-[900px]">
+              <div className="admin-table-head">
+                <input
+                  className="admin-search"
+                  placeholder="Rechercher un produit..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
               </div>
-            ))}
-            {filteredProducts.length === 0 && (
-              <div className="admin-empty">Aucun produit trouvé.</div>
-            )}
+              <div className="admin-row head">
+                <span>Image</span>
+                <span>Titre</span>
+                <span>Type</span>
+                <span>Prix</span>
+                <span>Plan</span>
+                <span>Actif</span>
+                <span>Variants</span>
+                <span>URL image</span>
+                <span>Détails</span>
+                <span>Actions</span>
+              </div>
+              {filteredProducts.map((p) => (
+                <div className="admin-row" key={p.id}>
+                  <span>
+                    <img
+                      className="admin-thumb"
+                      src={toProxyImage(p.image_url)}
+                      alt={p.title}
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).src = "/assets/images/brands/chatgpt.svg";
+                      }}
+                    />
+                  </span>
+                  <span>{p.title}</span>
+                  <span>{p.type}</span>
+                  <span>
+                    {p.price} {p.currency}
+                  </span>
+                  <span>{p.plan || "-"}</span>
+                  <span>{p.active ? "Oui" : "Non"}</span>
+                  <span className="muted">{variants.filter((v) => v.product_id === p.id).length}</span>
+                  <span>
+                    {p.image_url ? (
+                      <a className="link" href={p.image_url} target="_blank" rel="noreferrer">
+                        Ouvrir
+                      </a>
+                    ) : (
+                      <span className="muted">Aucune</span>
+                    )}
+                  </span>
+                  <span>
+                    <a className="link" href={`/product/${p.id}`} target="_blank" rel="noreferrer">
+                      Voir
+                    </a>
+                  </span>
+                  <span>
+                    <button className="link" type="button" onClick={() => setEditing(p)}>
+                      Modifier
+                    </button>
+                    <button className="link danger" type="button" onClick={() => setConfirmDelete(p)}>
+                      Supprimer
+                    </button>
+                  </span>
+                </div>
+              ))}
+              {filteredProducts.length === 0 && (
+                <div className="admin-empty">Aucun produit trouvé.</div>
+              )}
+            </div>
           </div>
         </div>
       </div>

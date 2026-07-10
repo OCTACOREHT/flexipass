@@ -19,9 +19,10 @@ import Badge from "@/app/admiflexipass/components/Badge";
 
 const navItems = [
   { name: "Tableau de Bord", href: "/admiflexipass", icon: LayoutDashboard, permissionKey: "dashboard" },
+  { name: "Analyses & Stats", href: "/admiflexipass/analytics", icon: TrendingUp, permissionKey: "dashboard" },
   { name: "Commandes", href: "/admiflexipass/orders", icon: Package, showBadge: true, permissionKey: "orders" },
-  { name: "Catalogue Produits", href: "/admiflexipass/stock", icon: TrendingUp, permissionKey: "stock" },
-  { name: "Liste Membres", href: "/admiflexipass/users", icon: Users, permissionKey: "users" },
+  { name: "Catalogue", href: "/admiflexipass/stock", icon: Package, permissionKey: "stock" },
+  { name: "Membres", href: "/admiflexipass/users", icon: Users, permissionKey: "users" },
   { name: "Parametres", href: "/admiflexipass/settings", icon: Settings, permissionKey: "settings" },
   { name: "Gestion Admins", href: "/admiflexipass/admins", icon: Shield, permissionKey: "admins" },
 ];
@@ -108,23 +109,44 @@ export default function Sidebar({ admin }: { admin?: any }) {
 
   return (
     <aside 
-      className={`bg-[#0f0f23] text-zinc-400 h-screen transition-all duration-300 border-r border-zinc-800 fixed left-0 top-0 z-50 flex flex-col ${
+      className={`hidden md:flex bg-white text-zinc-600 h-screen transition-all duration-300 border-r border-[#efe5d9] fixed left-0 top-0 z-50 flex-col ${
         isCollapsed ? "w-20" : "w-64"
       }`}
     >
-      <div className="p-6 flex items-center justify-between border-b border-zinc-800">
-        {!isCollapsed && (
-          <span className="text-xl font-bold bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent">
-            FlexiPass
-          </span>
+      <div className="p-5 flex items-center justify-between border-b border-[#efe5d9] min-h-[73px]">
+        {!isCollapsed ? (
+          <img 
+            src="/Flexipass%20.png" 
+            alt="FlexiPass Logo" 
+            className="h-8 object-contain"
+          />
+        ) : (
+          <img 
+            src="/flexipass-icon.png" 
+            alt="FlexiPass Logo" 
+            className="h-7 w-7 object-contain mx-auto"
+          />
         )}
-        <button 
-          onClick={() => setIsCollapsed(!isCollapsed)}
-          className="p-1 hover:bg-zinc-800 rounded-md transition-colors"
-        >
-          {isCollapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
-        </button>
+        {!isCollapsed && (
+          <button 
+            onClick={() => setIsCollapsed(true)}
+            className="p-1 hover:bg-zinc-100 hover:text-[#ff6a1a] rounded-md transition-colors text-zinc-400"
+          >
+            <ChevronLeft size={20} />
+          </button>
+        )}
       </div>
+      
+      {isCollapsed && (
+        <div className="p-4 flex justify-center border-b border-[#efe5d9]">
+          <button 
+            onClick={() => setIsCollapsed(false)}
+            className="p-1 hover:bg-zinc-100 hover:text-[#ff6a1a] rounded-md transition-colors text-zinc-400"
+          >
+            <ChevronRight size={20} />
+          </button>
+        </div>
+      )}
 
       <nav className="flex-1 mt-6 px-4 space-y-2">
         {visibleItems.map((item) => {
@@ -135,11 +157,11 @@ export default function Sidebar({ admin }: { admin?: any }) {
               href={item.href}
               className={`flex items-center p-3 rounded-lg transition-all group relative ${
                 isActive 
-                  ? "bg-red-500/10 text-red-500" 
-                  : "hover:bg-zinc-800 hover:text-zinc-200"
+                  ? "bg-zinc-100 text-[#ff6a1a]" 
+                  : "text-zinc-600 hover:bg-zinc-50 hover:text-[#ff6a1a]"
               }`}
             >
-              <item.icon size={22} className={isActive ? "text-red-500" : "group-hover:text-zinc-200"} />
+              <item.icon size={22} className={isActive ? "text-[#ff6a1a]" : "text-zinc-400 group-hover:text-[#ff6a1a]"} />
               {!isCollapsed && (
                 <span className="ml-4 font-medium">{item.name}</span>
               )}
@@ -155,18 +177,18 @@ export default function Sidebar({ admin }: { admin?: any }) {
 
       {/* Admin Name/Role Indicator */}
       {admin && !isCollapsed && (
-        <div className="px-6 py-3 border-t border-zinc-800 flex flex-col gap-0.5">
-          <p className="text-[11px] font-bold text-white truncate">{admin.name}</p>
-          <p className="text-[9px] font-semibold text-red-500/80 uppercase tracking-widest">{admin.role}</p>
+        <div className="px-6 py-3 border-t border-[#efe5d9] flex flex-col gap-0.5">
+          <p className="text-[11px] font-bold text-[#2f2a33] truncate">{admin.name}</p>
+          <p className="text-[9px] font-semibold text-[#ff6a1a] uppercase tracking-widest">{admin.role}</p>
         </div>
       )}
 
-      <div className="p-4 border-t border-zinc-800">
+      <div className="p-4 border-t border-[#efe5d9]">
         <button 
           onClick={handleLogout}
-          className="w-full flex items-center p-3 rounded-lg hover:bg-zinc-800 hover:text-zinc-200 transition-all text-zinc-500 group"
+          className="w-full flex items-center p-3 rounded-lg hover:bg-red-50 hover:text-red-600 transition-all text-zinc-500 group"
         >
-          <LogOut size={22} className="group-hover:text-zinc-200" />
+          <LogOut size={22} className="group-hover:text-red-600" />
           {!isCollapsed && <span className="ml-4 font-medium">Deconnexion</span>}
         </button>
       </div>

@@ -155,66 +155,54 @@ export default function OrdersPage() {
   );
 
   return (
-    <div className="space-y-10 pb-20">
-      <div className="flex flex-col gap-6 bg-[#0d0d12]/60 p-6 sm:p-8 md:p-10 rounded-[2rem] md:rounded-[2.5rem] border border-zinc-900 backdrop-blur-xl shadow-2xl shadow-black">
-        <div className="flex items-center gap-4 sm:gap-6 min-w-0">
-          <div className="p-5 bg-red-500/10 rounded-3xl border border-red-500/20 text-red-500 shadow-inner">
-            <Package size={36} />
+    <div className="space-y-6 pb-20">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="flex items-center gap-4 sm:gap-5 min-w-0">
+          <div className="p-3 bg-zinc-50 rounded-2xl border border-zinc-100 text-[#ff6a1a]">
+            <Package size={28} />
           </div>
           <div className="min-w-0">
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black italic uppercase tracking-tighter text-zinc-100">
-              File de <span className="text-red-600">Vérification</span>
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#2f2a33]">
+              File de <span className="text-[#ff6a1a]">Vérification</span>
             </h1>
-            <div className="flex flex-wrap items-center gap-3 sm:gap-4 mt-2">
-              <p className="text-zinc-500 font-bold uppercase tracking-[0.22em] text-[10px]">
-                Transactions en attente
-              </p>
-              <div className="h-1 w-1 bg-zinc-700 rounded-full"></div>
-              <p className="text-emerald-500 font-black uppercase tracking-[0.22em] text-[9px] flex items-center gap-2">
-                <Sparkles size={12} className="animate-pulse" />
-                Flux en direct actif
-              </p>
-            </div>
+            <p className="text-zinc-500 font-medium tracking-wide text-sm mt-1">
+              Gérez les transactions en attente.
+            </p>
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-          <button
-            onClick={fetchOrders}
-            className="p-4 sm:p-5 bg-zinc-900 border border-zinc-800 rounded-[1.5rem] text-zinc-400 hover:text-white transition-all shadow-lg active:scale-90"
-          >
-            <RefreshCcw size={22} className={isLoading ? "animate-spin" : ""} />
-          </button>
-
-          <div className="flex min-w-0 max-w-full overflow-x-auto bg-zinc-900/80 p-1.5 rounded-[1.5rem] border border-zinc-800">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex overflow-x-auto bg-white p-1 rounded-xl border border-[#efe5d9]">
             <button
               onClick={() => setStatusFilter("pending")}
-              className={`shrink-0 whitespace-nowrap px-4 sm:px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
-                statusFilter === "pending" ? "bg-red-600 text-white shadow-lg" : "text-zinc-500 hover:text-zinc-300"
+              className={`shrink-0 whitespace-nowrap px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all ${
+                statusFilter === "pending" ? "shadow-sm" : "text-zinc-500 hover:text-[#ff6a1a]"
               }`}
+              style={statusFilter === "pending" ? { backgroundColor: "#ff6a1a", color: "white" } : {}}
             >
               En attente ({orders.filter((o) => o.status === "pending").length})
             </button>
             <button
               onClick={() => setStatusFilter("all")}
-              className={`shrink-0 whitespace-nowrap px-4 sm:px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
-                statusFilter === "all" ? "bg-zinc-800 text-white shadow-lg" : "text-zinc-500 hover:text-zinc-300"
+              className={`shrink-0 whitespace-nowrap px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all ${
+                statusFilter === "all" ? "shadow-sm" : "text-zinc-500 hover:text-[#ff6a1a]"
               }`}
+              style={statusFilter === "all" ? { backgroundColor: "#2f2a33", color: "white" } : {}}
             >
-              Toutes les Commandes
+              Toutes
             </button>
           </div>
         </div>
       </div>
 
-      <div className="flex flex-col gap-4 md:gap-6 md:flex-row md:items-center">
-        <div className="flex-1 w-full overflow-hidden">
+      <div className="flex flex-col gap-3">
+        <div className="w-full">
           <SearchInput value={searchTerm} onChange={setSearchTerm} placeholder="Recherche par ID, Nom ou Email..." />
         </div>
 
         {/* FILTRES DE DATE */}
-        <div className="flex w-full flex-wrap items-center gap-4 bg-zinc-900/50 p-2 rounded-2xl border border-zinc-800 backdrop-blur-md md:w-auto">
-          <div className="flex min-w-0 max-w-full overflow-x-auto bg-zinc-800/50 p-1 rounded-xl border border-zinc-700/50">
+        <div className="flex flex-wrap items-center gap-2 bg-white p-1.5 rounded-2xl border border-[#efe5d9]">
+          <div className="flex flex-wrap items-center gap-1 bg-white p-1 rounded-xl border border-[#efe5d9]/60">
             {[
               { id: "all", label: "Tout" },
               { id: "today", label: "Aujourd'hui" },
@@ -224,11 +212,12 @@ export default function OrdersPage() {
               <button
                 key={f.id}
                 onClick={() => setTimeFilter(f.id as any)}
-                className={`shrink-0 whitespace-nowrap px-3 sm:px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
+                className={`shrink-0 whitespace-nowrap px-3 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all ${
                   timeFilter === f.id
-                    ? "bg-red-600 text-white shadow-lg shadow-red-500/20"
-                    : "text-zinc-500 hover:text-zinc-300"
+                    ? "shadow-sm"
+                    : "text-zinc-500 hover:text-[#ff6a1a]"
                 }`}
+                style={timeFilter === f.id ? { backgroundColor: "#ff6a1a", color: "white" } : {}}
               >
                 {f.label}
               </button>
@@ -240,7 +229,7 @@ export default function OrdersPage() {
               <select
                 value={selectedMonth}
                 onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-                className="bg-zinc-800 border border-zinc-700 text-zinc-200 text-[10px] font-bold uppercase tracking-widest px-3 py-2 rounded-lg outline-none focus:ring-1 focus:ring-red-500"
+                className="bg-white border border-[#efe5d9] text-zinc-700 text-[10px] font-bold uppercase tracking-widest px-3 py-2 rounded-lg outline-none focus:ring-1 focus:ring-[#ff6a1a]"
               >
                 {["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Août", "Sep", "Oct", "Nov", "Déc"].map((m, i) => (
                   <option key={m} value={i}>
@@ -251,7 +240,7 @@ export default function OrdersPage() {
               <select
                 value={selectedYear}
                 onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                className="bg-zinc-800 border border-zinc-700 text-zinc-200 text-[10px] font-bold uppercase tracking-widest px-3 py-2 rounded-lg outline-none focus:ring-1 focus:ring-red-500"
+                className="bg-white border border-[#efe5d9] text-zinc-700 text-[10px] font-bold uppercase tracking-widest px-3 py-2 rounded-lg outline-none focus:ring-1 focus:ring-[#ff6a1a]"
               >
                 {[2024, 2025, 2026].map((y) => (
                   <option key={y} value={y}>
@@ -264,7 +253,7 @@ export default function OrdersPage() {
         </div>
       </div>
 
-      <div className="bg-[#0d0d12] rounded-[3rem] border border-zinc-800/50 overflow-hidden shadow-2xl">
+      <div className="bg-white rounded-[2rem] border border-[#efe5d9] overflow-hidden">
         <OrderTable
           orders={filteredOrders}
           isLoading={isLoading}
@@ -272,6 +261,7 @@ export default function OrdersPage() {
             setSelectedOrder(order);
             setIsModalOpen(true);
           }}
+          onRefresh={fetchOrders}
         />
       </div>
 

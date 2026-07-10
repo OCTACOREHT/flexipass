@@ -111,30 +111,25 @@ export default function UsersPage() {
     <div className="space-y-8 pb-12">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="text-4xl font-black italic uppercase tracking-tighter text-zinc-100 flex items-center gap-3">
-            Répertoire des <span className="text-red-500">Membres</span>
+          <h1 className="text-3xl font-extrabold tracking-tight text-[#2f2a33] flex items-center gap-3">
+            Répertoire des <span className="text-[#ff6a1a]">Membres</span>
           </h1>
-          <p className="text-zinc-500 font-medium uppercase tracking-widest text-xs mt-1">
-            Contrôle d'Accès & Gestion des Utilisateurs
+          <p className="text-zinc-500 font-medium tracking-wide text-sm mt-1">
+            Gérez vos membres et leurs accès.
           </p>
         </div>
 
         <div className="flex items-center gap-3">
           <button
-            onClick={fetchUsers}
-            className="p-4 bg-[#1e1e2e] border border-zinc-800 rounded-2xl text-zinc-400 hover:text-white transition-all shadow-lg shadow-black/20"
-          >
-            <RefreshCcw size={20} className={isLoading ? "animate-spin" : ""} />
-          </button>
-          <button
             onClick={() => {
               setSelectedUser(null);
               setIsModalOpen(true);
             }}
-            className="px-6 py-4 bg-red-600 hover:bg-red-500 text-white font-black italic uppercase tracking-wider rounded-2xl shadow-xl shadow-red-500/20 flex items-center gap-2 transition-all active:scale-95"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all shadow-sm font-semibold text-sm"
+            style={{ backgroundColor: '#ff6a1a', color: 'white' }}
           >
-            <UserPlus size={20} />
-            Ajouter un Membre
+            <UserPlus size={16} />
+            <span>Nouveau</span>
           </button>
         </div>
       </div>
@@ -160,6 +155,7 @@ export default function UsersPage() {
           setSelectedUser(user);
           setIsDeleteOpen(true);
         }}
+        onRefresh={fetchUsers}
       />
 
       <UserModal
