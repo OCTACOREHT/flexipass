@@ -273,8 +273,8 @@ export default function ProductTable({ products, onEdit, onDelete, isLoading, on
       )}
 
       {/* Flat modern table with no vertical lines, no outer border, generous vertical spacing */}
-      <div className="w-full bg-white rounded-3xl p-6 border border-[#efe5d9]/60">
-        <h3 className="text-lg font-bold text-[#2f2a33] mb-6 pl-2">Product Catalog</h3>
+      <div className="w-full bg-white rounded-2xl p-4 border border-[#efe5d9]/60">
+        <h3 className="text-base font-bold text-[#2f2a33] mb-4 pl-2">Product Catalog</h3>
         <div className="overflow-x-auto no-scrollbar">
           <TableProvider 
             columns={columns} 
@@ -291,7 +291,7 @@ export default function ProductTable({ products, onEdit, onDelete, isLoading, on
                     <TableHead 
                       header={header} 
                       key={header.id} 
-                      className="py-5 px-6 text-[10px] font-bold text-zinc-400 uppercase tracking-[0.2em] border-none bg-transparent"
+                      className="py-2.5 px-4 text-[10px] font-bold text-zinc-400 uppercase tracking-[0.2em] border-none bg-transparent"
                     />
                   )}
                 </TableHeaderGroup>
@@ -308,7 +308,7 @@ export default function ProductTable({ products, onEdit, onDelete, isLoading, on
                     <TableCell 
                       cell={cell} 
                       key={cell.id} 
-                      className="py-5 px-6 border-none align-middle"
+                      className="py-2.5 px-4 border-none align-middle"
                     />
                   )}
                 </TableRow>

@@ -122,7 +122,7 @@ export default function ProductModal({ product, isOpen, onClose, onSave }: Produ
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-8 space-y-8 max-h-[75vh] overflow-y-auto custom-scrollbar bg-white">
+        <div className="p-8 space-y-8 max-h-[60vh] overflow-y-auto custom-scrollbar bg-white">
           {/* Top part: 3 Columns */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
             {/* Column 1: Media */}
@@ -222,30 +222,44 @@ export default function ProductModal({ product, isOpen, onClose, onSave }: Produ
                 placeholder="Ex: 30 (Laissez vide pour Carte Cadeau)"
               />
             </div>
-            <div>
-               {showConfirm ? (
-                 <div className="space-y-3 animate-in fade-in slide-in-from-bottom-2">
-                    <div className="flex items-center justify-center gap-2 p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-700">
-                       <AlertCircle size={16} />
-                       <span className="text-xs font-bold">Confirmer ?</span>
-                    </div>
-                    <div className="flex gap-2">
-                       <button type="button" onClick={() => setShowConfirm(false)} className="flex-1 py-2.5 text-xs bg-white border border-[#efe5d9] text-zinc-600 font-bold rounded-xl hover:bg-zinc-50 hover:text-zinc-800 transition-all">Annuler</button>
-                       <button type="submit" disabled={isSaving} className="flex-1 py-2.5 text-xs bg-emerald-600 text-white font-bold uppercase rounded-xl hover:bg-emerald-500 transition-all">{isSaving ? "Sync..." : "Confirmer"}</button>
-                    </div>
-                 </div>
-               ) : (
-                <button
-                  type="submit"
-                  className="w-full py-3.5 bg-[#ff6a1a] hover:bg-[#ff5a00] text-white font-bold uppercase tracking-wider text-xs rounded-2xl flex items-center justify-center gap-4 transition-all active:scale-95"
-                >
-                  <Check size={18} />
-                  {product ? "Synchroniser" : "Enregistrer SKU"}
-                </button>
-               )}
-            </div>
           </div>
-        </form>
+        </div>
+        
+        {/* Fixed Footer */}
+        <div className="p-6 border-t border-[#efe5d9] bg-zinc-50 flex justify-end">
+           {showConfirm ? (
+             <div className="flex items-center gap-4 w-full">
+                <div className="flex items-center gap-2 px-4 py-2 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-700">
+                   <AlertCircle size={16} />
+                   <span className="text-xs font-bold">Confirmer ?</span>
+                </div>
+                <div className="flex gap-2 ml-auto w-full max-w-sm">
+                   <button type="button" onClick={() => setShowConfirm(false)} className="flex-1 py-3.5 text-xs font-bold rounded-xl hover:bg-zinc-50 hover:text-zinc-800 transition-all" style={{ backgroundColor: '#ffffff', color: '#52525b', border: '1px solid #efe5d9' }}>Annuler</button>
+                   <button type="submit" disabled={isSaving} onClick={handleSubmit} className="flex-1 py-3.5 text-xs font-bold uppercase rounded-xl hover:bg-emerald-500 transition-all" style={{ backgroundColor: '#059669', color: '#ffffff' }}>{isSaving ? "Enregistrement..." : "Confirmer"}</button>
+                </div>
+             </div>
+           ) : (
+            <div className="flex gap-4 ml-auto w-full max-w-xs">
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex-1 py-3.5 hover:bg-zinc-50 font-bold uppercase tracking-wider text-xs rounded-2xl flex items-center justify-center transition-all"
+                style={{ backgroundColor: '#ffffff', color: '#52525b', border: '1px solid #efe5d9' }}
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                onClick={handleSubmit}
+                className="flex-1 py-3.5 hover:bg-[#ff5a00] font-bold uppercase tracking-wider text-xs rounded-2xl flex items-center justify-center gap-2 transition-all active:scale-95"
+                style={{ backgroundColor: '#ff6a1a', color: '#ffffff' }}
+              >
+                <Check size={18} />
+                Enregistrer
+              </button>
+            </div>
+           )}
+        </div>
       </div>
     </div>
   );

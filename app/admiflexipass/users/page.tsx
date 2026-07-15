@@ -108,10 +108,10 @@ export default function UsersPage() {
   };
 
   return (
-    <div className="space-y-8 pb-12">
+    <div className="space-y-6 pb-8">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-[#2f2a33] flex items-center gap-3">
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#2f2a33] flex items-center gap-2 sm:gap-3">
             Répertoire des <span className="text-[#ff6a1a]">Membres</span>
           </h1>
           <p className="text-zinc-500 font-medium tracking-wide text-sm mt-1">
