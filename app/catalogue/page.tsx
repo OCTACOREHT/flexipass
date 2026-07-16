@@ -250,7 +250,7 @@ export default function CataloguePage() {
                         href={`/product/${encodeURIComponent(getProductSlug(p))}`}
                         title="Voir le produit"
                       >
-                        <i className="ri-eye-line" />
+                        <i className="ri-arrow-right-line" />
                       </a>
                     </div>
                   </article>
