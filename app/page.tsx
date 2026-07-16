@@ -23,6 +23,7 @@ type Product = {
   plan?: string | null;
   duration_days?: number | null;
   variants?: Variant[];
+  created_at?: string;
 };
 
 type Category = { key: string; label: string; icon: string };
@@ -98,6 +99,14 @@ const getCategoryKey = (p: Product) => {
   if (/apple|chatgpt|copilot|claude|perplexity|slack|canva|tech|ia|ai|pro/.test(hay)) return "tech";
   if (/gift|carte|shopping|store|eshop|wallet/.test(hay)) return "shopping";
   return "all";
+};
+
+const isNewProduct = (createdAt?: string) => {
+  if (!createdAt) return false;
+  const createdDate = new Date(createdAt);
+  const diffTime = Math.abs(new Date().getTime() - createdDate.getTime());
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  return diffDays <= 7;
 };
 
 // Hook client : récupère la session Supabase et fournit un nom si connecté
@@ -1030,6 +1039,9 @@ export default function Home() {
               );
               return (
                 <article key={p.id} className={`compact-card ${p.type === "account" ? "luxe" : ""}`}>
+                  {isNewProduct(p.created_at) && (
+                    <span className="new-badge">Nouveau</span>
+                  )}
                   <div className="compact-logo-white">
                     <img
                       src={getProductImageSrc(p)}
@@ -1101,6 +1113,9 @@ export default function Home() {
               );
               return (
               <article key={p.id} className="compact-card luxe">
+                {isNewProduct(p.created_at) && (
+                  <span className="new-badge">Nouveau</span>
+                )}
                 <div className="compact-logo-white">
                   <img
                     src={getProductImageSrc(p)}

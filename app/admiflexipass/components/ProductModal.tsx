@@ -23,7 +23,7 @@ export default function ProductModal({ product, isOpen, onClose, onSave }: Produ
     image_url: "",
     short_description: "",
     active: true,
-    type: "gaming"
+    type: "account"
   });
   
   const [isSaving, setIsSaving] = useState(false);
@@ -41,7 +41,7 @@ export default function ProductModal({ product, isOpen, onClose, onSave }: Produ
           image_url: product.image_url || "",
           short_description: product.short_description || "",
           active: product.active ?? true,
-          type: product.type || "gaming"
+          type: product.type || "account"
         });
       } else {
         setFormData({
@@ -53,7 +53,7 @@ export default function ProductModal({ product, isOpen, onClose, onSave }: Produ
           image_url: "",
           short_description: "",
           active: true,
-          type: "gaming"
+          type: "account"
         });
       }
       setShowConfirm(false);
@@ -79,7 +79,7 @@ export default function ProductModal({ product, isOpen, onClose, onSave }: Produ
       image_url: formData.image_url,
       short_description: formData.short_description,
       active: formData.active,
-      type: formData.type || "gaming"
+      type: formData.type || "account"
     };
 
     try {
@@ -105,7 +105,8 @@ export default function ProductModal({ product, isOpen, onClose, onSave }: Produ
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose}></div>
       
       <div className="relative bg-white w-full max-w-5xl rounded-[2.5rem] border border-[#efe5d9] overflow-hidden animate-in fade-in zoom-in duration-300">
-        <div className="p-8 border-b border-[#efe5d9] flex items-center justify-between text-[#2f2a33] bg-white">
+        <form onSubmit={handleSubmit}>
+          <div className="p-8 border-b border-[#efe5d9] flex items-center justify-between text-[#2f2a33] bg-white">
           <div className="flex items-center gap-4">
             <div className="p-4 rounded-2xl bg-zinc-50 text-[#ff6a1a] border border-zinc-100">
               {product ? <Save size={28} /> : <PackagePlus size={28} />}
@@ -200,16 +201,14 @@ export default function ProductModal({ product, isOpen, onClose, onSave }: Produ
           {/* Bottom part: Type, Duration & Centered Submit in 3 Columns */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
             <div className="space-y-2">
-              <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest ml-1">Type / Catégorie</label>
+              <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest ml-1">Type de Produit</label>
               <select
-                value={formData.type || "gaming"}
+                value={formData.type || "account"}
                 onChange={(e) => setFormData({ ...formData, type: e.target.value })}
                 className="w-full bg-white border border-[#e7e1d8] rounded-2xl px-5 py-3.5 text-[#2f2a33] focus:outline-none focus:border-[#ff8a00] focus:ring-4 focus:ring-[#ff8a00]/5 transition-all cursor-pointer font-semibold"
               >
-                <option value="gaming">Gaming</option>
-                <option value="tech">Tech</option>
-                <option value="shopping">Shopping</option>
-                <option value="divertissement">Divertissement</option>
+                <option value="account">Compte / Abonnement</option>
+                <option value="giftcard">Carte Cadeau (Giftcard)</option>
               </select>
             </div>
             <div className="space-y-2">
@@ -235,7 +234,7 @@ export default function ProductModal({ product, isOpen, onClose, onSave }: Produ
                 </div>
                 <div className="flex gap-2 ml-auto w-full max-w-sm">
                    <button type="button" onClick={() => setShowConfirm(false)} className="flex-1 py-3.5 text-xs font-bold rounded-xl hover:bg-zinc-50 hover:text-zinc-800 transition-all" style={{ backgroundColor: '#ffffff', color: '#52525b', border: '1px solid #efe5d9' }}>Annuler</button>
-                   <button type="submit" disabled={isSaving} onClick={handleSubmit} className="flex-1 py-3.5 text-xs font-bold uppercase rounded-xl hover:bg-emerald-500 transition-all" style={{ backgroundColor: '#059669', color: '#ffffff' }}>{isSaving ? "Enregistrement..." : "Confirmer"}</button>
+                   <button type="submit" disabled={isSaving} className="flex-1 py-3.5 text-xs font-bold uppercase rounded-xl hover:bg-emerald-500 transition-all" style={{ backgroundColor: '#059669', color: '#ffffff' }}>{isSaving ? "Enregistrement..." : "Confirmer"}</button>
                 </div>
              </div>
            ) : (
@@ -249,8 +248,7 @@ export default function ProductModal({ product, isOpen, onClose, onSave }: Produ
                 Annuler
               </button>
               <button
-                type="button"
-                onClick={handleSubmit}
+                type="submit"
                 className="flex-1 py-3.5 hover:bg-[#ff5a00] font-bold uppercase tracking-wider text-xs rounded-2xl flex items-center justify-center gap-2 transition-all active:scale-95"
                 style={{ backgroundColor: '#ff6a1a', color: '#ffffff' }}
               >
@@ -260,7 +258,8 @@ export default function ProductModal({ product, isOpen, onClose, onSave }: Produ
             </div>
            )}
         </div>
-      </div>
+      </form>
     </div>
-  );
+  </div>
+);
 }
