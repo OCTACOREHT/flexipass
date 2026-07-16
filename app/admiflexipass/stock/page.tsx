@@ -74,6 +74,7 @@ export default function StockPage() {
         .eq("id", selectedProduct.id);
       
       if (error) throw error;
+      setProducts((prev) => prev.filter((p) => p.id !== selectedProduct.id));
       setToast({ message: "Produit supprimé avec succès", type: "success" });
       setIsDeleteOpen(false);
     } catch (err: any) {

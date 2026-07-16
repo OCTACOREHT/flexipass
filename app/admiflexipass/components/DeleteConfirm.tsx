@@ -39,13 +39,15 @@ export default function DeleteConfirm({ isOpen, title, message, onClose, onConfi
         <div className="p-6 border-t border-[#efe5d9] bg-white flex gap-3">
           <button 
             onClick={onClose}
-            className="flex-1 py-3 text-zinc-600 font-bold uppercase tracking-wider text-xs hover:bg-zinc-100 rounded-xl transition-all"
+            className="flex-1 py-3 font-bold uppercase tracking-wider text-xs hover:bg-zinc-100 rounded-xl transition-all"
+            style={{ backgroundColor: '#ffffff', color: '#52525b', border: '1px solid #efe5d9' }}
           >
             Annuler
           </button>
           <button 
             onClick={onConfirm}
-            className="flex-1 py-3 bg-red-600 hover:bg-red-500 text-white font-bold uppercase tracking-wider text-xs rounded-xl shadow-md shadow-red-500/10 transition-all active:scale-95"
+            className="flex-1 py-3 hover:bg-red-500 font-bold uppercase tracking-wider text-xs rounded-xl shadow-md shadow-red-500/10 transition-all active:scale-95"
+            style={{ backgroundColor: '#dc2626', color: '#ffffff' }}
           >
             Confirmer la suppression
           </button>
