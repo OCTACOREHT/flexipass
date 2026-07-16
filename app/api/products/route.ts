@@ -5,7 +5,7 @@ export async function GET() {
   const supabase = supabaseAdmin();
   const { data: products, error } = await supabase
     .from("products")
-    .select("id,title,type,price,currency,active,plan,duration_days,short_description,image_url,service_name,created_at")
+    .select("id,title,type,price,currency,active,plan,duration_days,short_description,description,image_url,service_name,created_at")
     .eq("active", true)
     .order("created_at", { ascending: false });
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });

@@ -67,13 +67,16 @@ export default function StockPage() {
   const handleDeleteProduct = async () => {
     if (!selectedProduct) return;
     try {
-      console.log("Suppression du produit :", selectedProduct.id);
-      const { error } = await supabase
-        .from("products")
-        .delete()
-        .eq("id", selectedProduct.id);
-      
-      if (error) throw error;
+      // Use the admin API which uses service role key and handles cascade deletion
+      const res = await fetch(`/api/admin/products?id=${selectedProduct.id}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body?.error || `Erreur serveur (${res.status})`);
+      }
+
       setProducts((prev) => prev.filter((p) => p.id !== selectedProduct.id));
       setToast({ message: "Produit supprimé avec succès", type: "success" });
       setIsDeleteOpen(false);
@@ -94,32 +97,29 @@ export default function StockPage() {
   };
 
   return (
-    <div className="space-y-6 pb-8">
-      {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+    <div className="space-y-8 bg-zinc-50/50 min-h-screen">
+      {/* Header Panel stock */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-8 rounded-[2.5rem] border border-[#efe5d9]">
         <div>
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#2f2a33] flex items-center gap-2 sm:gap-3">
-            Gestion du <span className="text-[#ff6a1a]">Stock</span>
+            <span className="w-2.5 h-7 rounded-full bg-[#ff6a1a]"></span>
+            Inventaire & <span className="text-[#ff6a1a]">Stock</span>
           </h1>
-          <p className="text-zinc-500 font-medium tracking-wide text-sm mt-1">
-            Gérez votre catalogue de produits et inventaire.
-          </p>
+          <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-[0.2em] mt-1 ml-4">Gestion des clés et des produits</p>
         </div>
-        
         <div className="flex items-center gap-3">
           <button 
             onClick={handleCreateTrigger}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all shadow-sm font-semibold text-sm"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all shadow-sm font-semibold text-sm hover:opacity-90 active:scale-95"
             style={{ backgroundColor: '#ff6a1a', color: 'white' }}
           >
-            <PackagePlus size={16} />
-            <span>Nouveau</span>
+            Nouveau
           </button>
         </div>
       </div>
 
-      <div className="flex flex-col md:flex-row gap-6">
-        <div className="flex-1 group">
+      <div className="bg-white p-6 rounded-[2rem] border border-[#efe5d9] flex flex-col md:flex-row md:items-center gap-4">
+        <div className="w-full">
           <SearchInput 
             value={searchTerm} 
             onChange={setSearchTerm} 
@@ -135,6 +135,7 @@ export default function StockPage() {
           onEdit={handleEditTrigger}
           onDelete={(product) => { setSelectedProduct(product); setIsDeleteOpen(true); }}
           onRefresh={fetchProducts}
+          setToast={setToast}
         />
       </div>
 

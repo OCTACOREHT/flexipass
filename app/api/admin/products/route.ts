@@ -1,4 +1,4 @@
-﻿import { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
 export async function GET() {
@@ -83,10 +83,35 @@ export async function DELETE(request: Request) {
   }
   const supabase = supabaseAdmin();
   const { searchParams } = new URL(request.url);
-  const id = searchParams.get("id");
-  if (!id) return NextResponse.json({ error: "id manquant" }, { status: 400 });
-  const { error } = await supabase.from("products").delete().eq("id", id);
-  if (error) return NextResponse.json({ error: error.message }, { status: 400 });
-  return NextResponse.json({ deleted: id });
-}
 
+  // Support single id (id=xxx) or bulk ids (ids=xxx,yyy,zzz)
+  const singleId = searchParams.get("id");
+  const bulkIds = searchParams.get("ids");
+  const ids: string[] = singleId
+    ? [singleId]
+    : bulkIds
+    ? bulkIds.split(",").map(s => s.trim()).filter(Boolean)
+    : [];
+
+  if (ids.length === 0) return NextResponse.json({ error: "id manquant" }, { status: 400 });
+
+  // 1. Delete related order_items (bypasses RLS via service role)
+  const { error: orderItemsError } = await supabase
+    .from("order_items")
+    .delete()
+    .in("product_id", ids);
+  if (orderItemsError) console.warn("order_items delete:", orderItemsError.message);
+
+  // 2. Delete related product_variants
+  const { error: variantsError } = await supabase
+    .from("product_variants")
+    .delete()
+    .in("product_id", ids);
+  if (variantsError) console.warn("product_variants delete:", variantsError.message);
+
+  // 3. Delete the products themselves
+  const { error } = await supabase.from("products").delete().in("id", ids);
+  if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+
+  return NextResponse.json({ deleted: ids });
+}

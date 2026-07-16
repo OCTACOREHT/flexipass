@@ -22,6 +22,7 @@ export default function ProductModal({ product, isOpen, onClose, onSave }: Produ
     duration_days: "",
     image_url: "",
     short_description: "",
+    description: "",
     active: true,
     type: "account"
   });
@@ -40,6 +41,7 @@ export default function ProductModal({ product, isOpen, onClose, onSave }: Produ
           duration_days: product.duration_days?.toString() || "",
           image_url: product.image_url || "",
           short_description: product.short_description || "",
+          description: product.description || "",
           active: product.active ?? true,
           type: product.type || "account"
         });
@@ -52,6 +54,7 @@ export default function ProductModal({ product, isOpen, onClose, onSave }: Produ
           duration_days: "",
           image_url: "",
           short_description: "",
+          description: "",
           active: true,
           type: "account"
         });
@@ -78,6 +81,7 @@ export default function ProductModal({ product, isOpen, onClose, onSave }: Produ
       duration_days: parseInt(formData.duration_days) || 0,
       image_url: formData.image_url,
       short_description: formData.short_description,
+      description: formData.description,
       active: formData.active,
       type: formData.type || "account"
     };
@@ -221,6 +225,17 @@ export default function ProductModal({ product, isOpen, onClose, onSave }: Produ
                 placeholder="Ex: 30 (Laissez vide pour Carte Cadeau)"
               />
             </div>
+          </div>
+          
+          <div className="space-y-2">
+            <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest ml-1">Description Longue</label>
+            <textarea
+              rows={4}
+              value={formData.description || ""}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              className="w-full bg-white border border-[#e7e1d8] rounded-2xl p-4 text-[#2f2a33] placeholder-zinc-400 focus:outline-none focus:border-[#ff8a00] focus:ring-4 focus:ring-[#ff8a00]/5 transition-all resize-y"
+              placeholder="Ex: Saisissez la description complète et longue du produit..."
+            />
           </div>
         </div>
         

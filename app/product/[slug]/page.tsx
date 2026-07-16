@@ -297,9 +297,12 @@ export default function ProductPage() {
                 cleanText(dbProduct.title) ||
                 cleanText(dbProduct.service_name) ||
                 "Produit",
-              subtitle: cleanText(
-                dbProduct.short_description || dbProduct.description || dbProduct.plan || "Abonnement / carte"
-              ),
+              subtitle: (() => {
+                const sd = cleanText(dbProduct.short_description) || "";
+                // If short_description is long (>100 chars), it's meant for the description section, not the subtitle
+                if (sd.length > 100) return cleanText(dbProduct.plan) || "Abonnement / carte";
+                return sd || cleanText(dbProduct.plan) || "Abonnement / carte";
+              })(),
               price: `${dbProduct.price} ${dbProduct.currency}`,
               rawPrice: dbProduct.price,
               currency: dbProduct.currency,
@@ -314,7 +317,14 @@ export default function ProductPage() {
                         price: `${dbProduct.price} ${dbProduct.currency}`,
                       },
                     ],
-              description: cleanText(dbProduct.description) || "Offre disponible immédiatement.",
+              description: (() => {
+                const longDesc = cleanText(dbProduct.description) || "";
+                const shortDesc = cleanText(dbProduct.short_description) || "";
+                // Use dedicated description field first; otherwise use short_description if it's long text
+                if (longDesc) return longDesc;
+                if (shortDesc.length > 100) return shortDesc;
+                return "Offre disponible immédiatement.";
+              })(),
               features: [
                 dbProduct.type === "giftcard" ? "Giftcard" : "Compte/Abonnement",
                 dbProduct.plan ? `Plan: ${cleanText(dbProduct.plan)}` : "Plan standard",
@@ -402,12 +412,90 @@ export default function ProductPage() {
       <HeaderMain />
       <main className="detail-wrap">
         {loading && (
-          <div className="detail-card">
-            <div className="skeleton-line w40" />
-            <div className="skeleton-line w70" />
-            <div className="skeleton-line w60" />
-            <div className="skeleton-pill" />
-            <div className="skeleton-btn" />
+          <div className="detail-grid">
+            {/* Left column */}
+            <div className="detail-left">
+              {/* Header card */}
+              <div className="detail-card">
+                <div className="detail-head">
+                  <div className="detail-icon">
+                    <div className="skeleton-line" style={{ width: "100%", height: "100%", margin: 0, borderRadius: "inherit" }} />
+                  </div>
+                  <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "8px" }}>
+                    <div className="skeleton-line h28 w50" style={{ margin: 0 }} />
+                    <p className="muted" style={{ margin: 0, display: "flex", alignItems: "center" }}>
+                      <span className="skeleton-line h12 w30" style={{ margin: 0 }} />
+                    </p>
+                    <div className="detail-flags" style={{ marginTop: "4px" }}>
+                      <span className="skeleton-line h12 w20" style={{ margin: 0 }} />
+                      <span className="skeleton-line h12 w20" style={{ margin: 0 }} />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Description card */}
+              <div className="detail-card">
+                <h3>Description</h3>
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "12px" }}>
+                  <div className="skeleton-line h12 w100" style={{ margin: 0 }} />
+                  <div className="skeleton-line h12 w100" style={{ margin: 0 }} />
+                  <div className="skeleton-line h12 w90" style={{ margin: 0 }} />
+                  <div className="skeleton-line h12 w75" style={{ margin: 0 }} />
+                  <div className="skeleton-line h12 w60" style={{ margin: 0 }} />
+                </div>
+              </div>
+
+              {/* Ce qui est inclus card */}
+              <div className="detail-card">
+                <h3>Ce qui est inclus</h3>
+                <div className="detail-features" style={{ marginTop: "12px", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: "12px" }}>
+                  {[1, 2, 3, 4].map((i) => (
+                    <span key={i} style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <span className="skeleton-line circle" style={{ width: "16px", height: "16px", minWidth: "16px", margin: 0 }} />
+                      <span className="skeleton-line h12 w60" style={{ margin: 0 }} />
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {/* Autres plans disponibles card */}
+              <div className="detail-card">
+                <h3>Autres plans disponibles</h3>
+                <div className="plan-list" style={{ marginTop: "12px" }}>
+                  {[1, 2].map((i) => (
+                    <div key={i} className="plan-item" style={{ cursor: "default", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                        <div className="skeleton-line h14 w40" style={{ margin: 0 }} />
+                        <div className="skeleton-line h10 w60" style={{ margin: 0 }} />
+                      </div>
+                      <div className="skeleton-line h16 w20" style={{ margin: 0 }} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Right column */}
+            <div className="detail-right">
+              <div className="detail-card" style={{ position: "sticky", top: 24 }}>
+                <div className="detail-price">
+                  <span className="skeleton-line h32 w50" style={{ margin: 0 }} />
+                </div>
+                <div className="cta-stack" style={{ marginTop: "16px" }}>
+                  <div className="skeleton-btn" style={{ margin: 0 }} />
+                  <div className="skeleton-line h36 w100" style={{ margin: 0, borderRadius: "18px" }} />
+                </div>
+                <div className="detail-bullets fancy-bullets" style={{ marginTop: "20px" }}>
+                  {[1, 2, 3].map((i) => (
+                    <span key={i} style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <span className="skeleton-line circle" style={{ width: "16px", height: "16px", minWidth: "16px", margin: 0 }} />
+                      <span className="skeleton-line h12 w60" style={{ margin: 0 }} />
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
         )}
 

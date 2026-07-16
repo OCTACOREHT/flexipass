@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/custom-table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/lib/supabase";
+import DeleteConfirm from "@/app/admiflexipass/components/DeleteConfirm";
 
 export interface Product {
   id: string;
@@ -28,6 +29,7 @@ export interface Product {
   duration_days?: number;
   currency?: string;
   short_description?: string;
+  description?: string;
   created_at?: string;
 }
 
@@ -37,19 +39,22 @@ interface ProductTableProps {
   onDelete: (product: Product) => void;
   isLoading?: boolean;
   onRefresh?: () => void;
+  setToast?: (toast: { message: string; type: "success" | "error" } | null) => void;
 }
 
-export default function ProductTable({ products, onEdit, onDelete, isLoading, onRefresh }: ProductTableProps) {
+export default function ProductTable({ products, onEdit, onDelete, isLoading, onRefresh, setToast }: ProductTableProps) {
   const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
   const [isBulkProcessing, setIsBulkProcessing] = useState(false);
+  const [isBulkDeleteOpen, setIsBulkDeleteOpen] = useState(false);
 
   const selectedCount = Object.keys(rowSelection).filter(k => rowSelection[k]).length;
 
   const handleBulkToggleActive = async (active: boolean) => {
-    const selectedIds = Object.keys(rowSelection).filter(k => rowSelection[k]);
+    const selectedIds = Object.keys(rowSelection)
+      .filter(k => rowSelection[k])
+      .map(idx => products[parseInt(idx)]?.id)
+      .filter(Boolean);
     if (selectedIds.length === 0) return;
-
-    if (!confirm(`Êtes-vous sûr de vouloir ${active ? "activer" : "désactiver"} ces ${selectedIds.length} produits ?`)) return;
 
     setIsBulkProcessing(true);
     try {
@@ -60,9 +65,10 @@ export default function ProductTable({ products, onEdit, onDelete, isLoading, on
 
       if (error) throw error;
       setRowSelection({});
+      setToast?.({ message: `${selectedIds.length} produits ${active ? "activés" : "désactivés"} avec succès`, type: "success" });
       if (onRefresh) onRefresh();
     } catch (err) {
-      alert("Une erreur est survenue lors de la mise à jour groupée.");
+      setToast?.({ message: "Une erreur est survenue lors de la mise à jour groupée.", type: "error" });
       console.error(err);
     } finally {
       setIsBulkProcessing(false);
@@ -70,24 +76,31 @@ export default function ProductTable({ products, onEdit, onDelete, isLoading, on
   };
 
   const handleBulkDelete = async () => {
-    const selectedIds = Object.keys(rowSelection).filter(k => rowSelection[k]);
+    const selectedIds = Object.keys(rowSelection)
+      .filter(k => rowSelection[k])
+      .map(idx => products[parseInt(idx)]?.id)
+      .filter(Boolean);
     if (selectedIds.length === 0) return;
-
-    if (!confirm(`ATTENTION : Êtes-vous sûr de vouloir supprimer définitivement ces ${selectedIds.length} produits ? cette action est irréversible.`)) return;
 
     setIsBulkProcessing(true);
     try {
-      const { error } = await supabase
-        .from("products")
-        .delete()
-        .in("id", selectedIds);
+      // Use the admin API route which has service role permissions and handles cascade
+      const res = await fetch(`/api/admin/products?ids=${selectedIds.join(",")}`, {
+        method: "DELETE",
+      });
 
-      if (error) throw error;
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body?.error || `Erreur serveur (${res.status})`);
+      }
+
       setRowSelection({});
+      setToast?.({ message: `${selectedIds.length} produit(s) supprimé(s) avec succès`, type: "success" });
       if (onRefresh) onRefresh();
-    } catch (err) {
-      alert("Une erreur est survenue lors de la suppression groupée.");
-      console.error(err);
+    } catch (err: any) {
+      const msg = err?.message || "Une erreur est survenue lors de la suppression groupée.";
+      setToast?.({ message: msg, type: "error" });
+      console.error("handleBulkDelete error:", err);
     } finally {
       setIsBulkProcessing(false);
     }
@@ -255,8 +268,9 @@ export default function ProductTable({ products, onEdit, onDelete, isLoading, on
                   <ToggleLeft size={16} /> Hors-ligne
                 </button>
                 <button
-                  onClick={handleBulkDelete}
+                  onClick={() => setIsBulkDeleteOpen(true)}
                   className="bg-red-600 hover:bg-red-500 text-white font-bold text-xs uppercase px-4 py-2.5 rounded-xl transition-all flex items-center gap-1.5 active:scale-95 shadow-sm"
+                  style={{ backgroundColor: '#dc2626', color: '#ffffff' }}
                 >
                   <Trash2 size={14} /> Supprimer
                 </button>
@@ -317,6 +331,17 @@ export default function ProductTable({ products, onEdit, onDelete, isLoading, on
           </TableProvider>
         </div>
       </div>
+      
+      <DeleteConfirm 
+        isOpen={isBulkDeleteOpen}
+        title="Supprimer les produits sélectionnés"
+        message={`Attention : Cette action supprimera définitivement ces ${selectedCount} produits sélectionnés ainsi que leurs plans associés de la base de données. C'est irréversible.`}
+        onClose={() => setIsBulkDeleteOpen(false)}
+        onConfirm={async () => {
+          setIsBulkDeleteOpen(false);
+          await handleBulkDelete();
+        }}
+      />
     </div>
   );
 }
