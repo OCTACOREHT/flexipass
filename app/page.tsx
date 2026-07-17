@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import FooterMain from "@/components/FooterMain";
 import Toaster from "@/components/admin/ui/Toaster";
 import { useToasts } from "@/components/admin/hooks/useToasts";
@@ -104,9 +104,9 @@ const getCategoryKey = (p: Product) => {
 const isNewProduct = (createdAt?: string) => {
   if (!createdAt) return false;
   const createdDate = new Date(createdAt);
-  const diffTime = Math.abs(new Date().getTime() - createdDate.getTime());
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  return diffDays <= 7;
+  const diffTime = new Date().getTime() - createdDate.getTime();
+  // Exactement 7 jours (7 * 24 * 60 * 60 * 1000 millisecondes)
+  return diffTime >= 0 && diffTime <= 604800000;
 };
 
 // Hook client : récupère la session Supabase et fournit un nom si connecté
@@ -168,6 +168,7 @@ function useSessionUser() {
 }
 
 export default function Home() {
+  const policyCheckRef = useRef(false);
   const { user, hydrated } = useSessionUser();
   const userLabel = user?.name?.trim() || (hydrated ? "Connexion" : "Chargement...");
   const [products, setProducts] = useState<Product[]>([]);
@@ -245,8 +246,12 @@ export default function Home() {
     const checkPolicyStatus = async () => {
       if (!user) {
         setPolicyStatusLoading(false);
+        policyCheckRef.current = false;
         return;
       }
+      
+      if (policyCheckRef.current) return;
+      policyCheckRef.current = true;
 
       setPolicyStatusLoading(true);
       setPolicyError(null);
@@ -307,7 +312,7 @@ export default function Home() {
     };
 
     checkPolicyStatus();
-  }, [user, privacyAccepted, privacyPolicyAccepted]);
+  }, [user]);
 
   useEffect(() => {
     if (!settingsOpen) return;
@@ -665,8 +670,37 @@ export default function Home() {
     window.location.href = "/paiement";
   };
 
+  const jsonLd = [
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "FlexiPass",
+      "url": "https://www.flexipass.shop",
+      "logo": "https://www.flexipass.shop/logo.png",
+      "description": "Plateforme de vente de cartes cadeaux et abonnements numériques instantanés pour le gaming, la tech, le shopping et le streaming.",
+      "sameAs": [
+        "https://www.facebook.com/flexipass",
+        "https://www.instagram.com/flexipass"
+      ]
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "url": "https://www.flexipass.shop",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://www.flexipass.shop/catalogue?q={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
+    }
+  ];
+
   return (
     <main>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <Toaster
         toasts={toasts}
         onDismiss={dismissToast}

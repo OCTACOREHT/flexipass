@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 
@@ -20,18 +20,18 @@ export default function FooterMain() {
           <div className="footer-col footer-nav">
             <h4>Navigation</h4>
             <ul>
-              <li><Link href="/">Accueil</Link></li>
-              <li><Link href="/catalogue">Catalogue</Link></li>
-              <li className="footer-mobile-only"><Link href="/streaming">Streaming</Link></li>
-              <li><Link href="/aide">Aide</Link></li>
+              <li><Link href="/" onClick={() => window.scrollTo(0, 0)}>Accueil</Link></li>
+              <li><Link href="/catalogue" onClick={() => window.scrollTo(0, 0)}>Catalogue</Link></li>
+              <li className="footer-mobile-only"><Link href="/streaming" onClick={() => window.scrollTo(0, 0)}>Streaming</Link></li>
+              <li><Link href="/aide" onClick={() => window.scrollTo(0, 0)}>Aide</Link></li>
             </ul>
           </div>
           <div className="footer-col footer-legal">
             <h4>Légal</h4>
             <ul>
-              <li><Link href="/cgu">CGU</Link></li>
-              <li><Link href="/confidentialite">Politique de confidentialité</Link></li>
-              <li><Link href="/mentions-legales">Mentions légales</Link></li>
+              <li><Link href="/cgu" onClick={() => window.scrollTo(0, 0)}>CGU</Link></li>
+              <li><Link href="/confidentialite" onClick={() => window.scrollTo(0, 0)}>Politique de confidentialité</Link></li>
+              <li><Link href="/mentions-legales" onClick={() => window.scrollTo(0, 0)}>Mentions légales</Link></li>
             </ul>
           </div>
           <div className="footer-col footer-follow">

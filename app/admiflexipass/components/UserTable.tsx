@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { User, Edit2, Trash2, Shield, UserCheck, ShieldAlert, Loader2 } from "lucide-react";
+import { User, Edit2, Trash2, Shield, UserCheck, ShieldAlert, Loader2, FileSignature } from "lucide-react";
 import { 
   TableProvider, 
   TableHeader, 
@@ -29,11 +29,12 @@ interface UserTableProps {
   users: DashboardUser[];
   onEdit: (user: DashboardUser) => void;
   onDelete: (user: DashboardUser) => void;
+  onViewSignature: (user: DashboardUser) => void;
   isLoading: boolean;
   onRefresh?: () => void;
 }
 
-export default function UserTable({ users, onEdit, onDelete, isLoading, onRefresh }: UserTableProps) {
+export default function UserTable({ users, onEdit, onDelete, onViewSignature, isLoading, onRefresh }: UserTableProps) {
   const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
   const [isBulkProcessing, setIsBulkProcessing] = useState(false);
 
@@ -176,6 +177,13 @@ export default function UserTable({ users, onEdit, onDelete, isLoading, onRefres
       header: () => <div className="text-right pr-2">Actions</div>,
       cell: ({ row }) => (
         <div className="flex items-center justify-end gap-2 pr-2">
+          <button 
+            onClick={() => onViewSignature(row.original)}
+            className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-all"
+            title="Voir la signature"
+          >
+            <FileSignature size={16} />
+          </button>
           <button 
             onClick={() => onEdit(row.original)}
             className="p-2 text-zinc-400 hover:text-[#ff6a1a] hover:bg-zinc-50 rounded-lg transition-all"

@@ -76,9 +76,9 @@ const getCategoryKey = (p: Product) => {
 const isNewProduct = (createdAt?: string) => {
   if (!createdAt) return false;
   const createdDate = new Date(createdAt);
-  const diffTime = Math.abs(new Date().getTime() - createdDate.getTime());
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  return diffDays <= 7;
+  const diffTime = new Date().getTime() - createdDate.getTime();
+  // Exactement 7 jours (7 * 24 * 60 * 60 * 1000 millisecondes)
+  return diffTime >= 0 && diffTime <= 604800000;
 };
 
 export default function CataloguePage() {
@@ -143,10 +143,32 @@ export default function CataloguePage() {
     return counts;
   }, [products]);
 
+  const jsonLdBreadcrumb = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Accueil", "item": "https://www.flexipass.shop/" },
+      { "@type": "ListItem", "position": 2, "name": "Catalogue", "item": "https://www.flexipass.shop/catalogue" }
+    ]
+  };
+
+  const jsonLdItemList = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "itemListElement": visible.map((p, index) => ({
+      "@type": "ListItem",
+      "position": index + 1,
+      "url": `https://www.flexipass.shop/product/${getProductSlug(p)}`,
+      "name": getDisplayTitle(p.title)
+    }))
+  };
+
   return (
     <>
       <HeaderMain />
       <main className="market-shell">
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdBreadcrumb) }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdItemList) }} />
         <section className="market-section">
           <div className="section-head market-head" style={{ justifyContent: "center" }}>
             <h2 style={{ textAlign: "center", width: "100%" }}>Tous les produits</h2>

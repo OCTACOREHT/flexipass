@@ -9,19 +9,52 @@ const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.flexipass.shop"),
-
-  title: "FlexiPass | Cartes Cadeaux Numériques",
-  description: "Offrez le choix avec nos cartes numériques instantanées.",
-
-  applicationName: "FlexiPass",
-
-  verification: {
-    google: "HO3jLj3vt59YwRDX0BFE4h0Nuc7GdKQz88XzjKTY0q4",
+  title: {
+    default: "FlexiPass | Cartes Cadeaux & Abonnements Numériques Instantanés",
+    template: "%s | FlexiPass",
   },
-
+  description: "Achetez vos abonnements Google One, Grok, TradingView, N8N, Eleven Labs et plus. Livraison numérique instantanée, activation garantie, assistance 7j/7.",
+  applicationName: "FlexiPass",
+  authors: [{ name: "FlexiPass" }],
+  keywords: ["carte cadeau numérique", "abonnement digital", "Google One", "Grok", "N8N", "TradingView", "Eleven Labs", "VidIQ", "Edx", "gift card gaming", "pass streaming"],
+  alternates: {
+    canonical: "/",
+    languages: {
+      "fr": "/",
+      "x-default": "/",
+    },
+  },
+  openGraph: {
+    type: "website",
+    siteName: "FlexiPass",
+    locale: "fr_FR",
+    images: [{
+      url: "/og-image.jpg",
+      width: 1200,
+      height: 630,
+    }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    images: ["/og-image.jpg"],
+  },
+  verification: {
+    google: "mMaZO31Js4dGAoaYXrWf_YdqfmVLlPCsgaios4LxK1U",
+  },
   icons: {
-    icon: "/icon.png",
-    apple: "/apple-icon.png",
+    icon: "/favicon.ico",
+    apple: "/apple-touch-icon.png",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
   },
 };
 
@@ -29,6 +62,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
+  themeColor: "#0B0B0F",
 };
 
 export default function RootLayout({

@@ -516,7 +516,7 @@ export default function ProductPage() {
                   <div className="detail-icon">
                     <img
                       src={product.icon}
-                      alt={product.title}
+                      alt={`Carte cadeau numérique ${product.title} ${selectedPlan ? selectedPlan.name : (product.plans[0]?.name || "")}`.trim()}
                       onError={(e) => {
                         handleProductImageError(e.currentTarget, {
                           title: product.title,
@@ -545,6 +545,9 @@ export default function ProductPage() {
               <div className="detail-card">
                 <h3>Description</h3>
                 <p>{cleanText(product.description)}</p>
+                <p className="geo-text" style={{ marginTop: "12px", fontSize: "0.95rem", color: "var(--text-muted)", lineHeight: 1.5 }}>
+                  FlexiPass propose {product.title} Plan {selectedPlan ? selectedPlan.name : (product.plans[0]?.name || "Standard")} à {activePrice} {product.currency || "USD"} avec livraison numérique instantanée.
+                </p>
                 {cartNote && <div className="auth-success" style={{ marginTop: 12 }}>{cartNote}</div>}
               </div>
 

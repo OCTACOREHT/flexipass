@@ -15,8 +15,8 @@ export default function MentionsLegalesPage() {
             <section className="legal-section">
               <h2>1. Présentation du service</h2>
               <p>
-                Le site FlexiPass propose la vente et la distribution de produits numériques, notamment des cartes
-                cadeaux, abonnements et accès à des services en ligne. L'utilisation de la plateforme implique
+                FlexiPass est une plateforme spécialisée dans la vente de cartes cadeaux et d'abonnements numériques instantanés pour le gaming, la tech, le shopping et le divertissement. En tant que revendeur de licences numériques de confiance, FlexiPass s'engage à fournir une activation garantie, une assistance premium 7j/7, et des transactions 100% sécurisées pour chaque produit (Google One, Grok, TradingView, N8N, etc.). 
+                Le site FlexiPass propose la vente et la distribution de ces produits numériques de manière légale et conforme. L'utilisation de la plateforme implique
                 l'acceptation pleine et entière des présentes mentions légales ainsi que des règles applicables
                 aux services proposés.
               </p>

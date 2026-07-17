@@ -4,6 +4,7 @@ import React, { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/lib/supabase";
 import UserTable, { DashboardUser } from "@/app/admiflexipass/components/UserTable";
 import UserModal from "@/app/admiflexipass/components/UserModal";
+import SignatureModal from "@/app/admiflexipass/components/SignatureModal";
 import DeleteConfirm from "@/app/admiflexipass/components/DeleteConfirm";
 import SuccessToast from "@/app/admiflexipass/components/SuccessToast";
 import SearchInput from "@/app/admiflexipass/components/SearchInput";
@@ -18,6 +19,7 @@ export default function UsersPage() {
   const [selectedUser, setSelectedUser] = useState<DashboardUser | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [isSignatureOpen, setIsSignatureOpen] = useState(false);
 
   // Toast state
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
@@ -155,7 +157,17 @@ export default function UsersPage() {
           setSelectedUser(user);
           setIsDeleteOpen(true);
         }}
+        onViewSignature={(user) => {
+          setSelectedUser(user);
+          setIsSignatureOpen(true);
+        }}
         onRefresh={fetchUsers}
+      />
+
+      <SignatureModal
+        isOpen={isSignatureOpen}
+        user={selectedUser}
+        onClose={() => setIsSignatureOpen(false)}
       />
 
       <UserModal
