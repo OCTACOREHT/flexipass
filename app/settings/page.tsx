@@ -343,7 +343,7 @@ export default function SettingsPage() {
               </div>
               <h3>Connexion requise</h3>
               <p className="muted mb-4">Connectez-vous pour accéder à vos paramètres.</p>
-              <a className="btn-ghost" href="/login">Se connecter</a>
+              <button type="button" className="btn-ghost" onClick={() => window.dispatchEvent(new Event("open-login-modal"))}>Se connecter</button>
             </div>
           )}
 

@@ -178,7 +178,7 @@ export default function Home() {
   const [loginOpen, setLoginOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
-  const [cartItems, setCartItems] = useState<{ id: string; title: string; price: number; qty: number; image?: string }[]>([]);
+  const [cartItems, setCartItems] = useState<{ id: string; title: string; price: number; qty: number; image?: string; currency?: string }[]>([]);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchBarVisible, setSearchBarVisible] = useState(true);
   const [authError, setAuthError] = useState<string | null>(null);
@@ -517,7 +517,7 @@ export default function Home() {
       if (existing) {
         return items.map((i) => (i.id === p.id && i.price === (price ?? p.price) ? { ...i, qty: i.qty + 1 } : i));
       }
-      return [...items, { id: p.id, title: getDisplayTitle(p.title), price: price ?? p.price, qty: 1, image: getProductImageSrc(p) }];
+      return [...items, { id: p.id, title: getDisplayTitle(p.title), price: price ?? p.price, qty: 1, image: getProductImageSrc(p), currency: p.currency ?? "HTG" }];
     });
     emitCartToast({ message: "Produit ajouté au panier.", variant: "success", duration: 1500 });
   };
@@ -1379,7 +1379,7 @@ export default function Home() {
                               <button type="button" onClick={() => updateQty(item.id, item.price, 1)}>+</button>
                             </div>
                           </div>
-                          <div className="cart-price">{formatHtg(item.price * item.qty)}</div>
+                          <div className="cart-price">{formatPrice(item.price * item.qty, item.currency || "HTG")}</div>
                         </div>
                       </div>
                     </div>
@@ -1388,7 +1388,7 @@ export default function Home() {
                 <div className="cart-footer">
                   <div className="cart-total">
                     <span>Total</span>
-                    <strong>{formatHtg(cartItems.reduce((s, i) => s + i.price * i.qty, 0))}</strong>
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 2 }}>{Object.entries(cartItems.reduce((acc, item) => { const cur = item.currency || "HTG"; acc[cur] = (acc[cur] || 0) + item.price * item.qty; return acc; }, {} as Record<string, number>)).map(([cur, total]) => (<strong key={cur}>{formatPrice(total, cur)}</strong>))}</div>
                   </div>
                   <button className="btn-full modal-primary" onClick={handleCheckout}>
                     Commander

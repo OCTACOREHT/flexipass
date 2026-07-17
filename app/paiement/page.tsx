@@ -11,6 +11,7 @@ type CartItem = {
   price: number;
   qty: number;
   image?: string;
+  currency?: string;
 };
 
 const CART_KEY = "flexipass_cart";
@@ -20,8 +21,8 @@ const EMPTY_CART: CartItem[] = [];
 let cachedRawCart = "__INIT__";
 let cachedParsedCart: CartItem[] = EMPTY_CART;
 
-const formatHtg = (value: number) =>
-  `${new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 2 }).format(value)} HTG`;
+const formatPrice = (value: number, currency: string) =>
+  `${new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 2 }).format(value)} ${currency.toUpperCase()}`;
 
 const buildWhatsAppMessage = ({
   orderId,
@@ -36,7 +37,13 @@ const buildWhatsAppMessage = ({
   items: CartItem[];
   total: number;
 }) => {
-  const lines = items.map((item) => `- ${item.title} x${item.qty} (${formatHtg(item.price * item.qty)})`).join("\n");
+  const lines = items.map((item) => `- ${item.title} x${item.qty} (${formatPrice(item.price * item.qty, item.currency || "HTG")})`).join("\n");
+  const totalsByCurrency = items.reduce((acc, item) => {
+    const cur = item.currency || "HTG";
+    acc[cur] = (acc[cur] || 0) + item.price * item.qty;
+    return acc;
+  }, {} as Record<string, number>);
+  const totalsStr = Object.entries(totalsByCurrency).map(([cur, t]) => formatPrice(t, cur)).join(", ");
 
   return [
     "Bonjour, je souhaite faire traiter cette commande.",
@@ -47,7 +54,7 @@ const buildWhatsAppMessage = ({
     "Articles :",
     lines || "- Aucun article",
     "",
-    `Total : ${formatHtg(total)}`,
+    `Total : ${totalsStr}`,
     "Merci.",
   ].join("\n");
 };
@@ -244,13 +251,13 @@ export default function PaiementPage() {
                           <strong>{item.title}</strong>
                           <span>Qté : {item.qty}</span>
                         </div>
-                        <div className="pay-summary-price">{formatHtg(item.price * item.qty)}</div>
+                        <div className="pay-summary-price">{formatPrice(item.price * item.qty, item.currency || "HTG")}</div>
                       </div>
                     ))}
                   </div>
-                  <div className="pay-total">
+                  <div className="pay-total" style={{ alignItems: "flex-start" }}>
                     <span>Total</span>
-                    <strong>{formatHtg(total)}</strong>
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 2 }}>{Object.entries(items.reduce((acc, item) => { const cur = item.currency || "HTG"; acc[cur] = (acc[cur] || 0) + item.price * item.qty; return acc; }, {} as Record<string, number>)).map(([cur, total]) => (<strong key={cur}>{formatPrice(total, cur)}</strong>))}</div>
                   </div>
                 </>
               )}
@@ -283,7 +290,7 @@ export default function PaiementPage() {
               {items.length > 0 && (
                 <div className="pay-amount-box">
                   <span style={{ color: "#6a6070", fontWeight: 600 }}>Montant total</span>
-                  <strong className="pay-amount-big">{formatHtg(total)}</strong>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 2 }}>{Object.entries(items.reduce((acc, item) => { const cur = item.currency || "HTG"; acc[cur] = (acc[cur] || 0) + item.price * item.qty; return acc; }, {} as Record<string, number>)).map(([cur, total]) => (<strong key={cur} className="pay-amount-big">{formatPrice(total, cur)}</strong>))}</div>
                 </div>
               )}
 
@@ -339,9 +346,9 @@ export default function PaiementPage() {
               Vous devez être connecté pour passer une commande.
             </p>
             <div className="cta-stack">
-              <Link href="/?login=1" className="btn-primary" style={{ display: "block" }}>
+              <button type="button" className="btn-primary" style={{ display: "block", width: "100%" }} onClick={() => window.dispatchEvent(new Event("open-login-modal"))}>
                 Se connecter
-              </Link>
+              </button>
               <button
                 className="btn-ghost"
                 style={{ display: "block", marginTop: 8 }}

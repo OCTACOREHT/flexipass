@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useCallback, useEffect, useState } from "react";
 import HeaderMain from "@/components/HeaderMain";
@@ -233,7 +233,7 @@ export default function HistoryPage() {
                 </div>
                 <h3>Connexion requise</h3>
                 <p className="muted">Connectez-vous pour voir votre historique.</p>
-                <a className="btn-ghost" href="/login">Se connecter</a>
+                <button type="button" className="btn-ghost" onClick={() => window.dispatchEvent(new Event("open-login-modal"))}>Se connecter</button>
               </div>
             )}
 

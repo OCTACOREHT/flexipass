@@ -137,6 +137,12 @@ export default function HeaderMain() {
   const overlayOpen = loginOpen || (!isLegalPage && policyModalOpen);
 
   useEffect(() => {
+    const handleOpenLogin = () => setLoginOpen(true);
+    window.addEventListener("open-login-modal", handleOpenLogin);
+    return () => window.removeEventListener("open-login-modal", handleOpenLogin);
+  }, []);
+
+  useEffect(() => {
     setPrivacyPolicyAccepted(readPersistedPrivacyAccepted());
   }, []);
 
