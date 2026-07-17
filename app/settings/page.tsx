@@ -39,7 +39,7 @@ export default function SettingsPage() {
   
   // Notifications state
   const [emailNotifications, setEmailNotifications] = useState(true);
-  const [promoNotifications, setPromoNotifications] = useState(true);
+  const [promoNotifications, setPromoNotifications] = useState(false);
   
   const [oauthProvider, setOauthProvider] = useState<string | null>(null);
   const isGoogleAccount = oauthProvider === "google";
@@ -75,7 +75,7 @@ export default function SettingsPage() {
       setUsername((meta.username as string | undefined) ?? "");
       setLanguage((meta.language as string | undefined) ?? "fr");
       setEmailNotifications(meta.email_notifications ?? true);
-      setPromoNotifications(meta.promo_notifications ?? true);
+      setPromoNotifications(meta.promo_notifications ?? false);
       
       const nextEmail = nextUser?.email ?? "";
       setNewEmail(nextEmail);
@@ -407,7 +407,7 @@ export default function SettingsPage() {
                       value={user.email ?? ""} 
                       disabled 
                     />
-                    <div className="help-text mt-1">L'email se modifie dans la section Sécurité.</div>
+                    <div className="help-text mt-1">Connecté via Google. L'email ne peut pas être modifié.</div>
                   </div>
                   <div>
                     <label>Langue préférée</label>
@@ -417,8 +417,6 @@ export default function SettingsPage() {
                       onChange={(e) => setLanguage(e.target.value)}
                     >
                       <option value="fr">Français</option>
-                      <option value="en">Anglais</option>
-                      <option value="es">Espagnol</option>
                     </select>
                   </div>
                   
@@ -447,11 +445,11 @@ export default function SettingsPage() {
                     <div>
                       <h4>Email de connexion</h4>
                       <p>{user.email}</p>
-                      <p className="text-[12px] mt-1 text-zinc-500">Une vérification par email sera demandée avant tout changement.</p>
+                      <p className="text-[12px] mt-1 text-zinc-500">Compte lié à Google. L'email ne peut pas être modifié.</p>
                     </div>
                   </div>
-                  <button type="button" className="btn-ghost" onClick={() => setShowEmailChangeForm(true)}>
-                    Modifier l'email
+                  <button type="button" className="btn-ghost" disabled style={{ opacity: 0.6, cursor: "not-allowed" }}>
+                    Lié à Google
                   </button>
                 </div>
 
@@ -615,7 +613,7 @@ export default function SettingsPage() {
                   <button type="button" onClick={handleLogout} className="btn-ghost w-full sm:w-auto">
                     <LogOut size={16} className="inline mr-2" /> Se déconnecter
                   </button>
-                  <a href={`mailto:support@flexipass.shop?subject=Demande de suppression de compte&body=Bonjour, je souhaite supprimer mon compte FlexiPass associé à l'email : ${user.email}`} className="btn-danger-outline w-full sm:w-auto">
+                  <a href={`mailto:info@octacore.io?subject=Demande de suppression de compte&body=Bonjour, je souhaite supprimer mon compte FlexiPass associé à l'email : ${user.email}`} className="btn-danger-outline w-full sm:w-auto">
                     Demander la suppression du compte
                   </a>
                 </div>
