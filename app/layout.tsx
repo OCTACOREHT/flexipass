@@ -41,10 +41,7 @@ export const metadata: Metadata = {
   verification: {
     google: "mMaZO31Js4dGAoaYXrWf_YdqfmVLlPCsgaios4LxK1U",
   },
-  icons: {
-    icon: "/favicon.ico",
-    apple: "/apple-touch-icon.png",
-  },
+
   robots: {
     index: true,
     follow: true,
