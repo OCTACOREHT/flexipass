@@ -145,7 +145,7 @@ export default function OrderTable({ orders, onView, isLoading, onRefresh }: Ord
             <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs shrink-0 ${color.bg} border ${color.border}`}>
               {initials}
             </div>
-            <div className="flex flex-col max-w-[200px] min-w-0">
+            <div className="flex flex-col max-w-[160px] min-w-0">
               <span className="text-[#2f2a33] font-bold text-sm truncate" title={name}>
                 {name}
               </span>
@@ -289,7 +289,7 @@ export default function OrderTable({ orders, onView, isLoading, onRefresh }: Ord
       {/* Flat modern table with no vertical lines, no outer border, generous vertical spacing */}
       <div className="w-full bg-white rounded-2xl p-4 border border-[#efe5d9]/60">
         <h3 className="text-base font-bold text-[#2f2a33] mb-4 pl-2">Recent Orders</h3>
-        <div className="overflow-x-auto no-scrollbar">
+        <div className="overflow-x-auto">
           <TableProvider 
             columns={columns} 
             data={orders}
@@ -305,7 +305,7 @@ export default function OrderTable({ orders, onView, isLoading, onRefresh }: Ord
                     <TableHead 
                       header={header} 
                       key={header.id} 
-                      className="py-2.5 px-4 text-[10px] font-bold text-zinc-400 uppercase tracking-[0.2em] border-none bg-transparent"
+                      className="py-2.5 px-2 text-[10px] font-bold text-zinc-400 uppercase tracking-widest border-none bg-transparent"
                     />
                   )}
                 </TableHeaderGroup>
@@ -322,7 +322,7 @@ export default function OrderTable({ orders, onView, isLoading, onRefresh }: Ord
                     <TableCell 
                       cell={cell} 
                       key={cell.id} 
-                      className="py-2.5 px-4 border-none align-middle"
+                      className="py-2.5 px-2 border-none align-middle"
                     />
                   )}
                 </TableRow>
