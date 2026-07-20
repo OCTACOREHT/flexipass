@@ -121,7 +121,7 @@ export default async function ProductLayout({
       "offers": {
         "@type": "Offer",
         "price": price.toString(),
-        "priceCurrency": product.currency || "USD",
+        "priceCurrency": product.currency || "HTG",
         "availability": "https://schema.org/InStock",
         "url": `https://www.flexipass.shop/product/${resolvedParams.slug}`,
         "seller": { "@type": "Organization", "name": "FlexiPass" }
@@ -135,7 +135,7 @@ export default async function ProductLayout({
         <>
           <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdProduct) }} />
           <meta property="product:price:amount" content={(product.variants && product.variants[0] ? product.variants[0].price : product.price).toString()} />
-          <meta property="product:price:currency" content={product.currency || "USD"} />
+          <meta property="product:price:currency" content={product.currency || "HTG"} />
           <meta property="og:type" content="product" />
         </>
       )}

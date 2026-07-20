@@ -119,12 +119,12 @@ const fallbackCatalog: Record<string, CatalogEntry> = {
   "chatgpt-plus": {
     title: "ChatGPT Plus",
     subtitle: "GPT-4, DALL·E, navigation et images illimitées.",
-    price: "$6.00",
+    price: "870 HTG",
     badge: "-70%",
     plans: [
-      { name: "Shared Plan", note: "Idéal pour un usage occasionnel", price: "$6.00", label: "Budget" },
-      { name: "Semi-Shared Plan", note: "3-4 utilisateurs, réponses rapides", price: "$12.00", label: "Populaire" },
-      { name: "Private Plan", note: "100% privé, vitesse max", price: "$12.00", label: "Premium" },
+      { name: "Shared Plan", note: "Idéal pour un usage occasionnel", price: "870 HTG", label: "Budget" },
+      { name: "Semi-Shared Plan", note: "3-4 utilisateurs, réponses rapides", price: "1740 HTG", label: "Populaire" },
+      { name: "Private Plan", note: "100% privé, vitesse max", price: "1740 HTG", label: "Premium" },
     ],
     description: "Accès à ChatGPT Plus avec GPT-4, DALL·E et navigation web.",
     features: ["GPT-4 & GPT-4o", "Génération d’images DALL·E", "Code Interpreter", "Navigation web", "Custom GPTs", "Accès prioritaire"],
@@ -134,11 +134,11 @@ const fallbackCatalog: Record<string, CatalogEntry> = {
   "claude-pro": {
     title: "Claude Pro",
     subtitle: "Long contexte, raisonnement fiable.",
-    price: "$15.00",
+    price: "2175 HTG",
     badge: "-60%",
     plans: [
-      { name: "Standard", note: "Usage quotidien", price: "$15.00", label: "Popular" },
-      { name: "Team", note: "Collaboration illimitée", price: "$25.00", label: "Team" },
+      { name: "Standard", note: "Usage quotidien", price: "2175 HTG", label: "Popular" },
+      { name: "Team", note: "Collaboration illimitée", price: "3625 HTG", label: "Team" },
     ],
     description: "Accès à Claude 3 pour l’analyse, la rédaction et l’idéation.",
     features: ["Contexte étendu", "Raisonnement avancé", "Sécurité Anthropic", "Outils code & data"],
@@ -218,8 +218,8 @@ const fallbackCatalog: Record<string, CatalogEntry> = {
   apple: {
     title: "Apple Gift Card",
     subtitle: "App Store & iTunes",
-    price: "1500 HTG",
-    plans: [{ name: "15 USD", note: "Code Apple", price: "1500 HTG" }],
+    price: "2175 HTG",
+    plans: [{ name: "15 USD", note: "Code Apple", price: "2175 HTG" }],
     description: "Crédits pour App Store, iTunes et abonnements Apple.",
     features: ["Code numérique", "App Store / iTunes", "Livraison instantanée"],
     bullets: ["Livraison digitale", "Support 24/7", "Paiement sécurisé"],
@@ -546,7 +546,7 @@ export default function ProductPage() {
                 <h3>Description</h3>
                 <p>{cleanText(product.description)}</p>
                 <p className="geo-text" style={{ marginTop: "12px", fontSize: "0.95rem", color: "var(--text-muted)", lineHeight: 1.5 }}>
-                  FlexiPass propose {product.title} Plan {selectedPlan ? selectedPlan.name : (product.plans[0]?.name || "Standard")} à {activePrice} {product.currency || "USD"} avec livraison numérique instantanée.
+                  FlexiPass propose {product.title} Plan {selectedPlan ? selectedPlan.name : (product.plans[0]?.name || "Standard")} à {activePrice} {product.currency || "HTG"} avec livraison numérique instantanée.
                 </p>
                 {cartNote && <div className="auth-success" style={{ marginTop: 12 }}>{cartNote}</div>}
               </div>

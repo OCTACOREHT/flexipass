@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
+const RATE = 145;
+
 export async function GET() {
   const supabase = supabaseAdmin();
   const { data: products, error } = await supabase
@@ -18,16 +20,30 @@ export async function GET() {
 
   const variantMap = new Map<string, any[]>();
   (variants || []).forEach((v) => {
+    const isUsd = (v.currency || "").toUpperCase() === "USD";
+    const convertedPrice = isUsd ? Math.round(Number(v.price) * RATE) : Number(v.price);
+    const convertedCurrency = "HTG";
+    const item = {
+      ...v,
+      price: convertedPrice,
+      currency: convertedCurrency,
+    };
     const arr = variantMap.get(v.product_id) || [];
-    arr.push(v);
+    arr.push(item);
     variantMap.set(v.product_id, arr);
   });
 
-  const merged = (products || []).map((p) => ({
-    ...p,
-    variants: variantMap.get(p.id) || [],
-  }));
+  const merged = (products || []).map((p) => {
+    const isUsd = (p.currency || "").toUpperCase() === "USD";
+    const convertedPrice = isUsd ? Math.round(Number(p.price) * RATE) : Number(p.price);
+    const convertedCurrency = "HTG";
+    return {
+      ...p,
+      price: convertedPrice,
+      currency: convertedCurrency,
+      variants: variantMap.get(p.id) || [],
+    };
+  });
 
   return NextResponse.json(merged);
 }
-

@@ -17,7 +17,7 @@ export default function ProductModal({ product, isOpen, onClose, onSave }: Produ
   const [formData, setFormData] = useState<any>({
     title: "",
     price: "",
-    currency: "USD",
+    currency: "HTG",
     plan: "",
     duration_days: "",
     image_url: "",
@@ -36,7 +36,7 @@ export default function ProductModal({ product, isOpen, onClose, onSave }: Produ
         setFormData({
           title: product.title || "",
           price: product.price?.toString() || "",
-          currency: product.currency || "USD",
+          currency: product.currency || "HTG",
           plan: product.plan || "",
           duration_days: product.duration_days?.toString() || "",
           image_url: product.image_url || "",
@@ -49,7 +49,7 @@ export default function ProductModal({ product, isOpen, onClose, onSave }: Produ
         setFormData({
           title: "",
           price: "",
-          currency: "USD",
+          currency: "HTG",
           plan: "",
           duration_days: "",
           image_url: "",

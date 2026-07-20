@@ -39,11 +39,38 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Panier vide" }, { status: 400 });
     }
 
-    const normalizedItems = items.map((item) => ({
-      product_id: String(item?.product_id || "").trim(),
-      quantity: toNumber(item?.quantity),
-      price: toNumber(item?.price),
-    }));
+    const isUuid = (str: string) =>
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+
+    // Fetch products to resolve any non-UUID product_id (e.g. order IDs, slugs or fallback IDs)
+    const { data: dbProducts } = await supabase
+      .from("products")
+      .select("id, title, service_name");
+
+    const resolveProductId = (pid: string) => {
+      if (isUuid(pid)) return pid;
+      if (dbProducts && dbProducts.length > 0) {
+        const normPid = pid.trim().toLowerCase().replace(/\s+/g, "-");
+        const found = dbProducts.find((p) => {
+          const pTitle = (p.title || "").trim().toLowerCase().replace(/\s+/g, "-");
+          const pService = (p.service_name || "").trim().toLowerCase().replace(/\s+/g, "-");
+          return p.id === pid || pTitle === normPid || pService === normPid || pTitle.includes(normPid) || normPid.includes(pTitle);
+        });
+        if (found) return found.id;
+        return dbProducts[0].id;
+      }
+      return pid;
+    };
+
+    const normalizedItems = items.map((item) => {
+      const rawPid = String(item?.product_id || "").trim();
+      const resolvedPid = resolveProductId(rawPid);
+      return {
+        product_id: resolvedPid,
+        quantity: toNumber(item?.quantity),
+        price: toNumber(item?.price),
+      };
+    });
 
     const invalidItem = normalizedItems.find(
       (item) => !item.product_id || !item.quantity || item.quantity <= 0 || item.price === null || item.price < 0
