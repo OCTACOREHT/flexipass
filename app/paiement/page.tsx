@@ -45,9 +45,10 @@ const buildWhatsAppMessage = ({
   }, {} as Record<string, number>);
   const totalsStr = Object.entries(totalsByCurrency).map(([cur, t]) => formatPrice(t, cur)).join(", ");
 
+  const formattedOrderId = orderId.length > 8 ? orderId.slice(0, 8).toUpperCase() : orderId;
   return [
     "Bonjour, je souhaite faire traiter cette commande.",
-    `Commande : #${orderId}`,
+    `Commande : #${formattedOrderId}`,
     `Client : ${customerName}`,
     `Email : ${customerEmail}`,
     "",

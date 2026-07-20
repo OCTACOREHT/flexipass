@@ -87,10 +87,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Email client manquant" }, { status: 400 });
     }
 
-    const orderId = `FLXP${Math.floor(10000 + Math.random() * 90000)}`;
+    const orderUuid = crypto.randomUUID();
 
     const orderPayload = {
-      id: orderId,
+      id: orderUuid,
       user_id: user.id,
       customer_email: customerEmail,
       customer_name: body?.customer_name || user.user_metadata?.full_name || "Client",
