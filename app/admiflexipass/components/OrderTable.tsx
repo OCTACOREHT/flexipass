@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { format } from "date-fns";
-import { Eye, Check, X, Loader2 } from "lucide-react";
+import { Eye, Check, X, Loader2, Trash2 } from "lucide-react";
 import { 
   TableProvider, 
   TableHeader, 
@@ -223,6 +223,30 @@ export default function OrderTable({ orders, onView, isLoading, onRefresh }: Ord
             title="Voir les détails"
           >
             <Eye size={18} />
+          </button>
+          <button 
+            type="button"
+            onClick={async (e) => {
+              e.stopPropagation();
+              if (confirm(`Êtes-vous sûr de vouloir supprimer définitivement la commande #${row.original.id.slice(0, 8)} ?`)) {
+                try {
+                  const res = await fetch(`/api/admin/orders?id=${row.original.id}`, {
+                    method: "DELETE",
+                  });
+                  if (!res.ok) {
+                    throw new Error(await res.text());
+                  }
+                  if (onRefresh) onRefresh();
+                } catch (err) {
+                  alert("Une erreur est survenue lors de la suppression de la commande.");
+                  console.error(err);
+                }
+              }
+            }}
+            className="w-10 h-10 flex items-center justify-center bg-white hover:bg-red-50 text-[#2f2a33] hover:text-red-600 rounded-xl transition-all border border-[#efe5d9] hover:border-red-200 active:scale-95"
+            title="Supprimer la commande"
+          >
+            <Trash2 size={18} />
           </button>
         </div>
       ),

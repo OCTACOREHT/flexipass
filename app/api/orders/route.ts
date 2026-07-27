@@ -48,8 +48,11 @@ export async function POST(request: Request) {
       .select("id, title, service_name");
 
     const resolveProductId = (pid: string) => {
-      if (isUuid(pid)) return pid;
       if (dbProducts && dbProducts.length > 0) {
+        if (isUuid(pid)) {
+          const exists = dbProducts.some((p) => p.id === pid);
+          if (exists) return pid;
+        }
         const normPid = pid.trim().toLowerCase().replace(/\s+/g, "-");
         const found = dbProducts.find((p) => {
           const pTitle = (p.title || "").trim().toLowerCase().replace(/\s+/g, "-");

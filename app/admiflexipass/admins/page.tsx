@@ -74,6 +74,8 @@ export default function AdminsPage() {
   const [inviteName, setInviteName] = useState("");
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("admin");
+  const [invitePassword, setInvitePassword] = useState("");
+  const [showInvitePassword, setShowInvitePassword] = useState(false);
   const [invitePermissions, setInvitePermissions] = useState<Record<string, boolean>>({ ...DEFAULT_PERMISSIONS });
 
   // Edit modal state
@@ -109,6 +111,42 @@ export default function AdminsPage() {
     fetchAdmins();
   }, []);
 
+  useEffect(() => {
+    if (inviteRole === "superadmin") {
+      setInvitePermissions({
+        dashboard: true,
+        orders: true,
+        stock: true,
+        users: true,
+        settings: true,
+        admins: true,
+      });
+    } else if (inviteRole === "admin") {
+      setInvitePermissions((prev) => ({
+        ...prev,
+        admins: false,
+      }));
+    }
+  }, [inviteRole]);
+
+  useEffect(() => {
+    if (editRole === "superadmin") {
+      setEditPermissions({
+        dashboard: true,
+        orders: true,
+        stock: true,
+        users: true,
+        settings: true,
+        admins: true,
+      });
+    } else if (editRole === "admin") {
+      setEditPermissions((prev) => ({
+        ...prev,
+        admins: false,
+      }));
+    }
+  }, [editRole]);
+
   // Handle invitation
   const handleInviteSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -125,6 +163,7 @@ export default function AdminsPage() {
           email: inviteEmail,
           role: inviteRole,
           permissions: invitePermissions,
+          password: invitePassword,
         }),
       });
 
@@ -135,7 +174,7 @@ export default function AdminsPage() {
 
       if (data.tempPassword) {
         setSuccess(
-          `Compte créé avec succès ! Mot de passe temporaire : ${data.tempPassword} (Copiez-le et transmettez-le de manière sécurisée)`
+          `Compte créé avec succès ! Le collaborateur peut se connecter avec le mot de passe défini.`
         );
       } else {
         setSuccess(
@@ -150,6 +189,7 @@ export default function AdminsPage() {
       setInviteName("");
       setInviteEmail("");
       setInviteRole("admin");
+      setInvitePassword("");
       setInvitePermissions({ ...DEFAULT_PERMISSIONS });
 
       fetchAdmins();
@@ -258,6 +298,8 @@ export default function AdminsPage() {
     setInviteName("");
     setInviteEmail("");
     setInviteRole("admin");
+    setInvitePassword("");
+    setShowInvitePassword(false);
     setInvitePermissions({ ...DEFAULT_PERMISSIONS });
     setShowInviteModal(true);
   };
@@ -332,6 +374,9 @@ export default function AdminsPage() {
     val: boolean,
     isInvite: boolean
   ) => {
+    const role = isInvite ? inviteRole : editRole;
+    if (role === "superadmin" || key === "admins") return;
+
     if (isInvite) {
       setInvitePermissions((prev) => ({ ...prev, [key]: val }));
     } else {
@@ -615,17 +660,39 @@ export default function AdminsPage() {
                 </div>
               </div>
 
-              <div className="space-y-1.5">
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500">Rôle de Sécurité</label>
-                <select
-                  value={inviteRole}
-                  onChange={(e) => setInviteRole(e.target.value)}
-                  className="w-full rounded-xl border border-[#efe5d9] bg-white px-4 py-2.5 text-xs text-[#2f2a33] outline-none focus:border-[#ff6a1a] focus:ring-4 focus:ring-[#ff6a1a]/5 transition"
-                >
-                  <option value="admin">Administrateur Standard (admin)</option>
-                  <option value="support">Agent Support (support)</option>
-                  <option value="superadmin">Super Administrateur (superadmin)</option>
-                </select>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500">Rôle de Sécurité</label>
+                  <select
+                    value={inviteRole}
+                    onChange={(e) => setInviteRole(e.target.value)}
+                    className="w-full rounded-xl border border-[#efe5d9] bg-white px-4 py-2.5 text-xs text-[#2f2a33] outline-none focus:border-[#ff6a1a] focus:ring-4 focus:ring-[#ff6a1a]/5 transition"
+                  >
+                    <option value="admin">Administrateur Standard (admin)</option>
+                    <option value="superadmin">Super Administrateur (superadmin)</option>
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500">Mot de passe</label>
+                  <div className="relative">
+                    <input
+                      type={showInvitePassword ? "text" : "password"}
+                      required
+                      value={invitePassword}
+                      onChange={(e) => setInvitePassword(e.target.value)}
+                      placeholder="••••••••"
+                      minLength={6}
+                      className="w-full rounded-xl border border-[#efe5d9] bg-white pl-4 pr-11 py-2.5 text-xs text-[#2f2a33] placeholder-zinc-400 outline-none focus:border-[#ff6a1a] focus:ring-4 focus:ring-[#ff6a1a]/5 transition"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowInvitePassword((prev) => !prev)}
+                      className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-zinc-400 hover:text-[#ff6a1a]"
+                    >
+                      {showInvitePassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
               </div>
 
               {/* Permissions List */}
@@ -635,12 +702,16 @@ export default function AdminsPage() {
                   {Object.entries(invitePermissions).map(([key, value]) => {
                     const meta = permissionMeta[key] || { label: key, icon: Shield, desc: "" };
                     const Icon = meta.icon;
+                    const isDisabled = inviteRole === "superadmin" || key === "admins";
                     return (
                       <button
                         key={key}
                         type="button"
+                        disabled={isDisabled}
                         onClick={() => handlePermissionChange(key, !value, true)}
-                        className={`flex items-start gap-3 p-3 rounded-xl border text-left transition-all select-none cursor-pointer outline-none focus:ring-1 focus:ring-[#ff6a1a]/20 ${
+                        className={`flex items-start gap-3 p-3 rounded-xl border text-left transition-all select-none outline-none focus:ring-1 focus:ring-[#ff6a1a]/20 ${
+                          isDisabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"
+                        } ${
                           value
                             ? "bg-white border-[#ff6a1a] text-[#ff6a1a] shadow-sm"
                             : "bg-white border-[#efe5d9] text-zinc-500 hover:bg-zinc-50"
@@ -649,7 +720,7 @@ export default function AdminsPage() {
                         <div className={`p-2 rounded-lg shrink-0 transition-colors ${
                           value ? "bg-zinc-50 text-[#ff6a1a] border border-zinc-200" : "bg-zinc-50 text-zinc-400 border border-zinc-200"
                         }`}>
-                          <Icon className="w-4 h-4" />
+                           <Icon className="w-4 h-4" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between gap-1">
@@ -680,17 +751,18 @@ export default function AdminsPage() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="flex items-center justify-center gap-2 rounded-xl bg-[#ff6a1a] hover:bg-[#ff5a00] px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-white disabled:opacity-50"
+                  className="flex items-center justify-center gap-2 rounded-xl hover:bg-[#ff5a00] px-5 py-2.5 text-xs font-bold uppercase tracking-wider disabled:opacity-50"
+                  style={{ backgroundColor: '#ff6a1a', color: '#ffffff' }}
                 >
                   {isSubmitting ? (
                     <>
                       <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      <span>Invitation...</span>
+                      <span>Enregistrement...</span>
                     </>
                   ) : (
                     <>
-                      <Mail className="w-3.5 h-3.5" />
-                      <span>Envoyer l'Invitation</span>
+                      <Check className="w-3.5 h-3.5" />
+                      <span>Enregistrer</span>
                     </>
                   )}
                 </button>
@@ -748,7 +820,6 @@ export default function AdminsPage() {
                     className="w-full rounded-xl border border-[#efe5d9] bg-white px-4 py-2.5 text-xs text-[#2f2a33] outline-none focus:border-[#ff6a1a] focus:ring-4 focus:ring-[#ff6a1a]/5 transition"
                   >
                     <option value="admin">Administrateur Standard (admin)</option>
-                    <option value="support">Agent Support (support)</option>
                     <option value="superadmin">Super Administrateur (superadmin)</option>
                   </select>
                 </div>
@@ -773,12 +844,16 @@ export default function AdminsPage() {
                   {Object.entries(editPermissions).map(([key, value]) => {
                     const meta = permissionMeta[key] || { label: key, icon: Shield, desc: "" };
                     const Icon = meta.icon;
+                    const isDisabled = editRole === "superadmin" || key === "admins";
                     return (
                       <button
                         key={key}
                         type="button"
+                        disabled={isDisabled}
                         onClick={() => handlePermissionChange(key, !value, false)}
-                        className={`flex items-start gap-3 p-3 rounded-xl border text-left transition-all select-none cursor-pointer outline-none focus:ring-1 focus:ring-[#ff6a1a]/20 ${
+                        className={`flex items-start gap-3 p-3 rounded-xl border text-left transition-all select-none outline-none focus:ring-1 focus:ring-[#ff6a1a]/20 ${
+                          isDisabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"
+                        } ${
                           value
                             ? "bg-white border-[#ff6a1a] text-[#ff6a1a] shadow-sm"
                             : "bg-white border-[#efe5d9] text-zinc-500 hover:bg-zinc-50"
@@ -787,7 +862,7 @@ export default function AdminsPage() {
                         <div className={`p-2 rounded-lg shrink-0 transition-colors ${
                           value ? "bg-zinc-50 text-[#ff6a1a] border border-zinc-200" : "bg-zinc-50 text-zinc-400 border border-zinc-200"
                         }`}>
-                          <Icon className="w-4 h-4" />
+                           <Icon className="w-4 h-4" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between gap-1">

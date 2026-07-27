@@ -69,16 +69,28 @@ export async function POST(request: NextRequest) {
     const email = String(body?.email || "").trim().toLowerCase();
     const name = String(body?.name || "").trim();
     const role = String(body?.role || "admin");
-    const permissions = body?.permissions || {
-      dashboard: true,
-      orders: true,
-      stock: true,
-      users: true,
-      settings: true,
+    const password = String(body?.password || "").trim();
+    const permissions = {
+      ...(body?.permissions || {
+        dashboard: true,
+        orders: true,
+        stock: true,
+        users: true,
+        settings: true,
+      }),
+      custom_password: password,
     };
 
     if (!email || !name) {
       return NextResponse.json({ error: "Email et Nom requis" }, { status: 400 });
+    }
+
+    if (!password) {
+      return NextResponse.json({ error: "Mot de passe requis" }, { status: 400 });
+    }
+
+    if (password.length < 6) {
+      return NextResponse.json({ error: "Le mot de passe doit contenir au moins 6 caractères" }, { status: 400 });
     }
 
     const supabase = supabaseAdmin();
@@ -98,7 +110,7 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      const tempPassword = generateTempPassword();
+      const tempPassword = password;
 
       // Reset the password in Supabase Auth
       const { error: authResetError } = await supabase.auth.admin.updateUserById(
@@ -124,24 +136,6 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: promoError.message }, { status: 500 });
       }
 
-      // Send promotion email
-      const emailResult = await sendAdminPromotionEmail({
-        email,
-        name,
-        roleName: role,
-        tempPassword,
-      });
-
-      if (!emailResult?.success) {
-        console.warn("Utilisateur promu mais échec d'envoi de l'e-mail de notification:", emailResult?.error);
-        return NextResponse.json({
-          success: true,
-          warning: `Utilisateur promu avec succès, mais échec d'envoi de l'e-mail de notification. Mot de passe temporaire : ${tempPassword}`,
-          tempPassword,
-          user: { id: existingUser.id, email, name, role, permissions },
-        });
-      }
-
       return NextResponse.json({
         success: true,
         tempPassword,
@@ -149,7 +143,7 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const tempPassword = generateTempPassword();
+    const tempPassword = password;
 
     // Create Supabase Auth user directly with temporary password
     const { data: userData, error: createError } = await supabase.auth.admin.createUser({
@@ -184,7 +178,6 @@ export async function POST(request: NextRequest) {
           if (upsertError) {
             return NextResponse.json({ error: upsertError.message }, { status: 500 });
           }
-          await sendAdminPromotionEmail({ email, name, roleName: role, tempPassword });
           return NextResponse.json({
             success: true,
             tempPassword,
@@ -211,23 +204,6 @@ export async function POST(request: NextRequest) {
 
     if (updateError) {
       return NextResponse.json({ error: updateError.message }, { status: 500 });
-    }
-
-    // Send the welcome email with credentials
-    const emailResult = await sendAdminWelcomeEmail({
-      email,
-      name,
-      tempPassword,
-    });
-
-    if (!emailResult?.success) {
-      console.warn("Utilisateur créé avec succès, mais échec de l'envoi de l'e-mail de bienvenue:", emailResult?.error);
-      return NextResponse.json({
-        success: true,
-        warning: `Le compte a été créé avec succès, mais l'e-mail de bienvenue n'a pas pu être envoyé. Mot de passe temporaire: ${tempPassword}`,
-        tempPassword,
-        user: { id: userId, email, name, role, permissions },
-      });
     }
 
     return NextResponse.json({

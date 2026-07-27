@@ -1,4 +1,4 @@
-﻿import { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
 export async function GET() {
@@ -47,5 +47,29 @@ export async function PATCH(request: Request) {
     .single();
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
   return NextResponse.json(data);
+}
+
+export async function DELETE(request: Request) {
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return NextResponse.json({ error: "SUPABASE_SERVICE_ROLE_KEY manquant" }, { status: 500 });
+  }
+  const { searchParams } = new URL(request.url);
+  const id = searchParams.get("id");
+  if (!id) return NextResponse.json({ error: "id manquant" }, { status: 400 });
+
+  const supabase = supabaseAdmin();
+
+  // 1. Delete related order_items
+  const { error: itemsError } = await supabase
+    .from("order_items")
+    .delete()
+    .eq("order_id", id);
+  if (itemsError) console.warn("order_items delete error:", itemsError.message);
+
+  // 2. Delete the order
+  const { error } = await supabase.from("orders").delete().eq("id", id);
+  if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+
+  return NextResponse.json({ success: true, deleted: id });
 }
 

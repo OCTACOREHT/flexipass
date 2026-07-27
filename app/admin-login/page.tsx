@@ -20,6 +20,13 @@ export default function AdminLoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [shouldShake, setShouldShake] = useState(false);
 
+  // Forgot password states
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotSuccess, setForgotSuccess] = useState<string | null>(null);
+  const [forgotError, setForgotError] = useState<string | null>(null);
+  const [isSendingReset, setIsSendingReset] = useState(false);
+
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError(null);
@@ -46,6 +53,32 @@ export default function AdminLoginPage() {
       setShouldShake(true);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setForgotError(null);
+    setForgotSuccess(null);
+    setIsSendingReset(true);
+
+    try {
+      const response = await fetch("/api/admin/reset-password-request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: forgotEmail }),
+      });
+
+      const result = await response.json();
+      if (!response.ok) {
+        setForgotError(result?.error || "Impossible de réinitialiser le mot de passe.");
+      } else {
+        setForgotSuccess(result?.message || "Si un compte existe, un e-mail de réinitialisation a été envoyé.");
+      }
+    } catch (err: any) {
+      setForgotError(err.message || "Une erreur est survenue.");
+    } finally {
+      setIsSendingReset(false);
     }
   };
 
@@ -98,76 +131,165 @@ export default function AdminLoginPage() {
           />
         </div>
 
-        {/* Login Form */}
-        <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Email Input */}
-          <div className="space-y-1.5">
-            <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500">
-              Adresse e-mail
-            </label>
-            <div className="relative group">
-              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-400 group-focus-within:text-[#ff8a00] transition-colors">
-                <User className="w-4 h-4" />
-              </div>
-              <input
-                className="w-full rounded-xl border border-[#e7e1d8] bg-white pl-10 pr-4 py-3 text-sm text-[#2f2a33] placeholder-zinc-400 outline-none transition duration-200 focus:border-[#ff8a00] focus:ring-4 focus:ring-[#ff8a00]/5"
-                type="email"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                placeholder="admin@flexipass.ht"
-                required
-                autoComplete="email"
-              />
+        {/* Conditionally render Login Form or Forgot Password Form */}
+        {isForgotPassword ? (
+          /* Forgot Password Form */
+          <form onSubmit={handleForgotPassword} className="space-y-5">
+            <div className="text-center space-y-1.5 mb-2">
+              <h2 className="font-bold text-base uppercase tracking-wider text-[#2f2a33]">
+                Mot de passe oublié ?
+              </h2>
+              <p className="text-xs text-zinc-500 leading-relaxed">
+                Entrez votre adresse email de collaborateur. Nous vous enverrons un lien de réinitialisation.
+              </p>
             </div>
-          </div>
 
-          {/* Password Input */}
-          <div className="space-y-1.5">
-            <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500">
-              Mot de passe
-            </label>
-            <div className="relative group">
-              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-400 group-focus-within:text-[#ff8a00] transition-colors">
-                <Lock className="w-4 h-4" />
+            {/* Email Input */}
+            <div className="space-y-1.5">
+              <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500">
+                Adresse e-mail
+              </label>
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-400 group-focus-within:text-[#ff8a00] transition-colors">
+                  <User className="w-4 h-4" />
+                </div>
+                <input
+                  className="w-full rounded-xl border border-[#e7e1d8] bg-white pl-10 pr-4 py-3 text-sm text-[#2f2a33] placeholder-zinc-400 outline-none transition duration-200 focus:border-[#ff8a00] focus:ring-4 focus:ring-[#ff8a00]/5"
+                  type="email"
+                  value={forgotEmail}
+                  onChange={(event) => setForgotEmail(event.target.value)}
+                  placeholder="admin@flexipass.ht"
+                  required
+                  autoComplete="email"
+                />
               </div>
-              <input
-                className="w-full rounded-xl border border-[#e7e1d8] bg-white pl-10 pr-10 py-3 text-sm text-[#2f2a33] placeholder-zinc-400 outline-none transition duration-200 focus:border-[#ff8a00] focus:ring-4 focus:ring-[#ff8a00]/5"
-                type={showPassword ? "text" : "password"}
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                placeholder="••••••••••••"
-                required
-                autoComplete="current-password"
-              />
+            </div>
+
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={isSendingReset}
+              style={{ background: "linear-gradient(120deg, #ff8a00, #ff4d00)" }}
+              className="w-full flex items-center justify-center gap-2 rounded-xl hover:opacity-95 px-6 py-3.5 text-xs font-bold uppercase tracking-wider text-white shadow-md active:translate-y-0.5 transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <span>{isSendingReset ? "Envoi..." : "Envoyer le lien"}</span>
+              {!isSendingReset && <ArrowRight className="w-4 h-4" />}
+            </button>
+
+            {/* Back to Login Link */}
+            <div className="text-center pt-2">
               <button
                 type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-zinc-400 hover:text-zinc-600 transition-colors"
+                onClick={() => setIsForgotPassword(false)}
+                className="text-xs font-bold text-zinc-500 hover:text-[#ff8a00] transition-colors"
               >
-                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                Retour à la connexion
               </button>
             </div>
-          </div>
 
-          {/* Submit Button */}
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            style={{ background: "linear-gradient(120deg, #ff8a00, #ff4d00)" }}
-            className="w-full flex items-center justify-center gap-2 rounded-xl hover:opacity-95 px-6 py-3.5 text-xs font-bold uppercase tracking-wider text-white shadow-md active:translate-y-0.5 transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            <span>{isSubmitting ? "Validation..." : "Se connecter"}</span>
-            {!isSubmitting && <ArrowRight className="w-4 h-4" />}
-          </button>
+            {/* Error Box */}
+            {forgotError && (
+              <div className="flex items-start gap-2.5 rounded-xl bg-red-50 border border-red-100 p-3 text-xs text-red-700">
+                <ShieldAlert className="w-4 h-4 shrink-0 mt-0.5 text-red-500" />
+                <p>{forgotError}</p>
+              </div>
+            )}
 
-          {/* Error Box */}
-          {error && (
-            <div className="flex items-start gap-2.5 rounded-xl bg-red-50 border border-red-100 p-3 text-xs text-red-700">
-              <ShieldAlert className="w-4 h-4 shrink-0 mt-0.5 text-red-500" />
-              <p>{error}</p>
+            {/* Success Box */}
+            {forgotSuccess && (
+              <div className="flex items-start gap-2.5 rounded-xl bg-emerald-50 border border-emerald-100 p-3 text-xs text-emerald-700">
+                <div className="w-4 h-4 shrink-0 mt-0.5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px] font-bold">✓</div>
+                <p>{forgotSuccess}</p>
+              </div>
+            )}
+          </form>
+        ) : (
+          /* Login Form */
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Email Input */}
+            <div className="space-y-1.5">
+              <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500">
+                Adresse e-mail
+              </label>
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-400 group-focus-within:text-[#ff8a00] transition-colors">
+                  <User className="w-4 h-4" />
+                </div>
+                <input
+                  className="w-full rounded-xl border border-[#e7e1d8] bg-white pl-10 pr-4 py-3 text-sm text-[#2f2a33] placeholder-zinc-400 outline-none transition duration-200 focus:border-[#ff8a00] focus:ring-4 focus:ring-[#ff8a00]/5"
+                  type="email"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  placeholder="admin@flexipass.ht"
+                  required
+                  autoComplete="email"
+                />
+              </div>
             </div>
-          )}
-        </form>
+
+            {/* Password Input with Forgot Password link inside layout */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500">
+                  Mot de passe
+                </label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setForgotEmail(email);
+                    setIsForgotPassword(true);
+                    setError(null);
+                    setForgotError(null);
+                    setForgotSuccess(null);
+                  }}
+                  className="text-[10px] font-bold text-[#ff8a00] hover:text-[#ff4d00] transition-colors"
+                >
+                  Mot de passe oublié ?
+                </button>
+              </div>
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-400 group-focus-within:text-[#ff8a00] transition-colors">
+                  <Lock className="w-4 h-4" />
+                </div>
+                <input
+                  className="w-full rounded-xl border border-[#e7e1d8] bg-white pl-10 pr-10 py-3 text-sm text-[#2f2a33] placeholder-zinc-400 outline-none transition duration-200 focus:border-[#ff8a00] focus:ring-4 focus:ring-[#ff8a00]/5"
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  placeholder="••••••••••••"
+                  required
+                  autoComplete="current-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-zinc-400 hover:text-zinc-600 transition-colors"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              style={{ background: "linear-gradient(120deg, #ff8a00, #ff4d00)" }}
+              className="w-full flex items-center justify-center gap-2 rounded-xl hover:opacity-95 px-6 py-3.5 text-xs font-bold uppercase tracking-wider text-white shadow-md active:translate-y-0.5 transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <span>{isSubmitting ? "Validation..." : "Se connecter"}</span>
+              {!isSubmitting && <ArrowRight className="w-4 h-4" />}
+            </button>
+
+            {/* Error Box */}
+            {error && (
+              <div className="flex items-start gap-2.5 rounded-xl bg-red-50 border border-red-100 p-3 text-xs text-red-700">
+                <ShieldAlert className="w-4 h-4 shrink-0 mt-0.5 text-red-500" />
+                <p>{error}</p>
+              </div>
+            )}
+          </form>
+        )}
 
         <div className="mt-8 pt-6 border-t border-[#f5ece2] text-center">
           <p className="text-[9px] font-medium text-zinc-400 uppercase tracking-widest">

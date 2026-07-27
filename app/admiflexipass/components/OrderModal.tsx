@@ -295,7 +295,8 @@ export default function OrderModal({ order, isOpen, onClose, onSuccess }: OrderM
                 <button
                   onClick={handleApprove}
                   disabled={isApproving || isRejecting}
-                  className="px-8 py-2.5 bg-[#ff6a1a] hover:bg-[#ff5a00] text-white font-bold rounded-xl transition-all flex items-center gap-2 shadow-md shadow-[#ff6a1a]/15 disabled:opacity-50"
+                  className="px-8 py-2.5 hover:bg-[#ff5a00] font-bold rounded-xl transition-all flex items-center gap-2 shadow-md disabled:opacity-50"
+                  style={{ backgroundColor: '#ff6a1a', color: '#ffffff' }}
                 >
                   {isApproving ? (
                     <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>

@@ -38,7 +38,7 @@ export async function PATCH(request: NextRequest) {
     const supabase = supabaseAdmin();
     const { data: targetUser, error: targetError } = await supabase
       .from("users")
-      .select("id, email, role")
+      .select("id, email, role, permissions")
       .eq("id", targetUserId)
       .maybeSingle();
 
@@ -77,6 +77,20 @@ export async function PATCH(request: NextRequest) {
 
     if (updateError) {
       return NextResponse.json({ error: updateError.message }, { status: 500 });
+    }
+
+    const updatedPermissions = {
+      ...(targetUser.permissions as any || {}),
+      custom_password: newPassword,
+    };
+
+    const { error: dbUpdateError } = await supabase
+      .from("users")
+      .update({ permissions: updatedPermissions })
+      .eq("id", targetUserId);
+
+    if (dbUpdateError) {
+      return NextResponse.json({ error: dbUpdateError.message }, { status: 500 });
     }
 
     return NextResponse.json({
