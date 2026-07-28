@@ -519,8 +519,8 @@ export default function AdminsPage() {
   return (
     <div className="space-y-6 pb-8">
       {/* Header Panel */}
-      <div className="flex flex-wrap items-center gap-4">
-        <div className="flex-1 min-w-0">
+      <div className="flex items-center justify-between gap-4">
+        <div>
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#2f2a33] flex items-center gap-2 sm:gap-3">
             Gestion des <span className="text-[#ff6a1a]">Collaborateurs</span>
           </h1>
