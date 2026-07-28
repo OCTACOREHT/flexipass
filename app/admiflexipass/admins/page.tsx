@@ -924,91 +924,115 @@ export default function AdminsPage() {
       )}
 
       {showPasswordModal && passwordTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fadeIn">
-          <div className="relative w-full max-md bg-white border border-[#efe5d9] rounded-2xl shadow-2xl overflow-hidden">
-            <div className="bg-white border-b border-[#efe5d9] p-5 flex items-center justify-between">
-              <h3 className="text-sm font-bold uppercase tracking-wider text-[#2f2a33] flex items-center gap-2">
-                <KeyRound className="w-4 h-4 text-emerald-600" />
-                Changer le mot de passe
-              </h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden border border-[#efe5d9]">
+
+            {/* Header */}
+            <div className="bg-gradient-to-r from-[#ff8a00] to-[#ff5500] px-6 py-5 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center">
+                  <KeyRound className="w-4 h-4 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-extrabold uppercase tracking-wider text-white">Changer le mot de passe</h3>
+                  <p className="text-[11px] text-white/70 mt-0.5">Modifiez votre mot de passe d'accès</p>
+                </div>
+              </div>
               <button
+                type="button"
                 onClick={() => setShowPasswordModal(false)}
-                className="text-zinc-400 hover:text-[#ff6a1a] transition-colors"
+                className="w-8 h-8 rounded-lg bg-white/20 hover:bg-white/30 flex items-center justify-center text-white transition-colors"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
 
-            <form onSubmit={handlePasswordSubmit} className="p-6 space-y-5 bg-white">
+            <form onSubmit={handlePasswordSubmit} className="p-6 space-y-4">
+              {/* Error */}
               {error && (
-                <div className="flex items-center gap-2.5 rounded-xl bg-red-50 border border-red-200 p-4 text-xs text-red-700">
+                <div className="flex items-center gap-2.5 rounded-xl bg-red-50 border border-red-200 p-3.5 text-xs text-red-700">
                   <AlertTriangle className="w-4 h-4 shrink-0 text-red-500" />
                   <p className="flex-1">{error}</p>
-                  <button type="button" onClick={() => setError(null)} className="text-red-500 hover:text-red-700">
-                    <X className="w-4 h-4" />
+                  <button type="button" onClick={() => setError(null)} className="text-red-400 hover:text-red-600">
+                    <X className="w-3.5 h-3.5" />
                   </button>
                 </div>
               )}
 
-              <div className="rounded-xl border border-[#efe5d9] bg-zinc-50 p-4">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Compte cible</p>
-                <p className="mt-1 text-sm font-bold text-[#2f2a33]">{passwordTarget.name}</p>
-                <p className="text-xs text-zinc-500">{passwordTarget.email}</p>
+              {/* Account info */}
+              <div className="flex items-center gap-3 rounded-xl bg-orange-50 border border-orange-100 p-4">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#ff8a00] to-[#ff5500] flex items-center justify-center text-white font-bold text-sm shrink-0">
+                  {passwordTarget.name?.charAt(0).toUpperCase()}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-bold text-[#2f2a33] truncate">{passwordTarget.name}</p>
+                  <p className="text-xs text-zinc-500 truncate">{passwordTarget.email}</p>
+                </div>
               </div>
 
+              {/* New password */}
               <div className="space-y-1.5">
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500">Nouveau mot de passe</label>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500">
+                  Nouveau mot de passe
+                </label>
                 <div className="relative">
                   <input
                     type={showPassword ? "text" : "password"}
+                    required
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                     minLength={8}
+                    placeholder="Minimum 8 caractères"
                     autoComplete="new-password"
-                    className="w-full rounded-xl border border-[#efe5d9] bg-white px-4 py-2.5 pr-11 text-xs text-[#2f2a33] outline-none focus:border-[#ff6a1a] focus:ring-4 focus:ring-[#ff6a1a]/5 transition"
+                    className="w-full rounded-xl border border-[#efe5d9] bg-white pl-4 pr-11 py-3 text-sm text-[#2f2a33] placeholder-zinc-400 outline-none focus:border-[#ff6a1a] focus:ring-4 focus:ring-[#ff6a1a]/5 transition"
                   />
                   <button
                     type="button"
-                    onClick={() => setShowPassword((value) => !value)}
-                    className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-zinc-400 hover:text-[#ff6a1a]"
-                    aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                    onClick={() => setShowPassword((v) => !v)}
+                    className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-zinc-400 hover:text-[#ff6a1a] transition-colors"
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
               </div>
 
+              {/* Confirm password */}
               <div className="space-y-1.5">
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500">Confirmer le mot de passe</label>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500">
+                  Confirmer le nouveau mot de passe
+                </label>
                 <input
                   type={showPassword ? "text" : "password"}
+                  required
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   minLength={8}
+                  placeholder="Répétez le mot de passe"
                   autoComplete="new-password"
-                  className="w-full rounded-xl border border-[#efe5d9] bg-white px-4 py-2.5 text-xs text-[#2f2a33] outline-none focus:border-[#ff6a1a] focus:ring-4 focus:ring-[#ff6a1a]/5 transition"
+                  className="w-full rounded-xl border border-[#efe5d9] bg-white px-4 py-3 text-sm text-[#2f2a33] placeholder-zinc-400 outline-none focus:border-[#ff6a1a] focus:ring-4 focus:ring-[#ff6a1a]/5 transition"
                 />
               </div>
 
-              <p className="text-[11px] leading-relaxed text-zinc-500">
-                Cette action est autorisee uniquement au proprietaire du compte ou a un superadmin. La verification finale est faite par l'API.
-              </p>
-
-              <div className="flex items-center justify-end gap-3 pt-2">
+              {/* Footer buttons */}
+              <div className="flex items-center justify-end gap-3 pt-2 border-t border-[#f5ece2]">
                 <button
                   type="button"
                   onClick={() => setShowPasswordModal(false)}
-                  className="rounded-xl border border-[#efe5d9] bg-white hover:bg-zinc-50 px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-zinc-500 transition"
+                  className="rounded-xl border border-[#efe5d9] bg-white hover:bg-zinc-50 px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-zinc-500 transition"
                 >
                   Annuler
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-white disabled:opacity-50"
+                  style={{ background: "linear-gradient(120deg,#ff8a00,#ff4d00)" }}
+                  className="flex items-center gap-2 rounded-xl px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-white shadow-md hover:opacity-90 disabled:opacity-50 transition-all"
                 >
-                  {isSubmitting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <KeyRound className="w-3.5 h-3.5" />}
-                  Enregistrer
+                  {isSubmitting ? (
+                    <><Loader2 className="w-3.5 h-3.5 animate-spin" /><span>Enregistrement...</span></>
+                  ) : (
+                    <><KeyRound className="w-3.5 h-3.5" /><span>Enregistrer</span></>
+                  )}
                 </button>
               </div>
             </form>
