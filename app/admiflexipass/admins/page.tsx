@@ -519,7 +519,7 @@ export default function AdminsPage() {
   return (
     <div className="space-y-6 pb-8">
       {/* Header Panel */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#2f2a33] flex items-center gap-2 sm:gap-3">
             Gestion des <span className="text-[#ff6a1a]">Collaborateurs</span>
@@ -528,16 +528,13 @@ export default function AdminsPage() {
             Gérez les accès à l'administration et les permissions.
           </p>
         </div>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={openInviteModal}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all shadow-sm font-semibold text-sm"
-            style={{ backgroundColor: '#ff6a1a', color: 'white' }}
-          >
-            <UserPlus size={16} />
-            <span>Nouveau</span>
-          </button>
-        </div>
+        <button
+          onClick={openInviteModal}
+          className="flex shrink-0 items-center gap-2 px-4 py-2.5 bg-white border border-[#efe5d9] text-zinc-600 rounded-xl hover:text-[#ff6a1a] hover:bg-zinc-50 hover:border-orange-200 transition-all shadow-sm font-semibold text-sm"
+        >
+          <UserPlus size={16} />
+          <span>Nouveau</span>
+        </button>
       </div>
 
       {/* Notifications */}
