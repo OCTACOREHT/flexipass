@@ -160,7 +160,15 @@ function GridCard({ item }: { item: CardItem }) {
 }
 
 export default function SettingsPage() {
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    const confirmLogout = window.confirm("Êtes-vous sûr de vouloir vous déconnecter ?");
+    if (!confirmLogout) return;
+
+    try {
+      await fetch("/admiflexipass/logout", { method: "POST" });
+    } catch (error) {
+      console.warn("Logout failed", error);
+    }
     window.location.href = "/admin-login";
   };
 

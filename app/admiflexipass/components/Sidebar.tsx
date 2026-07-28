@@ -86,6 +86,9 @@ export default function Sidebar({ admin }: { admin?: any }) {
   }, [pathname, admin]);
 
   const handleLogout = async () => {
+    const confirmLogout = window.confirm("Êtes-vous sûr de vouloir vous déconnecter ?");
+    if (!confirmLogout) return;
+
     try {
       await fetch("/admiflexipass/logout", { method: "POST" });
     } catch (error) {
