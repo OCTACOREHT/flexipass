@@ -26,11 +26,11 @@ export async function PATCH(request: NextRequest) {
     }
 
     const isOwnAccount = targetUserId === currentAdmin.id;
-    const isSuperAdmin = currentAdmin.role === "superadmin";
 
-    if (!isOwnAccount && !isSuperAdmin) {
+    // Everyone (including superadmin) can only change their own password
+    if (!isOwnAccount) {
       return NextResponse.json(
-        { error: "Seul le superadmin peut modifier le mot de passe d'un autre compte." },
+        { error: "Vous ne pouvez modifier que votre propre mot de passe." },
         { status: 403 }
       );
     }

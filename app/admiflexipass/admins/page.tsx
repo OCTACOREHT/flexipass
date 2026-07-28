@@ -68,6 +68,15 @@ export default function AdminsPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [currentAdmin, setCurrentAdmin] = useState<{ id: string; role: string } | null>(null);
+
+  // Load current logged-in admin identity
+  useEffect(() => {
+    fetch("/api/admin/me")
+      .then((r) => r.json())
+      .then((d) => { if (d?.admin) setCurrentAdmin(d.admin); })
+      .catch(() => {});
+  }, []);
 
   // Invite modal state
   const [showInviteModal, setShowInviteModal] = useState(false);
@@ -461,15 +470,19 @@ export default function AdminsPage() {
       header: () => <div className="text-right">Actions</div>,
       cell: ({ row }) => {
         const admin = row.original;
+        const isOwnAccount = currentAdmin?.id === admin.id;
         return (
           <div className="flex items-center justify-end gap-2">
-            <button
-              onClick={() => openPasswordModal(admin)}
-              title="Changer le mot de passe"
-              className="p-2 rounded-lg bg-white hover:bg-emerald-50 border border-[#efe5d9] text-zinc-400 hover:text-emerald-700 transition-colors"
-            >
-              <KeyRound className="w-3.5 h-3.5" />
-            </button>
+            {/* Password change only allowed for own account */}
+            {isOwnAccount && (
+              <button
+                onClick={() => openPasswordModal(admin)}
+                title="Changer mon mot de passe"
+                className="p-2 rounded-lg bg-white hover:bg-emerald-50 border border-[#efe5d9] text-zinc-400 hover:text-emerald-700 transition-colors"
+              >
+                <KeyRound className="w-3.5 h-3.5" />
+              </button>
+            )}
 
             <button
               onClick={() => openEditModal(admin)}
